@@ -1,5 +1,9 @@
 package pl.lambada.songsync.ui.screens.settings.providers
 
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.Job
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.foundation.gestures.scrollBy
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.CoroutineScope
@@ -123,6 +127,8 @@ class MyProvidersEditorState internal constructor(
         save(list.toMutableList().apply { add(to, removeAt(from)) })
     }
 
+    private var autoScrollJob: Job? = null
+
     fun startDrag(provider: Providers) {
         // A new drag interrupts a row that is still settling
         settling = null
@@ -130,9 +136,36 @@ class MyProvidersEditorState internal constructor(
         dragging = provider
         dragOffset = 0f
         haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        // Scrolls while the row is held near an edge, so it can go past the rows on screen
+        autoScrollJob?.cancel()
+        autoScrollJob = scope.launch {
+            while (isActive && dragging != null) {
+                withFrameNanos { }
+                autoScrollStep()
+            }
+        }
+    }
+
+    private suspend fun autoScrollStep() {
+        val key = dragging ?: return
+        val info = listState.layoutInfo
+        val current = info.visibleItemsInfo.find { it.key == key.name } ?: return
+        val top = current.offset + dragOffset
+        val delta = autoScrollDelta(
+            top = top,
+            bottom = top + current.size,
+            viewportStart = info.viewportStartOffset.toFloat(),
+            viewportEnd = info.viewportEndOffset.toFloat(),
+            edge = current.size.toFloat(),
+        )
+        if (delta == 0f) return
+        // The list moved under the finger: move the row back by as much so it stays put
+        dragOffset += listState.scrollBy(delta)
+        swapIfPastNeighbour()
     }
 
     fun endDrag() {
+        autoScrollJob?.cancel()
         // Glide from where the row was let go instead of snapping into its slot.
         // Undispatched, so the offset is in place before the next frame draws.
         val from = dragOffset
@@ -177,6 +210,29 @@ class MyProvidersEditorState internal constructor(
                 haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
             }
         }
+    }
+}
+
+/**
+ * How far to scroll this frame while a row spanning [top]..[bottom] is dragged: nothing while it
+ * is clear of the viewport's [edge]-wide edge zones, then faster the deeper it is in one, up to a
+ * quarter of [edge] per frame. Positive scrolls down the list.
+ */
+internal fun autoScrollDelta(
+    top: Float,
+    bottom: Float,
+    viewportStart: Float,
+    viewportEnd: Float,
+    edge: Float,
+): Float {
+    if (edge <= 0f) return 0f
+    val maxStep = edge / 4f
+    val intoBottom = bottom - (viewportEnd - edge)
+    val intoTop = (viewportStart + edge) - top
+    return when {
+        intoBottom > 0f -> (intoBottom / edge * maxStep).coerceAtMost(maxStep)
+        intoTop > 0f -> -(intoTop / edge * maxStep).coerceAtMost(maxStep)
+        else -> 0f
     }
 }
 
