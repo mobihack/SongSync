@@ -196,9 +196,11 @@ fun HomeScreen(
         // Library tools (sort, filter, search) normally; selection actions while songs are selected
         if (viewModel.allSongs != null) AnimatedContent(
             targetState = selecting,
+            // Right-aligned, where a FAB would sit
             modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(bottom = paddingValues.calculateBottomPadding() + 16.dp),
+                .align(Alignment.BottomEnd)
+                .padding(end = 16.dp, bottom = paddingValues.calculateBottomPadding() + 16.dp),
+            contentAlignment = Alignment.BottomEnd,
             transitionSpec = {
                 (fadeIn(motionScheme.defaultEffectsSpec()) +
                     slideInVertically(motionScheme.defaultSpatialSpec()) { it / 2 }) togetherWith
