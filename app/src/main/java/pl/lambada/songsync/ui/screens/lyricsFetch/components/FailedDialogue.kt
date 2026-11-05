@@ -1,10 +1,13 @@
 package pl.lambada.songsync.ui.screens.lyricsFetch.components
 
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import pl.lambada.songsync.R
 import pl.lambada.songsync.util.EmptyQueryException
@@ -29,10 +32,12 @@ fun FailedDialogue(
         confirmButton = { Button(onClick = onOkRequest) { Text(stringResource(R.string.ok)) } },
         title = { Text(text = stringResource(id = R.string.error)) },
         text = {
-            when (exception) {
-                is NoTrackFoundException -> Text(stringResource(R.string.no_results))
-                is EmptyQueryException -> Text(stringResource(R.string.invalid_query))
-                else -> Text(exception.toString())
+            SelectionContainer(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                when (exception) {
+                    is NoTrackFoundException -> Text(stringResource(R.string.no_results))
+                    is EmptyQueryException -> Text(stringResource(R.string.invalid_query))
+                    else -> Text(exception.toString())
+                }
             }
         }
     )
