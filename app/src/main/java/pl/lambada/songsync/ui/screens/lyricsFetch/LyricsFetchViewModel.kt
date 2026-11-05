@@ -20,6 +20,8 @@ import pl.lambada.songsync.util.generateLrcContent
 import pl.lambada.songsync.util.isLegacyFileAccessRequired
 import pl.lambada.songsync.util.NoTrackFoundException
 import pl.lambada.songsync.util.ProviderChain
+import pl.lambada.songsync.util.ProviderMode
+import pl.lambada.songsync.util.Providers
 import pl.lambada.songsync.util.newLyricsFilePath
 import pl.lambada.songsync.util.saveToExternalPath
 import pl.lambada.songsync.util.showToast
@@ -49,9 +51,22 @@ class LyricsFetchViewModel(
     var searchProgress by mutableStateOf<ProviderChain.Progress?>(null)
         private set
 
-    /** The provider that supplied the current result; can differ from the selected one. */
-    var activeProvider by mutableStateOf(userSettingsController.selectedProvider)
+    /** Provider picked for this song only, in My list mode; null = use the list. */
+    var songProvider by mutableStateOf<Providers?>(null)
         private set
+
+    /** The provider that supplied the current result; can differ from the selected one. */
+    var activeProvider by mutableStateOf(userSettingsController.lookupProviders().first())
+        private set
+
+    /** Providers this song's search will try, in order. */
+    fun lookupProviders() = userSettingsController.lookupProviders(songOverride = songProvider)
+
+    /** Picker choice: for this song only in My list mode, otherwise saved as the provider. */
+    fun pickProvider(provider: Providers?) {
+        if (userSettingsController.providerMode == ProviderMode.MY_LIST) songProvider = provider
+        else if (provider != null) userSettingsController.updateSelectedProviders(provider)
+    }
 
     private suspend fun getSyncedLyrics(title: String, artist: String): String? =
         lyricsProviderService.getSyncedLyrics(
@@ -89,12 +104,13 @@ class LyricsFetchViewModel(
                     queryState = QueryStatus.Success(result)
                     loadLyrics(result.songName!!, result.artistName!!)
                 } else {
-                    // Fresh search: selected provider first, then fallbacks if enabled
+                    // Fresh search: providers in the order the provider mode gives
                     queryOffset = 0
-                    activeProvider = userSettingsController.selectedProvider
+                    val providers = lookupProviders()
+                    activeProvider = providers.first()
                     val found = lyricsProviderService.findLyrics(
                         buildQuery(),
-                        userSettingsController.lookupProviders(),
+                        providers,
                         includeTranslationNetEase = userSettingsController.includeTranslation,
                         includeRomanizationNetEase = userSettingsController.includeRomanization,
                         multiPersonWordByWord = userSettingsController.multiPersonWordByWord,

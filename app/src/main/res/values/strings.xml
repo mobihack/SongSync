@@ -175,4 +175,42 @@
         <item quantity="one">%1$d song</item>
         <item quantity="other">%1$d songs</item>
     </plurals>
+    <string name="provider_mode_auto">Auto</string>
+    <string name="provider_mode_auto_summary">%1$s first, then every other provider</string>
+    <string name="provider_mode_my_list">My list</string>
+    <string name="provider_mode_my_list_summary">Your own providers, tried in your order</string>
+    <string name="provider_mode_selected">Selected provider</string>
+    <string name="provider_mode_selected_summary">Only %1$s</string>
+    <string name="edit_my_list">Edit my list</string>
+    <string name="my_list_hint">Providers are tried from the top until one has synced lyrics. Drag the handle to reorder.</string>
+    <string name="my_list_in_list">In my list</string>
+    <string name="my_list_available">Available</string>
+    <string name="add_provider">Add %1$s</string>
+    <string name="remove_provider">Remove %1$s</string>
+    <string name="drag_to_reorder">Drag to reorder</string>
+    <string name="move_up">Move up</string>
+    <string name="move_down">Move down</string>
+    <string name="library">Library</string>
+    <string name="music_folders">Music folders</string>
+    <string name="folder_mode_all">All music</string>
+    <string name="folder_mode_all_summary">Every folder with music</string>
+    <string name="folder_mode_ignore">Ignore folders</string>
+    <string name="folder_mode_ignore_summary">All music except the folders you tick</string>
+    <string name="folder_mode_only">Only these folders</string>
+    <string name="folder_mode_only_summary">Just the folders you tick, including their subfolders</string>
+    <string name="folders_to_ignore">Folders to ignore</string>
+    <string name="folders_to_show">Folders to show</string>
+    <string name="no_music_folders">No folders with music found</string>
+    <plurals name="folder_song_count">
+        <item quantity="one">%d song</item>
+        <item quantity="other">%d songs</item>
+    </plurals>
+    <plurals name="folders_summary_ignore">
+        <item quantity="one">Ignoring %d folder</item>
+        <item quantity="other">Ignoring %d folders</item>
+    </plurals>
+    <plurals name="folders_summary_only">
+        <item quantity="one">Only %d folder</item>
+        <item quantity="other">Only %d folders</item>
+    </plurals>
 </resources>

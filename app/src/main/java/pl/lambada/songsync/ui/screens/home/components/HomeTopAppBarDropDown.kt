@@ -30,8 +30,9 @@ import pl.lambada.songsync.util.ui.tweenExit
 @Composable
 fun HomeTopAppBarDropDown(
     onNavigateToSettingsSectionRequest: () -> Unit,
-    selectedProvider: Providers,
-    onProviderSelectRequest: (Providers) -> Unit,
+    selectedProvider: Providers?,
+    showMyList: Boolean,
+    onProviderSelectRequest: (Providers?) -> Unit,
     onBatchDownloadRequest: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -72,6 +73,7 @@ fun HomeTopAppBarDropDown(
                 ProvidersDropdownMenuContent(
                     onDismissRequest = { expanded = false },
                     selectedProvider = selectedProvider,
+                    showMyList = showMyList,
                     onProviderSelectRequest = onProviderSelectRequest
                 )
             else

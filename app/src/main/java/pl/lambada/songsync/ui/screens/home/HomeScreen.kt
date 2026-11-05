@@ -68,6 +68,9 @@ import androidx.compose.runtime.withFrameNanos
 import pl.lambada.songsync.domain.model.SortValues
 import pl.lambada.songsync.ui.screens.home.components.FastScroller
 import pl.lambada.songsync.ui.screens.home.components.sectionLetter
+import pl.lambada.songsync.util.ProviderMode
+import pl.lambada.songsync.ui.ScreenMusicFolders
+import pl.lambada.songsync.ui.screens.settings.folders.folderModeSummary
 
 /**
  * Composable function representing the home screen.
@@ -88,6 +91,12 @@ fun HomeScreen(
     }
     var isBatchDownload by remember { mutableStateOf(false) }
     val context = LocalContext.current
+
+    // Re-filter whenever a filter setting changes, here or in Settings > Music folders
+    val settings = viewModel.userSettingsController
+    LaunchedEffect(settings.folderMode, settings.blacklistedFolders, settings.onlyFolders, settings.hideLyrics) {
+        viewModel.filterSongs()
+    }
 
     LaunchedEffect(viewModel.userSettingsController.sortBy to viewModel.userSettingsController.sortOrder) {
         viewModel.cachedSongs = null
@@ -117,9 +126,10 @@ fun HomeScreen(
                     scrolled = listScrolled,
                     onSelectedClearAction = viewModel.selectedSongs::clear,
                     onNavigateToSettingsSectionRequest = { navController.navigate(ScreenSettings) },
-                    onProviderSelectRequest = viewModel.userSettingsController::updateSelectedProviders,
+                    onProviderSelectRequest = viewModel.userSettingsController::pickProvider,
                     onBatchDownloadRequest = { isBatchDownload = true },
-                    selectedProvider = viewModel.userSettingsController.selectedProvider,
+                    selectedProvider = viewModel.userSettingsController.pickerSelection(),
+                    showMyList = viewModel.userSettingsController.providerMode == ProviderMode.MY_LIST,
                     onSelectAllSongsRequest = viewModel::selectAllDisplayingSongs,
                     onInvertSongSelectionRequest = viewModel::invertSongSelection,
                     cachedSize = cachedSize
@@ -307,12 +317,13 @@ fun HomeScreenLoaded(
                     if (viewModel.showFilters) {
                         FiltersDialog(
                             hideLyrics = viewModel.userSettingsController.hideLyrics,
-                            folders = viewModel.getSongFolders(context),
-                            blacklistedFolders = viewModel.userSettingsController.blacklistedFolders,
+                            folderSummary = folderModeSummary(viewModel.userSettingsController),
                             onDismiss = { viewModel.showFilters = false },
-                            onFilterChange = { viewModel.filterSongs() },
                             onHideLyricsChange = viewModel::onHideLyricsChange,
-                            onToggleFolderBlacklist = viewModel::onToggleFolderBlacklist
+                            onOpenMusicFolders = {
+                                viewModel.showFilters = false
+                                navController.navigate(ScreenMusicFolders)
+                            },
                         )
                     }
                 }

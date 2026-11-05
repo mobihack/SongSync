@@ -45,15 +45,11 @@ import pl.lambada.songsync.ui.components.SwitchItem
 @Composable
 fun FiltersDialog(
     hideLyrics: Boolean,
-    folders: List<String>,
-    blacklistedFolders: List<String>,
+    folderSummary: String,
     onDismiss: () -> Unit,
-    onFilterChange: () -> Unit,
     onHideLyricsChange: (Boolean) -> Unit,
-    onToggleFolderBlacklist: (String, Boolean) -> Unit
+    onOpenMusicFolders: () -> Unit,
 ) {
-    var showFolders by rememberSaveable { mutableStateOf(false) }
-
     BasicAlertDialog(onDismissRequest = { onDismiss() }) {
         Surface(
             modifier = Modifier
@@ -83,22 +79,27 @@ fun FiltersDialog(
                     )
                 ) {
                     onHideLyricsChange(!hideLyrics)
-                    onFilterChange()
                 }
                 Spacer(modifier = Modifier.height(16.dp))
+                // Folder choice lives in Settings > Music folders; this is a shortcut to it
                 Row(
                     modifier = Modifier
                         .padding(start = 24.dp, end = 26.dp)
                         .clip(RoundedCornerShape(100))
                         .background(MaterialTheme.colorScheme.secondaryContainer)
-                        .clickable { showFolders = true }
+                        .clickable { onOpenMusicFolders() }
                         .padding(start = 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Row(modifier = Modifier.weight(1f)) {
-                        Text(stringResource(R.string.ignore_folders))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(stringResource(R.string.music_folders))
+                        Text(
+                            text = folderSummary,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        )
                     }
-                    IconButton(onClick = { showFolders = true }) {
+                    IconButton(onClick = { onOpenMusicFolders() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                             contentDescription = null,
@@ -111,73 +112,6 @@ fun FiltersDialog(
                         onClick = { onDismiss() }
                     ) {
                         Text(stringResource(R.string.close))
-                    }
-                }
-            }
-        }
-    }
-
-    if (showFolders) {
-        BasicAlertDialog(onDismissRequest = { showFolders = false }) {
-            Surface(
-                modifier = Modifier
-                    .wrapContentWidth()
-                    .wrapContentHeight(),
-                shape = MaterialTheme.shapes.large,
-                color = AlertDialogDefaults.containerColor,
-                tonalElevation = AlertDialogDefaults.TonalElevation
-            ) {
-                Column {
-                    Text(
-                        text = stringResource(R.string.ignore_folders),
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.padding(start = 22.dp, top = 22.dp, bottom = 16.dp)
-                    )
-                    HorizontalDivider()
-                    LazyColumn {
-                        items(folders.size) { index ->
-                            val folder = folders[index]
-                            var checked by remember {
-                                mutableStateOf(blacklistedFolders.contains(folder))
-                            }
-
-                            Row(
-                                modifier = Modifier
-                                    .clickable {
-                                        checked = !checked
-                                        onToggleFolderBlacklist(folder, checked)
-                                        onFilterChange()
-                                    }
-                                    .padding(start = 22.dp, end = 16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Icon(imageVector = Icons.Outlined.Folder, contentDescription = "Folder icon")
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = folder.removePrefix("/storage/emulated/0/"),
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .padding(vertical = 16.dp)
-                                )
-                                Checkbox(
-                                    checked = checked,
-                                    onCheckedChange = { check ->
-                                        checked = check
-                                        onToggleFolderBlacklist(folder, check)
-                                        onFilterChange()
-                                    }
-                                )
-                            }
-                        }
-                        item {
-                            HorizontalDivider()
-                            Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-                                Spacer(modifier = Modifier.weight(1f))
-                                TextButton(onClick = { showFolders = false }) {
-                                    Text(stringResource(R.string.close))
-                                }
-                            }
-                        }
                     }
                 }
             }

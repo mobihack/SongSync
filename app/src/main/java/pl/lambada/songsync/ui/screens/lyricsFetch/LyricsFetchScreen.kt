@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import pl.lambada.songsync.R
 import pl.lambada.songsync.ui.components.ProvidersDropdownMenu
+import pl.lambada.songsync.util.ProviderMode
 import pl.lambada.songsync.ui.screens.lyricsFetch.components.CloudProviderTitle
 import pl.lambada.songsync.ui.screens.lyricsFetch.components.FailedDialogue
 import pl.lambada.songsync.ui.screens.lyricsFetch.components.LocalSongContent
@@ -119,10 +120,11 @@ fun SharedTransitionScope.LyricsFetchScreen(
                     }
                     ProvidersDropdownMenu(
                         expanded = expandedProviders,
-                        selectedProvider = viewModel.userSettingsController.selectedProvider,
+                        selectedProvider = viewModel.userSettingsController.pickerSelection(viewModel.songProvider),
+                        showMyList = viewModel.userSettingsController.providerMode == ProviderMode.MY_LIST,
                         onDismissRequest = { expandedProviders = false },
                         onProviderSelectRequest = { it ->
-                            (viewModel.userSettingsController::updateSelectedProviders)(it)
+                            viewModel.pickProvider(it)
                             if (viewModel.queryState != QueryStatus.NotSubmitted)
                                 viewModel.loadSongInfo(context)
                         },
@@ -173,7 +175,7 @@ fun SharedTransitionScope.LyricsFetchScreen(
                         CloudProviderTitle(
                             // Follows the fallback live: shows the provider being tried right now
                             selectedProvider = progress?.provider
-                                ?: viewModel.userSettingsController.selectedProvider,
+                                ?: viewModel.lookupProviders().first(),
                             onExpandProvidersRequest = { expandedProviders = true }
                         )
                         Spacer(modifier = Modifier.height(16.dp))

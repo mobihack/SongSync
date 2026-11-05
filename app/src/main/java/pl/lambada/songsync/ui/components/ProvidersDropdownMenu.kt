@@ -17,27 +17,29 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import pl.lambada.songsync.R
 import pl.lambada.songsync.ui.components.dropdown.AnimatedDropdownMenu
 import pl.lambada.songsync.util.Providers
-import pl.lambada.songsync.util.dataStore
-import pl.lambada.songsync.util.set
 
+/**
+ * Provider picker. In My list mode ([showMyList]) the first entry is "My list", selected when
+ * [selectedProvider] is null; picking it passes null to [onProviderSelectRequest].
+ * Callers decide whether a pick is saved or temporary.
+ */
 @Composable
 fun ProvidersDropdownMenu(
     expanded: Boolean,
     onDismissRequest: () -> Unit,
-    selectedProvider: Providers,
-    onProviderSelectRequest: (Providers) -> Unit,
+    selectedProvider: Providers?,
+    showMyList: Boolean = false,
+    onProviderSelectRequest: (Providers?) -> Unit,
 ) {
     AnimatedDropdownMenu(
         expanded = expanded,
@@ -46,6 +48,7 @@ fun ProvidersDropdownMenu(
         ProvidersDropdownMenuContent(
             onDismissRequest = onDismissRequest,
             selectedProvider = selectedProvider,
+            showMyList = showMyList,
             onProviderSelectRequest = onProviderSelectRequest,
         )
     }
@@ -54,17 +57,39 @@ fun ProvidersDropdownMenu(
 @Composable
 fun ProvidersDropdownMenuContent(
     onDismissRequest: () -> Unit,
-    selectedProvider: Providers,
-    onProviderSelectRequest: (Providers) -> Unit,
+    selectedProvider: Providers?,
+    showMyList: Boolean = false,
+    onProviderSelectRequest: (Providers?) -> Unit,
 ) = Column {
     val providers = Providers.entries.filter { it.enabled }
-    val dataStore = LocalContext.current.dataStore
     val scope = rememberCoroutineScope()
+    fun pick(provider: Providers?) {
+        onProviderSelectRequest(provider)
+        scope.launch {
+            delay(200)
+            onDismissRequest()
+        }
+    }
     Text(
         text = stringResource(id = R.string.provider),
         modifier = Modifier.padding(start = 18.dp, top = 8.dp),
         fontSize = 12.sp
     )
+    if (showMyList) {
+        DropdownMenuItem(
+            text = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = stringResource(R.string.provider_mode_my_list),
+                        modifier = Modifier.padding(start = 6.dp)
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    RadioButton(selected = selectedProvider == null, onClick = { pick(null) })
+                }
+            },
+            onClick = { pick(null) }
+        )
+    }
     providers.forEach {
         DropdownMenuItem(
             text = {
@@ -73,52 +98,37 @@ fun ProvidersDropdownMenuContent(
                         text = it.displayName,
                         modifier = Modifier.padding(start = 6.dp)
                     )
-                    if (it.hasWordByWord)
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier
-                                .padding(horizontal = 4.dp)
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(MaterialTheme.colorScheme.onSurfaceVariant)
-                                .size(14.dp)
-                        ) {
-                            Text(
-                                text = "W",
-                                color = MaterialTheme.colorScheme.background,
-                                style = TextStyle(
-                                    fontSize = 9.sp,
-                                    fontWeight = FontWeight.Bold
-                                ),
-                            )
-                        }
+                    if (it.hasWordByWord) WordByWordBadge()
                     Spacer(modifier = Modifier.weight(1f))
                     RadioButton(
                         selected = selectedProvider == it,
-                        onClick = {
-                            onProviderSelectRequest(it)
-                            dataStore.set(
-                                stringPreferencesKey("provider"),
-                                it.displayName
-                            )
-                            scope.launch {
-                                delay(200)
-                                onDismissRequest()
-                            }
-                        }
+                        onClick = { pick(it) }
                     )
                 }
             },
-            onClick = {
-                onProviderSelectRequest(it)
-                dataStore.set(
-                    stringPreferencesKey("provider"),
-                    it.displayName
-                )
-                scope.launch {
-                    delay(200)
-                    onDismissRequest()
-                }
-            }
+            onClick = { pick(it) }
+        )
+    }
+}
+
+/** Small "W" badge for providers with word-by-word lyrics. */
+@Composable
+fun WordByWordBadge() {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .padding(horizontal = 4.dp)
+            .clip(RoundedCornerShape(4.dp))
+            .background(MaterialTheme.colorScheme.onSurfaceVariant)
+            .size(14.dp)
+    ) {
+        Text(
+            text = "W",
+            color = MaterialTheme.colorScheme.background,
+            style = TextStyle(
+                fontSize = 9.sp,
+                fontWeight = FontWeight.Bold
+            ),
         )
     }
 }

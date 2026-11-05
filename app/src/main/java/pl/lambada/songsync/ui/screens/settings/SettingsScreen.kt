@@ -27,7 +27,11 @@ import pl.lambada.songsync.ui.screens.settings.components.ContributorsSection
 import pl.lambada.songsync.ui.screens.settings.components.CreditsSection
 import pl.lambada.songsync.ui.screens.settings.components.ExternalLinkSection
 import pl.lambada.songsync.ui.screens.settings.components.MarqueeSwitch
-import pl.lambada.songsync.ui.screens.settings.components.ProviderFallbackSwitch
+import pl.lambada.songsync.ui.ScreenMusicFolders
+import pl.lambada.songsync.ui.ScreenMyProviders
+import pl.lambada.songsync.ui.components.NavigationItem
+import pl.lambada.songsync.ui.screens.settings.components.ProviderModeSection
+import pl.lambada.songsync.ui.screens.settings.folders.folderModeSummary
 import pl.lambada.songsync.ui.screens.settings.components.MultiPersonSwitch
 import pl.lambada.songsync.ui.screens.settings.components.PureBlackThemeSwitch
 import pl.lambada.songsync.ui.screens.settings.components.RomanizationSwitch
@@ -76,12 +80,6 @@ fun SettingsScreen(
                 )
             }
             item {
-                ProviderFallbackSwitch(
-                    selected = userSettingsController.providerFallback,
-                    onToggle = { userSettingsController.updateProviderFallback(it) }
-                )
-            }
-            item {
                 MarqueeSwitch(
                     selected = userSettingsController.disableMarquee,
                     onToggle = { userSettingsController.updateDisableMarquee(it) }
@@ -94,7 +92,22 @@ fun SettingsScreen(
                 )
             }
 
+            item { SettingsHeadLabel(label = stringResource(R.string.library)) }
+            item {
+                NavigationItem(
+                    label = stringResource(R.string.music_folders),
+                    description = folderModeSummary(userSettingsController),
+                    onClick = { navController.navigate(ScreenMusicFolders) },
+                )
+            }
+
             item { SettingsHeadLabel(label = stringResource(id = R.string.provider)) }
+            item {
+                ProviderModeSection(
+                    userSettingsController = userSettingsController,
+                    onEditMyList = { navController.navigate(ScreenMyProviders) },
+                )
+            }
             item {
                 TranslationSwitch(
                     selected = userSettingsController.includeTranslation,

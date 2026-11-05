@@ -33,6 +33,8 @@ import pl.lambada.songsync.domain.model.SongInfo
 import pl.lambada.songsync.domain.model.SortOrders
 import pl.lambada.songsync.domain.model.SortValues
 import pl.lambada.songsync.services.NotificationListener
+import pl.lambada.songsync.util.FolderMode
+import pl.lambada.songsync.util.MusicFolders
 import pl.lambada.songsync.util.downloadLyrics
 import pl.lambada.songsync.util.ext.toLrcFile
 import java.io.File
@@ -67,12 +69,9 @@ class HomeViewModel(
     var playingSongAlbumArt by mutableStateOf<Uri?>(null)
     var playingSongFilePath by mutableStateOf("")
 
-    // Filter settings
-    private var cachedFolders: MutableList<String>? = null
-    private var hideFolders = userSettingsController.blacklistedFolders.isNotEmpty()
-
-    // filtered folders/lyrics songs
-    private var _cachedFilteredSongs = MutableStateFlow<List<Song>>(emptyList())
+    // Songs left after the folder and "no lyrics only" filters; null when nothing is filtered.
+    // (An empty list is a real result, e.g. "only these folders" with none chosen.)
+    private var _cachedFilteredSongs = MutableStateFlow<List<Song>?>(null)
 
     // searching
     private var _searchResults = MutableStateFlow<List<Song>>(emptyList())
@@ -80,8 +79,7 @@ class HomeViewModel(
     var displaySongs by mutableStateOf(
         when {
             searchQuery.isNotEmpty() -> _searchResults.value
-            _cachedFilteredSongs.value.isNotEmpty() -> _cachedFilteredSongs.value
-            else -> allSongs ?: listOf()
+            else -> _cachedFilteredSongs.value ?: allSongs ?: listOf()
         }
     )
 
@@ -108,8 +106,7 @@ class HomeViewModel(
                 _cachedFilteredSongs.combine(_searchResults) { filtered, searchResults ->
                     when {
                         searchQuery.isNotEmpty() -> searchResults
-                        filtered.isNotEmpty() -> filtered
-                        else -> all
+                        else -> filtered ?: all
                     }
                 }
             }.collect { newDisplaySongs ->
@@ -193,12 +190,12 @@ class HomeViewModel(
     fun updateSearchResults(query: String) {
         viewModelScope.launch(Dispatchers.IO) {
             if (query.isEmpty()) {
-                _searchResults.value = _cachedFilteredSongs.value
+                _searchResults.value = _cachedFilteredSongs.value ?: emptyList()
                 return@launch
             }
 
             val data: List<Song> = when {
-                _cachedFilteredSongs.value.isNotEmpty() -> _cachedFilteredSongs.value
+                _cachedFilteredSongs.value != null -> _cachedFilteredSongs.value!!
                 cachedSongs != null -> cachedSongs!!
                 else -> { return@launch }
             }
@@ -213,64 +210,23 @@ class HomeViewModel(
     }
 
     /**
-     * Loads all songs' folders
-     * @param context The application context.
-     * @return A list of folders.
+     * Applies the folder setting (all / ignore / only) and "no lyrics only" to the loaded songs.
      */
-    fun getSongFolders(context: Context): List<String> {
-        return cachedFolders ?: run {
-            val folders = mutableListOf<String>()
-
-            for (song in getAllSongs(context, SortValues.TITLE, SortOrders.ASCENDING)) {
-                val path = song.filePath
-                val folder = path?.substring(0, path.lastIndexOf("/"))
-                if (folder != null && !folders.contains(folder))
-                    folders.add(folder)
-            }
-
-            cachedFolders = folders
-            cachedFolders!!
+    fun filterSongs() = viewModelScope.launch(Dispatchers.Default) {
+        val songs = cachedSongs ?: return@launch
+        val settings = userSettingsController
+        val mode = settings.folderMode
+        val hideLyrics = settings.hideLyrics
+        if (mode == FolderMode.ALL && !hideLyrics) {
+            _cachedFilteredSongs.value = null
+            return@launch
         }
-    }
-
-    /**
-     * Filter songs based on user's preferences.
-     * @return A list of songs depending on the user's preferences. If no preferences are set, null is returned, so app will use all songs.
-     */
-    fun filterSongs() = viewModelScope.launch {
-        hideFolders = userSettingsController.blacklistedFolders.isNotEmpty()
-
-        when {
-            userSettingsController.hideLyrics && hideFolders -> {
-                _cachedFilteredSongs.value = cachedSongs!!
-                    .filter {
-                        it.filePath.toLrcFile()?.exists() != true && !userSettingsController.blacklistedFolders.contains(
-                            it.filePath!!.substring(
-                                0, it.filePath.lastIndexOf("/")
-                            )
-                        )
-                    }
-            }
-
-            userSettingsController.hideLyrics -> {
-                _cachedFilteredSongs.value = cachedSongs!!
-                    .filter { it.filePath.toLrcFile()?.exists() != true }
-            }
-
-            hideFolders -> {
-                _cachedFilteredSongs.value = cachedSongs!!.filter {
-                    !userSettingsController.blacklistedFolders.contains(
-                        it.filePath!!.substring(
-                            0,
-                            it.filePath.lastIndexOf("/")
-                        )
-                    )
-                }
-            }
-
-            else -> {
-                _cachedFilteredSongs.value = emptyList()
-            }
+        val ignored = settings.blacklistedFolders
+        val only = settings.onlyFolders
+        _cachedFilteredSongs.value = songs.filter { song ->
+            val path = song.filePath ?: return@filter false
+            MusicFolders.includes(MusicFolders.folderOf(path), mode, ignored, only) &&
+                    (!hideLyrics || path.toLrcFile()?.exists() != true)
         }
     }
 
@@ -288,18 +244,6 @@ class HomeViewModel(
 
     fun onHideLyricsChange(newHideLyrics: Boolean) {
         userSettingsController.updateHideLyrics(newHideLyrics)
-    }
-
-    fun onToggleFolderBlacklist(folder: String, blacklisted: Boolean) {
-        if (blacklisted) {
-            userSettingsController.updateBlacklistedFolders(
-                userSettingsController.blacklistedFolders + folder
-            )
-        } else {
-            userSettingsController.updateBlacklistedFolders(
-                userSettingsController.blacklistedFolders - folder
-            )
-        }
     }
 
     /** Finds lyrics for [query], falling back to other providers if enabled. */

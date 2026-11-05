@@ -9,7 +9,9 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import pl.lambada.songsync.domain.model.SortOrders
 import pl.lambada.songsync.domain.model.SortValues
+import pl.lambada.songsync.util.FolderMode
 import pl.lambada.songsync.util.ProviderChain
+import pl.lambada.songsync.util.ProviderMode
 import pl.lambada.songsync.util.Providers
 import pl.lambada.songsync.util.get
 import pl.lambada.songsync.util.set
@@ -29,8 +31,22 @@ class UserSettingsController(private val dataStore: DataStore<Preferences>) {
     )
         private set
 
+    /** Folders ignored in [FolderMode.IGNORE]. */
     var blacklistedFolders by mutableStateOf(
-        dataStore.get(blacklistedFoldersKey, "").split(",")
+        dataStore.get(blacklistedFoldersKey, "").split(",").filter { it.isNotBlank() }
+    )
+        private set
+
+    /** Folders shown in [FolderMode.ONLY]. */
+    var onlyFolders by mutableStateOf(
+        dataStore.get(onlyFoldersKey, "").split(",").filter { it.isNotBlank() }
+    )
+        private set
+
+    var folderMode by mutableStateOf(
+        FolderMode.entries.find { it.name == dataStore.get(folderModeKey, "") }
+            // Before folder modes existed, a non-empty ignore list meant "ignore these"
+            ?: if (blacklistedFolders.isNotEmpty()) FolderMode.IGNORE else FolderMode.ALL
     )
         private set
 
@@ -55,8 +71,27 @@ class UserSettingsController(private val dataStore: DataStore<Preferences>) {
     var disableMarquee by mutableStateOf(dataStore.get(disableMarqueeKey, false))
         private set
 
-    /** Try other providers when the selected one has no (synced) lyrics. */
-    var providerFallback by mutableStateOf(dataStore.get(providerFallbackKey, true))
+    var providerMode by mutableStateOf(
+        ProviderMode.entries.find { it.name == dataStore.get(providerModeKey, "") }
+            // Before modes existed: "Try other providers" on = Auto, off = selected provider only
+            ?: if (dataStore.get(providerFallbackKey, true)) ProviderMode.AUTO else ProviderMode.SELECTED
+    )
+        private set
+
+    /** The user's ordered providers for [ProviderMode.MY_LIST]. */
+    var myProviders by mutableStateOf(
+        dataStore.get(myProvidersKey, "").split(",")
+            .mapNotNull { name -> Providers.entries.find { it.name == name }?.takeIf { it.enabled } }
+            .distinct()
+            .ifEmpty { ProviderChain.defaultMyList }
+    )
+        private set
+
+    /**
+     * Provider picked from the home menu while in [ProviderMode.MY_LIST]. Lasts until the app
+     * restarts (not persisted); null means "use My list".
+     */
+    var sessionProvider by mutableStateOf<Providers?>(null)
         private set
 
     var sdCardPath by mutableStateOf(dataStore.get(sdCardPathKey, null))
@@ -100,6 +135,16 @@ class UserSettingsController(private val dataStore: DataStore<Preferences>) {
         blacklistedFolders = to
     }
 
+    fun updateOnlyFolders(to: List<String>) {
+        dataStore.set(onlyFoldersKey, to.joinToString(","))
+        onlyFolders = to
+    }
+
+    fun updateFolderMode(to: FolderMode) {
+        dataStore.set(folderModeKey, to.name)
+        folderMode = to
+    }
+
     fun updateHideLyrics(to: Boolean) {
         dataStore.set(hideLyricsKey, to)
         hideLyrics = to
@@ -125,13 +170,43 @@ class UserSettingsController(private val dataStore: DataStore<Preferences>) {
         unsyncedFallbackMusixmatch = to
     }
 
-    fun updateProviderFallback(to: Boolean) {
-        dataStore.set(providerFallbackKey, to)
-        providerFallback = to
+    fun updateProviderMode(to: ProviderMode) {
+        dataStore.set(providerModeKey, to.name)
+        providerMode = to
+        if (to != ProviderMode.MY_LIST) sessionProvider = null
     }
 
-    /** Providers to search, in order: the selected one, then fallbacks if enabled. */
-    fun lookupProviders(): List<Providers> = ProviderChain.order(selectedProvider, providerFallback)
+    fun updateMyProviders(to: List<Providers>) {
+        dataStore.set(myProvidersKey, to.joinToString(",") { it.name })
+        myProviders = to
+    }
+
+    /**
+     * What the provider picker shows as selected: in My list mode the temporary pick, or null for
+     * "My list"; otherwise the saved provider.
+     */
+    fun pickerSelection(songOverride: Providers? = null): Providers? =
+        if (providerMode == ProviderMode.MY_LIST) songOverride ?: sessionProvider else selectedProvider
+
+    /**
+     * Picker choice from the home menu. In My list mode it only lasts for this session (null goes
+     * back to the list); otherwise it changes the saved provider.
+     */
+    fun pickProvider(provider: Providers?) {
+        if (providerMode == ProviderMode.MY_LIST) sessionProvider = provider
+        else if (provider != null) updateSelectedProviders(provider)
+    }
+
+    /**
+     * Providers to search, in order, for the current mode.
+     * @param songOverride a provider picked for one song (My list mode only).
+     */
+    fun lookupProviders(songOverride: Providers? = null): List<Providers> = ProviderChain.lookup(
+        mode = providerMode,
+        selected = selectedProvider,
+        myList = myProviders,
+        override = songOverride ?: sessionProvider,
+    )
 
     fun updateDisableMarquee(to: Boolean) {
         dataStore.set(disableMarqueeKey, to)
@@ -179,7 +254,11 @@ private val includeRomanizationKey = booleanPreferencesKey("include_romanization
 private val multiPersonWordByWordKey = booleanPreferencesKey("multi_person_word_by_word")
 private val unsyncedFallbackMusixmatchKey = booleanPreferencesKey("unsynced_lyrics_fallback")
 private val disableMarqueeKey = booleanPreferencesKey("marquee_disable")
-private val providerFallbackKey = booleanPreferencesKey("provider_fallback")
+private val providerFallbackKey = booleanPreferencesKey("provider_fallback") // legacy, read for migration
+private val providerModeKey = stringPreferencesKey("provider_mode")
+private val myProvidersKey = stringPreferencesKey("my_providers")
+private val folderModeKey = stringPreferencesKey("folder_mode")
+private val onlyFoldersKey = stringPreferencesKey("only_folders")
 private val pureBlackKey = booleanPreferencesKey("pure_black")
 private val sdCardPathKey = stringPreferencesKey("sd_card_path")
 private val showPathKey = booleanPreferencesKey("show_path")

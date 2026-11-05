@@ -34,10 +34,11 @@ fun HomeAppBar(
     showing: Boolean,
     /** Whether the list is scrolled away from the top; tints the bar. */
     scrolled: Boolean,
-    selectedProvider: Providers,
+    selectedProvider: Providers?,
+    showMyList: Boolean,
     onSelectedClearAction: () -> Unit,
     onNavigateToSettingsSectionRequest: () -> Unit,
-    onProviderSelectRequest: (Providers) -> Unit,
+    onProviderSelectRequest: (Providers?) -> Unit,
     onBatchDownloadRequest: () -> Unit,
     onSelectAllSongsRequest: () -> Unit,
     onInvertSongSelectionRequest: () -> Unit,
@@ -129,6 +130,7 @@ fun HomeAppBar(
                 HomeTopAppBarDropDown(
                     onNavigateToSettingsSectionRequest = onNavigateToSettingsSectionRequest,
                     selectedProvider = selectedProvider,
+                    showMyList = showMyList,
                     onProviderSelectRequest = onProviderSelectRequest,
                     onBatchDownloadRequest = onBatchDownloadRequest,
                 )

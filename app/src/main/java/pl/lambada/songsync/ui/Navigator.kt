@@ -19,6 +19,8 @@ import pl.lambada.songsync.ui.screens.lyricsFetch.LyricsFetchScreen
 import pl.lambada.songsync.ui.screens.lyricsFetch.LyricsFetchViewModel
 import pl.lambada.songsync.ui.screens.settings.SettingsScreen
 import pl.lambada.songsync.ui.screens.settings.SettingsViewModel
+import pl.lambada.songsync.ui.screens.settings.folders.MusicFoldersScreen
+import pl.lambada.songsync.ui.screens.settings.providers.MyProvidersScreen
 
 /**
  * Composable function for handling navigation within the app.
@@ -71,6 +73,12 @@ fun Navigator(
                     animatedVisibilityScope = this,
                 )
             }
+            animatedComposable<ScreenMyProviders> {
+                MyProvidersScreen(userSettingsController, navController)
+            }
+            animatedComposable<ScreenMusicFolders> {
+                MusicFoldersScreen(userSettingsController, navController)
+            }
             animatedComposable<ScreenSettings> {
                 SettingsScreen(
                     viewModel = viewModel { SettingsViewModel() },
@@ -112,3 +120,9 @@ data class LocalSong(
 
 @Serializable
 object ScreenSettings
+
+@Serializable
+object ScreenMyProviders
+
+@Serializable
+object ScreenMusicFolders
