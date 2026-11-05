@@ -1,5 +1,9 @@
 package pl.lambada.songsync.data.remote.lyrics_providers.apple
 
+import kotlin.coroutines.cancellation.CancellationException
+import io.ktor.http.isSuccess
+import io.ktor.http.HttpStatusCode
+import io.ktor.client.statement.HttpResponse
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -36,37 +40,14 @@ class AppleAPI(private val client: HttpClient = Ktor.clientFor(Providers.APPLE))
         }
 
         return try {
-            val token = tokenManager.getToken()
-            
-            val response = client.get(
-                "$apiBaseURL/search?" +
-                "term=$search&" +
-                "types=songs&" +
-                "limit=25&" +
-                "l=en-US&" +
-                "platform=web&" +
-                "format[resources]=map&" +
-                "include[songs]=artists&" +
-                "extend=artistUrl"
-            ) {
-                header("Authorization", "Bearer $token")
-                header("Origin", "https://music.apple.com")
-                header("Referer", "https://music.apple.com/")
-                header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:95.0) Gecko/20100101 Firefox/95.0")
-                header("Accept", "application/json")
-                header("Accept-Language", "en-US,en;q=0.5")
-                header("x-apple-renewal", "true")
+            var response = searchRequest(search)
+            if (response.status == HttpStatusCode.Unauthorized) {
+                // The cached token expired: fetch a new one and try once more
+                tokenManager.clearToken()
+                response = searchRequest(search)
             }
-
+            if (!response.status.isSuccess()) return null
             val responseBody = response.bodyAsText(Charsets.UTF_8)
-
-            if (response.status.value !in 200..299) {
-                // Token might be expired, clear it and retry once
-                if (response.status.value == 401) {
-                    tokenManager.clearToken()
-                }
-                return null
-            }
 
             val searchResponse = try {
                 json.decodeFromString<AppleMusicSearchResponse>(responseBody)
@@ -101,9 +82,34 @@ class AppleAPI(private val client: HttpClient = Ktor.clientFor(Providers.APPLE))
                 albumCoverLink = artworkUrl,
                 appleID = songId.toLongOrNull() ?: return null
             )
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             e.printStackTrace()
             null
+        }
+    }
+
+    private suspend fun searchRequest(search: String): HttpResponse {
+        val token = tokenManager.getToken()
+        return client.get(
+            "$apiBaseURL/search?" +
+            "term=$search&" +
+            "types=songs&" +
+            "limit=25&" +
+            "l=en-US&" +
+            "platform=web&" +
+            "format[resources]=map&" +
+            "include[songs]=artists&" +
+            "extend=artistUrl"
+        ) {
+            header("Authorization", "Bearer $token")
+            header("Origin", "https://music.apple.com")
+            header("Referer", "https://music.apple.com/")
+            header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:95.0) Gecko/20100101 Firefox/95.0")
+            header("Accept", "application/json")
+            header("Accept-Language", "en-US,en;q=0.5")
+            header("x-apple-renewal", "true")
         }
     }
 

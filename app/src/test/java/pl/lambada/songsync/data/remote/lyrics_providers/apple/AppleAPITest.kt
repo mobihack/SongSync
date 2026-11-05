@@ -31,17 +31,23 @@ class AppleAPITest {
            "timestamp":1000,"oppositeTurn":false,"background":false,"backgroundText":[],"endtime":2000}]}
     """.trimIndent()
 
+    private var searches = 0
+
     /** Fake Apple: main page -> JS bundle with the token -> catalog search -> lyrics. */
     private fun appleBackend(
         searchStatus: HttpStatusCode = HttpStatusCode.OK,
         jsBody: String = """var a="x";const token="$jwt";""",
+        firstSearchStatus: HttpStatusCode = searchStatus,
     ) = FakeHttp { request ->
         val path = request.url.encodedPath
         when {
             request.url.host == "beta.music.apple.com" && path.startsWith("/assets/index~") -> respondText(jsBody)
             request.url.host == "beta.music.apple.com" ->
                 respondText("""<script type="module" src="/assets/index~a1b2c3.js"></script>""")
-            path.endsWith("/search") -> respondJson(searchResponse, searchStatus)
+            path.endsWith("/search") -> respondJson(
+                searchResponse,
+                if (searches++ == 0) firstSearchStatus else searchStatus,
+            )
             request.url.host == "lyrics.paxsenix.org" -> respondJson(lineLyrics)
             else -> notFound()
         }
@@ -84,13 +90,20 @@ class AppleAPITest {
     }
 
     @Test
-    fun `expired token is dropped so the next search fetches a new one`() = runTest {
-        val http = appleBackend(searchStatus = HttpStatusCode.Unauthorized)
-        val api = AppleAPI(http.client)
-        api.getSongInfo(query).shouldBeNull()
-        api.getSongInfo(query).shouldBeNull()
+    fun `an expired token is replaced and the search retried`() = runTest {
+        val http = appleBackend(firstSearchStatus = HttpStatusCode.Unauthorized)
 
-        http.requests.count { it.url.host == "beta.music.apple.com" } shouldBe 4 // fetched twice
+        AppleAPI(http.client).getSongInfo(query)!!.songName shouldBe "3005"
+        http.requests.count { it.url.host == "beta.music.apple.com" } shouldBe 4 // token fetched twice
+        http.requests.count { it.url.encodedPath.endsWith("/search") } shouldBe 2
+    }
+
+    @Test
+    fun `a search still unauthorized after a new token is retried only once`() = runTest {
+        val http = appleBackend(searchStatus = HttpStatusCode.Unauthorized)
+
+        AppleAPI(http.client).getSongInfo(query).shouldBeNull()
+        http.requests.count { it.url.encodedPath.endsWith("/search") } shouldBe 2
     }
 
     @Test
