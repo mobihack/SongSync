@@ -16,6 +16,7 @@ import pl.lambada.songsync.domain.model.SongInfo
 import pl.lambada.songsync.util.EmptyQueryException
 import pl.lambada.songsync.util.ProviderUnavailableException
 import pl.lambada.songsync.util.SearchMatching
+import pl.lambada.songsync.util.Providers
 import pl.lambada.songsync.util.networking.Ktor
 import pl.lambada.songsync.util.networking.Ktor.json
 
@@ -25,7 +26,7 @@ import pl.lambada.songsync.util.networking.Ktor.json
  * `genius.token` in local.properties.
  */
 class GeniusAPI(
-    private val client: HttpClient = Ktor.client,
+    private val client: HttpClient = Ktor.clientFor(Providers.GENIUS),
     private val token: String = BuildConfig.GENIUS_TOKEN,
 ) {
     private val baseURL = "https://api.genius.com/"

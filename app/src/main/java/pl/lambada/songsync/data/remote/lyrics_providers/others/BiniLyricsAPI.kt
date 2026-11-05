@@ -11,6 +11,7 @@ import pl.lambada.songsync.util.EmptyQueryException
 import pl.lambada.songsync.util.ProviderUnavailableException
 import pl.lambada.songsync.util.SearchMatching
 import pl.lambada.songsync.util.TtmlLyrics
+import pl.lambada.songsync.util.Providers
 import pl.lambada.songsync.util.networking.Ktor
 import pl.lambada.songsync.util.networking.Ktor.json
 
@@ -19,7 +20,7 @@ import pl.lambada.songsync.util.networking.Ktor.json
  * often with word timings. TTML is converted to SongSync's word-by-word or line LRC.
  */
 class BiniLyricsAPI(
-    private val client: HttpClient = Ktor.client,
+    private val client: HttpClient = Ktor.clientFor(Providers.BINILYRICS),
     private val baseURL: String = "https://lrc.red/api/v1",
 ) {
     suspend fun getSongInfo(query: SongInfo, offset: Int = 0): SongInfo? {

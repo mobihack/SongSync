@@ -1,6 +1,9 @@
 package pl.lambada.songsync
 
 import android.Manifest
+import coil.Coil
+import coil.ImageLoader
+import pl.lambada.songsync.util.networking.Ktor
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.app.NotificationChannel
@@ -54,6 +57,8 @@ class MainActivity : ComponentActivity() {
 
         val dataStore = this.dataStore
         val userSettingsController = UserSettingsController(dataStore)
+        // Cover art from providers follows the proxy setting too
+        Coil.setImageLoader { ImageLoader.Builder(applicationContext).okHttpClient { Ktor.baseOkHttp }.build() }
         checkOrCreateDownloadSubFolder()
         createNotificationChannel()
 

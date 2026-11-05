@@ -13,6 +13,7 @@ import pl.lambada.songsync.util.EmptyQueryException
 import pl.lambada.songsync.util.ProviderUnavailableException
 import pl.lambada.songsync.util.SearchMatching
 import pl.lambada.songsync.util.ext.toLrcTimestamp
+import pl.lambada.songsync.util.Providers
 import pl.lambada.songsync.util.networking.Ktor
 import pl.lambada.songsync.util.networking.Ktor.json
 import kotlin.math.abs
@@ -22,7 +23,7 @@ import kotlin.math.abs
  * Search results are scraped from the website; since artists are often listed in Korean,
  * candidates are confirmed by duration (from each song's detail page) rather than artist name.
  */
-class GenieAPI(private val client: HttpClient = Ktor.client) {
+class GenieAPI(private val client: HttpClient = Ktor.clientFor(Providers.GENIE)) {
     private val baseURL = "https://www.genie.co.kr"
     private val lyricsURL = "https://dn.genie.co.kr/app/purchase/get_msl.asp"
 

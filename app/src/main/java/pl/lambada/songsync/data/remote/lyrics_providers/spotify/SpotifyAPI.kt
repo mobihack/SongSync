@@ -19,7 +19,8 @@ import pl.lambada.songsync.domain.model.lyrics_providers.spotify.TrackSearchResu
 import pl.lambada.songsync.domain.model.lyrics_providers.spotify.WebPlayerTokenResponse
 import pl.lambada.songsync.util.EmptyQueryException
 import pl.lambada.songsync.util.NoTrackFoundException
-import pl.lambada.songsync.util.networking.Ktor.client
+import pl.lambada.songsync.util.Providers
+import pl.lambada.songsync.util.networking.Ktor
 import pl.lambada.songsync.util.networking.Ktor.json
 import java.io.FileNotFoundException
 import java.net.URLEncoder
@@ -34,6 +35,8 @@ data class SecretData(
 )
 
 class SpotifyAPI {
+    private val client = Ktor.clientFor(Providers.SPOTIFY)
+
     private val webPlayerURL = "https://open.spotify.com/"
     private val baseURL = "https://api-partner.spotify.com/pathfinder/v1/query"
 

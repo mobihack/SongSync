@@ -106,16 +106,14 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.preference)
     implementation(libs.ktor.core)
-    implementation(libs.ktor.cio)
+    implementation(libs.ktor.okhttp)
+    implementation(libs.ktor.content.negotiation)
+    implementation(libs.ktor.serialization.json)
     implementation(libs.taglib)
     implementation(libs.kotlin.onetimepassword)
     implementation(libs.datastore.preferences)
     implementation(libs.ui.tooling) //NOT RECOMMENDED
     implementation(libs.ui.tooling.preview) //NOT RECOMMENDED
-    implementation("io.ktor:ktor-client-core:2.3.4")
-    implementation("io.ktor:ktor-client-cio:2.3.4")
-    implementation("io.ktor:ktor-client-content-negotiation:2.3.4")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.4")
 
     testImplementation(libs.bundles.unit.test)
     // Compose UI tests on the JVM (Robolectric), no device needed

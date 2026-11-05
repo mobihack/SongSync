@@ -8,6 +8,7 @@ import kotlinx.serialization.Serializable
 import pl.lambada.songsync.domain.model.SongInfo
 import pl.lambada.songsync.util.EmptyQueryException
 import pl.lambada.songsync.util.SearchMatching
+import pl.lambada.songsync.util.Providers
 import pl.lambada.songsync.util.networking.Ktor
 import pl.lambada.songsync.util.networking.Ktor.json
 
@@ -16,7 +17,7 @@ import pl.lambada.songsync.util.networking.Ktor.json
  * (sourced from Genius, AZLyrics, Lyrics.com and others). The lyrics come with the lookup.
  */
 class LyricsOvhAPI(
-    private val client: HttpClient = Ktor.client,
+    private val client: HttpClient = Ktor.clientFor(Providers.LYRICSOVH),
     private val baseURL: String = "https://api.lyrics.ovh",
 ) {
     suspend fun getSongInfo(query: SongInfo, offset: Int = 0): SongInfo? {

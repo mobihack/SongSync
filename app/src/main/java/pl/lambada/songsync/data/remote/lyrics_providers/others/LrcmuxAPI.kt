@@ -10,6 +10,7 @@ import pl.lambada.songsync.util.EmptyQueryException
 import pl.lambada.songsync.util.ProviderUnavailableException
 import pl.lambada.songsync.util.WordSync
 import pl.lambada.songsync.util.ext.toLrcTimestamp
+import pl.lambada.songsync.util.Providers
 import pl.lambada.songsync.util.networking.Ktor
 import pl.lambada.songsync.util.networking.Ktor.json
 import kotlin.math.abs
@@ -20,7 +21,7 @@ import kotlin.math.abs
  * The lyrics come with the search result, so no second request is needed.
  */
 class LrcmuxAPI(
-    private val client: HttpClient = Ktor.client,
+    private val client: HttpClient = Ktor.clientFor(Providers.LRCMUX),
     private val baseURL: String = "https://api.lrcmux.dev",
 ) {
     suspend fun getSongInfo(query: SongInfo, offset: Int = 0): SongInfo? {

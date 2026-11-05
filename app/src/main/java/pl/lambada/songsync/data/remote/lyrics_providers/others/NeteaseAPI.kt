@@ -14,10 +14,11 @@ import pl.lambada.songsync.util.EmptyQueryException
 import pl.lambada.songsync.util.InternalErrorException
 import pl.lambada.songsync.util.SearchMatching
 import pl.lambada.songsync.util.WordSync
+import pl.lambada.songsync.util.Providers
 import pl.lambada.songsync.util.networking.Ktor
 import pl.lambada.songsync.util.networking.Ktor.json
 
-class NeteaseAPI(private val client: HttpClient = Ktor.client) {
+class NeteaseAPI(private val client: HttpClient = Ktor.clientFor(Providers.NETEASE)) {
     private val baseURL = "https://music.163.com/api/"
 
     // stolen from github https://github.com/0x7d4/syncedlyrics/blob/ab744c9ebb96d310861364142ef95706c36a6b1a/syncedlyrics/providers/netease.py#L19C19-L19C19

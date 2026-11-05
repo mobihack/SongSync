@@ -23,6 +23,7 @@ import pl.lambada.songsync.data.UserSettingsController
 import pl.lambada.songsync.data.remote.lyrics_providers.LyricsProviderService
 import pl.lambada.songsync.ui.theme.SongSyncTheme
 import pl.lambada.songsync.util.dataStore
+import pl.lambada.songsync.util.networking.Ktor
 
 class QuickLyricsSearchActivity : AppCompatActivity() {
     private val lyricsProviderService = LyricsProviderService()
@@ -37,6 +38,8 @@ class QuickLyricsSearchActivity : AppCompatActivity() {
             QuickLyricsSearchViewModelFactory(userSettingsController, lyricsProviderService)
         }
         activityImageLoader = ImageLoader.Builder(this)
+            // Follows the proxy setting, like the lyrics requests
+            .okHttpClient { Ktor.baseOkHttp }
             .memoryCache {
                 MemoryCache.Builder(this)
                     .maxSizePercent(0.35)

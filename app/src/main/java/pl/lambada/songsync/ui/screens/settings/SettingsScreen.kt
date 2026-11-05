@@ -16,6 +16,8 @@ import androidx.compose.material.icons.outlined.Lyrics
 import androidx.compose.material.icons.outlined.Palette
 import androidx.compose.material.icons.outlined.Route
 import androidx.compose.material.icons.outlined.Speaker
+import androidx.compose.material.icons.outlined.VpnLock
+import pl.lambada.songsync.ui.screens.settings.network.networkSummary
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBarDefaults
@@ -117,6 +119,14 @@ fun SettingsScreen(
                             contentSummary(userSettingsController),
                             shapes = it,
                         ) { open(SettingsSection.CONTENT) }
+                    }
+                    row {
+                        SettingsHubRow(
+                            Icons.Outlined.VpnLock,
+                            stringResource(R.string.settings_network),
+                            networkSummary(userSettingsController),
+                            shapes = it,
+                        ) { open(SettingsSection.NETWORK) }
                     }
                 }
             }

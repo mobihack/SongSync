@@ -6,6 +6,8 @@ import androidx.compose.runtime.setValue
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import pl.lambada.songsync.data.remote.lyrics_providers.LyricsOptions
 import pl.lambada.songsync.domain.model.SortOrders
@@ -16,7 +18,14 @@ import pl.lambada.songsync.util.ProviderChoice
 import pl.lambada.songsync.util.ProviderMode
 import pl.lambada.songsync.util.Providers
 import pl.lambada.songsync.util.get
+import pl.lambada.songsync.util.networking.AppProxy
+import pl.lambada.songsync.util.networking.ProxyMode
+import pl.lambada.songsync.util.networking.ProxyScope
+import pl.lambada.songsync.util.networking.ProxySettings
+import pl.lambada.songsync.util.networking.ProxyType
 import pl.lambada.songsync.util.set
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 
 class UserSettingsController(private val dataStore: DataStore<Preferences>) {
     var embedLyricsIntoFiles by mutableStateOf(dataStore.get(embedKey, false))
@@ -121,6 +130,47 @@ class UserSettingsController(private val dataStore: DataStore<Preferences>) {
             .find { it.name == dataStore.get(sortByKey, SortValues.TITLE.name) }!!
     )
         private set
+
+    /** The app's proxy; see [AppProxy]. */
+    var proxySettings by mutableStateOf(loadProxySettings())
+        private set
+
+    init {
+        // Before any request: every entry point creates a controller first
+        AppProxy.update(proxySettings)
+    }
+
+    private fun loadProxySettings(): ProxySettings {
+        val defaults = ProxySettings()
+        return ProxySettings(
+            mode = ProxyMode.entries.find { it.name == dataStore.get(proxyModeKey, "") } ?: defaults.mode,
+            type = ProxyType.entries.find { it.name == dataStore.get(proxyTypeKey, "") } ?: defaults.type,
+            host = dataStore.get(proxyHostKey, defaults.host),
+            port = dataStore.get(proxyPortKey, defaults.port),
+            username = dataStore.get(proxyUserKey, defaults.username),
+            // Stored in plain DataStore like every other setting: it's a proxy login, not an account
+            password = dataStore.get(proxyPasswordKey, defaults.password),
+            scope = ProxyScope.entries.find { it.name == dataStore.get(proxyScopeKey, "") } ?: defaults.scope,
+            providers = dataStore.get(proxyProvidersKey, "").parseProviders().toSet(),
+        )
+    }
+
+    fun updateProxySettings(to: ProxySettings) {
+        runBlocking(Dispatchers.IO) {
+            dataStore.edit {
+                it[proxyModeKey] = to.mode.name
+                it[proxyTypeKey] = to.type.name
+                it[proxyHostKey] = to.host
+                it[proxyPortKey] = to.port
+                it[proxyUserKey] = to.username
+                it[proxyPasswordKey] = to.password
+                it[proxyScopeKey] = to.scope.name
+                it[proxyProvidersKey] = to.providers.joinToString(",") { p -> p.name }
+            }
+        }
+        proxySettings = to
+        AppProxy.update(to)
+    }
 
     fun updateEmbedLyrics(to: Boolean) {
         dataStore.set(embedKey, to)
@@ -294,3 +344,11 @@ private val powerampRescanKey = booleanPreferencesKey("poweramp_rescan_after_sav
 private val sortOrderKey = stringPreferencesKey("sort_order")
 private val sortByKey = stringPreferencesKey("sort_by")
 private val directlyModifyTimestampsKey = booleanPreferencesKey("directly_modify_timestamps")
+private val proxyModeKey = stringPreferencesKey("proxy_mode")
+private val proxyTypeKey = stringPreferencesKey("proxy_type")
+private val proxyHostKey = stringPreferencesKey("proxy_host")
+private val proxyPortKey = intPreferencesKey("proxy_port")
+private val proxyUserKey = stringPreferencesKey("proxy_user")
+private val proxyPasswordKey = stringPreferencesKey("proxy_password")
+private val proxyScopeKey = stringPreferencesKey("proxy_scope")
+private val proxyProvidersKey = stringPreferencesKey("proxy_providers")

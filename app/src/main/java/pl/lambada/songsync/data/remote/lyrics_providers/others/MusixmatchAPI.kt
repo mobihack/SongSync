@@ -15,6 +15,7 @@ import kotlinx.serialization.json.jsonObject
 import pl.lambada.songsync.domain.model.SongInfo
 import pl.lambada.songsync.util.EmptyQueryException
 import pl.lambada.songsync.util.ProviderUnavailableException
+import pl.lambada.songsync.util.Providers
 import pl.lambada.songsync.util.networking.Ktor
 import pl.lambada.songsync.util.networking.Ktor.json
 import java.util.Locale
@@ -23,7 +24,7 @@ import java.util.UUID
 /**
  * Musixmatch provider, talking to Musixmatch's mobile API directly with an anonymous token.
  */
-class MusixmatchAPI(private val client: HttpClient = Ktor.client) {
+class MusixmatchAPI(private val client: HttpClient = Ktor.clientFor(Providers.MUSIXMATCH)) {
     private val baseURL = "https://apic-appmobile.musixmatch.com/ws/1.1/"
     private val appId = "mac-ios-v2.0"
     private val appVersion = "10.1.1"

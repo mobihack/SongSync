@@ -13,10 +13,11 @@ import pl.lambada.songsync.domain.model.lyrics_providers.others.PaxQQPayload
 import pl.lambada.songsync.domain.model.lyrics_providers.others.QQMusicSearchResponse
 import pl.lambada.songsync.util.EmptyQueryException
 import pl.lambada.songsync.util.SearchMatching
+import pl.lambada.songsync.util.Providers
 import pl.lambada.songsync.util.networking.Ktor
 import pl.lambada.songsync.util.networking.Ktor.json
 
-class QQMusicAPI(private val client: HttpClient = Ktor.client) {
+class QQMusicAPI(private val client: HttpClient = Ktor.clientFor(Providers.QQMUSIC)) {
     private val baseURL = "https://c.y.qq.com/soso/fcgi-bin/client_search_cp"
     private val lyricsURL = "https://paxsenix.alwaysdata.net/getQQLyrics.php"
 

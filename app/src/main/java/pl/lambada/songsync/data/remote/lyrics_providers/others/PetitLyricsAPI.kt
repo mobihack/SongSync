@@ -11,6 +11,7 @@ import pl.lambada.songsync.domain.model.SongInfo
 import pl.lambada.songsync.util.EmptyQueryException
 import pl.lambada.songsync.util.ProviderUnavailableException
 import pl.lambada.songsync.util.SearchMatching
+import pl.lambada.songsync.util.Providers
 import pl.lambada.songsync.util.networking.Ktor
 import javax.xml.parsers.DocumentBuilderFactory
 
@@ -20,7 +21,7 @@ import javax.xml.parsers.DocumentBuilderFactory
  * Search results already contain the lyrics, so no second request is needed.
  */
 class PetitLyricsAPI(
-    private val client: HttpClient = Ktor.client,
+    private val client: HttpClient = Ktor.clientFor(Providers.PETITLYRICS),
     private val clientId: String = BuildConfig.PETITLYRICS_CLIENT_ID,
 ) {
     private val apiURL = "https://on.petitlyrics.com/api/GetPetitLyricsData.php"

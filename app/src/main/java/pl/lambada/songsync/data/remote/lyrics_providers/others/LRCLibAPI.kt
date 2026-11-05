@@ -9,12 +9,13 @@ import pl.lambada.songsync.domain.model.SongInfo
 import pl.lambada.songsync.domain.model.lyrics_providers.others.LRCLibResponse
 import pl.lambada.songsync.util.EmptyQueryException
 import pl.lambada.songsync.util.SearchMatching
+import pl.lambada.songsync.util.Providers
 import pl.lambada.songsync.util.networking.Ktor
 import pl.lambada.songsync.util.networking.Ktor.json
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
-class LRCLibAPI(private val client: HttpClient = Ktor.client) {
+class LRCLibAPI(private val client: HttpClient = Ktor.clientFor(Providers.LRCLIB)) {
     private val baseURL = "https://lrclib.net/api/"
 
     /**

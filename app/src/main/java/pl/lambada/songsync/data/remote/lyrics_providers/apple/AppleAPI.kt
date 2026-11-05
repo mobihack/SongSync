@@ -11,11 +11,12 @@ import pl.lambada.songsync.domain.model.SongInfo
 import pl.lambada.songsync.domain.model.lyrics_providers.others.AppleMusicSearchResponse
 import pl.lambada.songsync.util.EmptyQueryException
 import pl.lambada.songsync.util.SearchMatching
+import pl.lambada.songsync.util.Providers
 import pl.lambada.songsync.util.networking.Ktor
 import pl.lambada.songsync.util.networking.Ktor.json
 import java.net.URLEncoder
 
-class AppleAPI(private val client: HttpClient = Ktor.client) {
+class AppleAPI(private val client: HttpClient = Ktor.clientFor(Providers.APPLE)) {
     private val lyricsBaseURL = "https://lyrics.paxsenix.org/"
     private val apiBaseURL = "https://amp-api.music.apple.com/v1/catalog/us"
     private val tokenManager = AppleTokenManager(client)

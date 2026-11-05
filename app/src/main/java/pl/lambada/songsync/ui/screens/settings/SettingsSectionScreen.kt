@@ -50,6 +50,7 @@ import pl.lambada.songsync.ui.screens.settings.components.TranslationSection
 import pl.lambada.songsync.ui.screens.settings.components.TranslationSwitch
 import pl.lambada.songsync.ui.screens.settings.components.UpdateAvailableDialog
 import pl.lambada.songsync.ui.screens.settings.folders.folderModeSummary
+import pl.lambada.songsync.ui.screens.settings.network.network
 import pl.lambada.songsync.ui.screens.settings.providers.MyProvidersEditorState
 import pl.lambada.songsync.ui.screens.settings.providers.myProvidersEditor
 import pl.lambada.songsync.ui.screens.settings.providers.rememberMyProvidersEditor
@@ -58,7 +59,7 @@ import pl.lambada.songsync.util.ProviderMode
 import pl.lambada.songsync.util.ext.getVersion
 
 /** The categories on the Settings home screen. */
-enum class SettingsSection { APPEARANCE, LIBRARY, SEARCH, CONTENT, POWERAMP, ABOUT }
+enum class SettingsSection { APPEARANCE, LIBRARY, SEARCH, CONTENT, NETWORK, POWERAMP, ABOUT }
 
 /** One category's settings on its own page. */
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
@@ -74,6 +75,7 @@ fun SettingsSectionScreen(
         SettingsSection.LIBRARY -> stringResource(R.string.library)
         SettingsSection.SEARCH -> stringResource(R.string.settings_lyrics_search)
         SettingsSection.CONTENT -> stringResource(R.string.settings_lyrics_content)
+        SettingsSection.NETWORK -> stringResource(R.string.settings_network)
         SettingsSection.POWERAMP -> stringResource(R.string.poweramp)
         SettingsSection.ABOUT -> stringResource(R.string.about_songsync)
     }
@@ -104,6 +106,7 @@ fun SettingsSectionScreen(
                 SettingsSection.LIBRARY -> library(userSettingsController, navController)
                 SettingsSection.SEARCH -> search(userSettingsController, editor!!)
                 SettingsSection.CONTENT -> content(userSettingsController)
+                SettingsSection.NETWORK -> network(userSettingsController)
                 SettingsSection.POWERAMP -> poweramp(userSettingsController)
                 SettingsSection.ABOUT -> about(viewModel)
             }

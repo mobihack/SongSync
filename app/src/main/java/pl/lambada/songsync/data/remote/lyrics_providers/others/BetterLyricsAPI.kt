@@ -10,6 +10,7 @@ import pl.lambada.songsync.util.EmptyQueryException
 import pl.lambada.songsync.util.ProviderUnavailableException
 import pl.lambada.songsync.util.SearchMatching
 import pl.lambada.songsync.util.TtmlLyrics
+import pl.lambada.songsync.util.Providers
 import pl.lambada.songsync.util.networking.Ktor
 import pl.lambada.songsync.util.networking.Ktor.json
 
@@ -18,7 +19,7 @@ import pl.lambada.songsync.util.networking.Ktor.json
  * someone has already looked up. Returns one answer with its lyrics, so no second request is needed.
  */
 class BetterLyricsAPI(
-    private val client: HttpClient = Ktor.client,
+    private val client: HttpClient = Ktor.clientFor(Providers.BETTERLYRICS),
     private val baseURL: String = "https://lyrics-api.boidu.dev/getLyrics",
 ) {
     suspend fun getSongInfo(query: SongInfo, offset: Int = 0): SongInfo? {

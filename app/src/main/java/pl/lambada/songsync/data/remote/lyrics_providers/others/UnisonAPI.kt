@@ -11,6 +11,7 @@ import pl.lambada.songsync.util.EmptyQueryException
 import pl.lambada.songsync.util.ProviderUnavailableException
 import pl.lambada.songsync.util.SearchMatching
 import pl.lambada.songsync.util.TtmlLyrics
+import pl.lambada.songsync.util.Providers
 import pl.lambada.songsync.util.networking.Ktor
 import pl.lambada.songsync.util.networking.Ktor.json
 
@@ -19,7 +20,7 @@ import pl.lambada.songsync.util.networking.Ktor.json
  * match with its lyrics, so no second request is needed.
  */
 class UnisonAPI(
-    private val client: HttpClient = Ktor.client,
+    private val client: HttpClient = Ktor.clientFor(Providers.UNISON),
     private val baseURL: String = "https://unison.boidu.dev/lyrics",
 ) {
     suspend fun getSongInfo(query: SongInfo, offset: Int = 0): SongInfo? {

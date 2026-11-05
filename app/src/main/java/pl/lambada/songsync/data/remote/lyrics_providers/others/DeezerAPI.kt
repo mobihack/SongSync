@@ -22,13 +22,14 @@ import pl.lambada.songsync.domain.model.SongInfo
 import pl.lambada.songsync.util.EmptyQueryException
 import pl.lambada.songsync.util.ProviderUnavailableException
 import pl.lambada.songsync.util.SearchMatching
+import pl.lambada.songsync.util.Providers
 import pl.lambada.songsync.util.networking.Ktor
 import pl.lambada.songsync.util.networking.Ktor.json
 
 /**
  * Deezer lyrics provider, using an anonymous session and Deezer's GraphQL API.
  */
-class DeezerAPI(private val client: HttpClient = Ktor.client) {
+class DeezerAPI(private val client: HttpClient = Ktor.clientFor(Providers.DEEZER)) {
     private val authURL = "https://auth.deezer.com/login/anonymous?jo=p"
     private val graphqlURL = "https://pipe.deezer.com/api"
     private val infoURL = "https://api.deezer.com/infos"

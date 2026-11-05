@@ -4,10 +4,13 @@ import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.statement.bodyAsText
 import pl.lambada.songsync.domain.model.lyrics_providers.spotify.SyncedLinesResponse
-import pl.lambada.songsync.util.networking.Ktor.client
+import pl.lambada.songsync.util.Providers
+import pl.lambada.songsync.util.networking.Ktor
 import pl.lambada.songsync.util.networking.Ktor.json
 
 class SpotifyLyricsAPI {
+    private val client = Ktor.clientFor(Providers.SPOTIFY)
+
     private val baseURL = "https://paxsenix.alwaysdata.net/getLyricsSpotify.php"
 
     /**

@@ -13,6 +13,7 @@ import pl.lambada.songsync.util.EmptyQueryException
 import pl.lambada.songsync.util.ProviderUnavailableException
 import pl.lambada.songsync.util.SearchMatching
 import pl.lambada.songsync.util.WordSync
+import pl.lambada.songsync.util.Providers
 import pl.lambada.songsync.util.networking.Ktor
 import pl.lambada.songsync.util.networking.Ktor.json
 import java.io.ByteArrayOutputStream
@@ -22,7 +23,7 @@ import java.util.zip.InflaterOutputStream
  * KuGou: line-synced and word-by-word ("KRC") lyrics, strong for Chinese music.
  * Search finds the song's hash; lyrics are then looked up by hash and downloaded.
  */
-class KugouAPI(private val client: HttpClient = Ktor.client) {
+class KugouAPI(private val client: HttpClient = Ktor.clientFor(Providers.KUGOU)) {
     // KuGou's mobile search endpoint is only served over plain http
     private val songSearchURL = "http://mobilecdn.kugou.com/api/v3/search/song"
     private val lyricsSearchURL = "https://lyrics.kugou.com/search"

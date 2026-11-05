@@ -5,9 +5,10 @@ import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import pl.lambada.songsync.util.Providers
 import pl.lambada.songsync.util.networking.Ktor
 
-class AppleTokenManager(private val client: HttpClient = Ktor.client) {
+class AppleTokenManager(private val client: HttpClient = Ktor.clientFor(Providers.APPLE)) {
     private var cachedToken: String? = null
     private val mutex = Mutex()
 
