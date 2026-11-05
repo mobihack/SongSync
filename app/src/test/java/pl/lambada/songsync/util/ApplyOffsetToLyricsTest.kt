@@ -1,7 +1,6 @@
 package pl.lambada.songsync.util
 
 import io.kotest.matchers.shouldBe
-import org.junit.Ignore
 import org.junit.Test
 
 class ApplyOffsetToLyricsTest {
@@ -48,9 +47,23 @@ class ApplyOffsetToLyricsTest {
         applyOffsetToLyrics("[ti:Song]\n[ar:Artist]", 500) shouldBe "[ti:Song]\n[ar:Artist]"
     }
 
-    @Ignore("Known bug: the fraction is always treated as centiseconds (x10), so 3-digit millisecond timestamps are shifted wrongly")
     @Test
     fun `three-digit millisecond timestamps are shifted correctly`() {
         applyOffsetToLyrics("[00:12.345]Hello", 100) shouldBe "[00:12.445]Hello"
+    }
+
+    @Test
+    fun `single-digit fraction is tenths of a second`() {
+        applyOffsetToLyrics("[00:12.3]Hello", 0) shouldBe "[00:12.300]Hello"
+    }
+
+    @Test
+    fun `minutes keep counting past an hour`() {
+        applyOffsetToLyrics("[61:00.00]Hello", 100) shouldBe "[61:00.100]Hello"
+    }
+
+    @Test
+    fun `three-digit timestamps roll over a minute boundary`() {
+        applyOffsetToLyrics("[00:59.950]Hello", 100) shouldBe "[01:00.050]Hello"
     }
 }

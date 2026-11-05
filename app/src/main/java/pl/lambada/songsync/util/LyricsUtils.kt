@@ -347,10 +347,11 @@ fun applyOffsetToLyrics(lyrics: String, offset: Int): String {
     val timestampRegex = Regex("""[\[<](\d+):(\d+)\.(\d+)[]>]""")
 
     fun applyOffset(minute: Int, second: Int, millisecond: Int): String {
-        val totalMilliseconds = (minute * 60 * 1000) + (second * 1000) + (millisecond * 10) + offset
+        val totalMilliseconds = (minute * 60 * 1000) + (second * 1000) + millisecond + offset
         if (totalMilliseconds < 0) return "00:00.000" // Prevent negative times
 
-        val newMinutes = (totalMilliseconds / 60000) % 60
+        // Not wrapped at 60: LRC minutes keep counting in long mixes and audiobooks
+        val newMinutes = totalMilliseconds / 60000
         val newSeconds = (totalMilliseconds / 1000) % 60
         val newMilliseconds = (totalMilliseconds % 1000)
 
@@ -363,7 +364,8 @@ fun applyOffsetToLyrics(lyrics: String, offset: Int): String {
         val (minuteStr, secondStr, millisecondStr) = matchResult.destructured
         val minute = minuteStr.toInt()
         val second = secondStr.toInt()
-        val millisecond = millisecondStr.toInt()
+        // The fraction is hundredths (".34") or milliseconds (".345"); read both as milliseconds
+        val millisecond = millisecondStr.padEnd(3, '0').take(3).toInt()
 
         val startChar = matchResult.value[0]
         val endChar = if (startChar == '[') ']' else '>'
