@@ -18,6 +18,11 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent>
+        <!-- Poweramp, to send lyrics back to it -->
+        <intent>
+            <action android:name="com.maxmpz.audioplayer.API_COMMAND" />
+        </intent>
+        <package android:name="com.maxmpz.audioplayer" />
     </queries>
 
     <application
@@ -69,6 +74,16 @@
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
         </service>
+
+        <!-- Poweramp lyrics plugin -->
+        <receiver
+            android:name=".services.PowerampLyricsReceiver"
+            android:exported="true"
+            tools:ignore="ExportedReceiver">
+            <intent-filter>
+                <action android:name="com.maxmpz.audioplayer.ACTION_NEED_LYRICS" />
+            </intent-filter>
+        </receiver>
 
         <!-- File Provider -->
         <provider
