@@ -7,6 +7,7 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import okhttp3.ConnectionPool
 import okhttp3.OkHttpClient
+import java.util.concurrent.TimeUnit
 import pl.lambada.songsync.util.Providers
 import java.util.concurrent.ConcurrentHashMap
 
@@ -16,12 +17,17 @@ object Ktor {
         encodeDefaults = true
     }
 
+    const val CALL_TIMEOUT_SECONDS = 20L
+
     /** Shared by every client below, so [AppProxy.update] can drop connections made the old way. */
     val connectionPool = ConnectionPool()
 
     /** Base for every client: shared pool, proxy credentials from [AppProxy]. */
     val okHttp: OkHttpClient = OkHttpClient.Builder()
         .connectionPool(connectionPool)
+        // A whole request, so one blocked or blackholed provider can't stall a search for minutes
+        // (OkHttp's 10 s connect and read timeouts apply per step, not per call)
+        .callTimeout(CALL_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         .proxyAuthenticator(AppProxy.authenticator())
         .build()
 
