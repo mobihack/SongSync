@@ -53,7 +53,21 @@ import pl.lambada.songsync.ui.screens.home.components.UiState
 import pl.lambada.songsync.util.saveBatchLyrics
 import pl.lambada.songsync.util.ext.toLrcFile
 import java.io.File
+import java.io.OutputStream
 import java.util.UUID
+
+/**
+ * Writes the now-playing cover with [write] to a new file in [cacheDir] and deletes [previous], so
+ * covers don't pile up while songs change. A new name each time, so the image view reloads.
+ *
+ * @return the new file
+ */
+internal fun replaceNowPlayingArt(cacheDir: File, previous: File?, write: (OutputStream) -> Unit): File {
+    val file = File(cacheDir, "now_playing_${UUID.randomUUID()}.jpg")
+    file.outputStream().use(write)
+    previous?.takeIf { it != file }?.delete()
+    return file
+}
 
 /**
  * The songs the list shows: [filtered] (or [all] when nothing is filtered), narrowed to those whose
@@ -376,6 +390,7 @@ class HomeViewModel(
     /** Title, artist and player of the song whose album art is cached, so art isn't rewritten on every pause. */
     private var artKey: String? = null
     private var artClearJob: Job? = null
+    private var nowPlayingArtFile: File? = null
 
     /** Whether the now-playing song is playing right now, rather than paused (shown as "Last played"). */
     var playingSongIsPlaying by mutableStateOf(false)
@@ -465,14 +480,14 @@ class HomeViewModel(
         artClearJob?.cancel()
         artKey = key
         viewModelScope.launch(Dispatchers.IO) {
-            // not same name of files because img won't update, cache dir cleared at app start
-            val uri = runCatching {
-                val file = File(context.cacheDir, "${UUID.randomUUID()}.jpg")
-                file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.JPEG, 100, it) }
-                Uri.parse(file.absolutePath)
+            val file = runCatching {
+                replaceNowPlayingArt(context.cacheDir, nowPlayingArtFile) {
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 90, it)
+                }
             }.getOrNull()
             withContext(Dispatchers.Main) {
-                if (artKey == key) playingSongAlbumArt = uri // skip if the song changed meanwhile
+                if (file != null) nowPlayingArtFile = file
+                if (artKey == key) playingSongAlbumArt = file?.let { Uri.parse(it.absolutePath) } // skip if the song changed meanwhile
             }
         }
     }
