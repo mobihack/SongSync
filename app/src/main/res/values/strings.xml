@@ -220,4 +220,9 @@
     <string name="poweramp">Poweramp</string>
     <string name="poweramp_rescan_after_save">Refresh Poweramp after saving</string>
     <string name="poweramp_rescan_after_save_description">After saving or embedding lyrics from Poweramp\'s lyrics link, ask Poweramp to rescan the song\'s folder so it picks up the change</string>
+    <string name="poweramp_plugin">Lyrics for Poweramp</string>
+    <string name="poweramp_plugin_description">Answer Poweramp\'s lyrics requests with your providers. Tap the SongSync link under the lyrics in Poweramp to save them.</string>
+    <string name="poweramp_plugin_off">Lyrics plugin off</string>
+    <string name="poweramp_plugin_on">Lyrics plugin on</string>
+    <string name="poweramp_plugin_on_rescan">Lyrics plugin on · refreshes Poweramp after saving</string>
 </resources>
