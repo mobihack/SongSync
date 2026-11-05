@@ -43,10 +43,7 @@ class QuickLyricsSearchViewModel(
                 lyricsProviderService.findLyrics(
                     SongInfo(song.first, song.second),
                     userSettingsController.lookupProviders(),
-                    includeTranslationNetEase = userSettingsController.includeTranslation,
-                    includeRomanizationNetEase = userSettingsController.includeRomanization,
-                    multiPersonWordByWord = userSettingsController.multiPersonWordByWord,
-                    unsyncedFallbackMusixmatch = userSettingsController.unsyncedFallbackMusixmatch,
+                    options = userSettingsController.lyricsOptions,
                     onAttempt = { progress -> mutableState.update { it.copy(searchProgress = progress) } },
                 )
             }

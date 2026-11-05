@@ -7,6 +7,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import pl.lambada.songsync.data.remote.lyrics_providers.LyricsOptions
 import pl.lambada.songsync.domain.model.SortOrders
 import pl.lambada.songsync.domain.model.SortValues
 import pl.lambada.songsync.util.FolderMode
@@ -202,6 +203,15 @@ class UserSettingsController(private val dataStore: DataStore<Preferences>) {
     }
 
     /** Providers to search, in order, for the current mode. */
+    /** The lyrics settings, as the providers take them. */
+    val lyricsOptions: LyricsOptions
+        get() = LyricsOptions(
+            includeTranslation = includeTranslation,
+            includeRomanization = includeRomanization,
+            multiPersonWordByWord = multiPersonWordByWord,
+            unsyncedFallback = unsyncedFallbackMusixmatch,
+        )
+
     fun lookupProviders(): List<Providers> = ProviderChain.lookup(
         mode = providerMode,
         selected = selectedProvider,

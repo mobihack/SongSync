@@ -250,30 +250,8 @@ class HomeViewModel(
     suspend fun findLyrics(query: SongInfo) = lyricsProviderService.findLyrics(
         query,
         userSettingsController.lookupProviders(),
-        includeTranslationNetEase = userSettingsController.includeTranslation,
-        includeRomanizationNetEase = userSettingsController.includeRomanization,
-        multiPersonWordByWord = userSettingsController.multiPersonWordByWord,
-        unsyncedFallbackMusixmatch = userSettingsController.unsyncedFallbackMusixmatch,
+        options = userSettingsController.lyricsOptions,
     )
-
-    suspend fun getSongInfo(query: SongInfo): SongInfo? =
-        lyricsProviderService.getSongInfo(query, provider = userSettingsController.selectedProvider)
-
-    suspend fun getSyncedLyrics(title: String, artist: String): String? {
-        return try {
-            lyricsProviderService.getSyncedLyrics(
-                title,
-                artist,
-                provider = userSettingsController.selectedProvider,
-                includeTranslationNetEase = userSettingsController.includeTranslation,
-                includeRomanizationNetEase = userSettingsController.includeRomanization,
-                multiPersonWordByWord = userSettingsController.multiPersonWordByWord,
-                unsyncedFallbackMusixmatch = userSettingsController.unsyncedFallbackMusixmatch
-            )
-        } catch (e: Exception) {
-            null
-        }
-    }
 
     fun selectSong(song: Song, newValue: Boolean) {
         if (newValue) {

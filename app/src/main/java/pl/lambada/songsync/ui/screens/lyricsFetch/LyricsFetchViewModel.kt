@@ -56,17 +56,6 @@ class LyricsFetchViewModel(
     /** Providers this song's search will try, in order. */
     fun lookupProviders() = userSettingsController.lookupProviders()
 
-    private suspend fun getSyncedLyrics(title: String, artist: String): String? =
-        lyricsProviderService.getSyncedLyrics(
-            title,
-            artist,
-            activeProvider,
-            userSettingsController.includeTranslation,
-            userSettingsController.includeRomanization,
-            userSettingsController.multiPersonWordByWord,
-            userSettingsController.unsyncedFallbackMusixmatch
-        )
-
     private fun buildQuery() = SongInfo(
         querySongName,
         queryArtistName,
@@ -90,7 +79,7 @@ class LyricsFetchViewModel(
                         ?: error("Error fetching lyrics for the song.")
 
                     queryState = QueryStatus.Success(result)
-                    loadLyrics(result.songName!!, result.artistName!!)
+                    loadLyrics(result)
                 } else {
                     // Fresh search: providers in the order the provider mode gives
                     queryOffset = 0
@@ -99,10 +88,7 @@ class LyricsFetchViewModel(
                     val found = lyricsProviderService.findLyrics(
                         buildQuery(),
                         providers,
-                        includeTranslationNetEase = userSettingsController.includeTranslation,
-                        includeRomanizationNetEase = userSettingsController.includeRomanization,
-                        multiPersonWordByWord = userSettingsController.multiPersonWordByWord,
-                        unsyncedFallbackMusixmatch = userSettingsController.unsyncedFallbackMusixmatch,
+                        options = userSettingsController.lyricsOptions,
                         onAttempt = { searchProgress = it },
                     ) ?: throw NoTrackFoundException()
 
@@ -146,14 +132,15 @@ class LyricsFetchViewModel(
         showToast(context, R.string.file_saved_to, file.absolutePath)
     }
 
-    private fun loadLyrics(title: String, artist: String) {
+    private fun loadLyrics(match: SongInfo) {
         viewModelScope.launch {
             lyricsFetchState = LyricsFetchState.Pending
 
             try {
-                val lyrics = getSyncedLyrics(
-                    title,
-                    artist
+                val lyrics = lyricsProviderService.getSyncedLyrics(
+                    match,
+                    activeProvider,
+                    userSettingsController.lyricsOptions,
                 ) ?: throw NullPointerException("Lyrics result is null")
 
                 lyricsFetchState = LyricsFetchState.Success(lyrics)

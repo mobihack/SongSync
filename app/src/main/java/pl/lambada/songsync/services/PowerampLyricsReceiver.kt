@@ -74,15 +74,11 @@ class PowerampLyricsReceiver : BroadcastReceiver() {
     /** @return the provider's name and its lyrics, or null if nothing was found. */
     private suspend fun findLyrics(context: Context, query: SongInfo): Pair<String, String>? {
         val settings = UserSettingsController(context.dataStore)
-        // Its own service: it keeps per-search state, and Poweramp may ask for several tracks at once
         return runCatching {
             LyricsProviderService().findLyrics(
                 query,
                 settings.lookupProviders(),
-                includeTranslationNetEase = settings.includeTranslation,
-                includeRomanizationNetEase = settings.includeRomanization,
-                multiPersonWordByWord = settings.multiPersonWordByWord,
-                unsyncedFallbackMusixmatch = settings.unsyncedFallbackMusixmatch,
+                options = settings.lyricsOptions,
             )
         }.onFailure { Log.w(TAG, "Lyrics search failed for \"${query.songName}\"", it) }
             .getOrNull()

@@ -2,20 +2,8 @@ package pl.lambada.songsync.data.remote.lyrics_providers
 
 import android.util.Log
 import pl.lambada.songsync.data.remote.lyrics_providers.apple.AppleAPI
-import pl.lambada.songsync.data.remote.lyrics_providers.others.BiniLyricsAPI
-import pl.lambada.songsync.data.remote.lyrics_providers.others.DeezerAPI
-import pl.lambada.songsync.data.remote.lyrics_providers.others.GenieAPI
-import pl.lambada.songsync.data.remote.lyrics_providers.others.GeniusAPI
-import pl.lambada.songsync.data.remote.lyrics_providers.others.KugouAPI
-import pl.lambada.songsync.data.remote.lyrics_providers.others.LRCLibAPI
-import pl.lambada.songsync.data.remote.lyrics_providers.others.LrcmuxAPI
-import pl.lambada.songsync.data.remote.lyrics_providers.others.LyricsOvhAPI
-import pl.lambada.songsync.data.remote.lyrics_providers.others.PetitLyricsAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.others.MusixmatchAPI
-import pl.lambada.songsync.data.remote.lyrics_providers.others.NeteaseAPI
-import pl.lambada.songsync.data.remote.lyrics_providers.others.QQMusicAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.spotify.SpotifyAPI
-import pl.lambada.songsync.data.remote.lyrics_providers.spotify.SpotifyLyricsAPI
 import pl.lambada.songsync.domain.model.SongInfo
 import pl.lambada.songsync.util.EmptyQueryException
 import pl.lambada.songsync.util.InternalErrorException
@@ -31,46 +19,26 @@ import java.net.UnknownHostException
  * Service class for interacting with different lyrics providers.
  */
 class LyricsProviderService {
-    // Spotify API token
+    // Kept for the service's lifetime so their tokens are reused
     private val spotifyAPI = SpotifyAPI()
-
-    // Spotify Track Url
-    private var spotifyUrl = ""
-
-    // LRCLib Track ID
-    private var lrcLibID = 0
-
-    // QQMusic request payload
-    private var qqPayload = ""
-
-    // Netease Track ID and stuff
-    private var neteaseID = 0L
-    
-    // Apple API
     private val appleAPI = AppleAPI()
-    
-    // Apple Track ID
-    private var appleID = 0L
 
-    // Musixmatch Song Info
-    private var musixmatchSongInfo: SongInfo? = null
-
-    // Deezer / Genius Track IDs
-    private var deezerID = 0L
-    private var geniusID = 0L
-
-    // Providers whose search result already carries the lyrics (PetitLyrics, lrcmux, lyrics.ovh)
-    private val prefetched = mutableMapOf<Providers, SongInfo?>()
-
-    // KuGou looks lyrics up by the song's hash
-    private var kugouSongInfo: SongInfo? = null
-
-    // BiniLyrics: URL of the matched song's TTML file
-    private var biniLyricsUrl: String? = null
-
-    // Genie Song ID
-    private var genieID: String? = null
-    // TODO: Use values from SongInfo object returned by search instead of storing them here
+    private fun sourceFor(provider: Providers): LyricsSource = when (provider) {
+        Providers.SPOTIFY -> LyricsSource.Spotify(spotifyAPI)
+        Providers.APPLE -> LyricsSource.Apple(appleAPI)
+        Providers.LRCLIB -> LyricsSource.LrcLib
+        Providers.NETEASE -> LyricsSource.Netease
+        Providers.QQMUSIC -> LyricsSource.QQMusic
+        Providers.MUSIXMATCH -> LyricsSource.Musixmatch
+        Providers.DEEZER -> LyricsSource.Deezer
+        Providers.GENIUS -> LyricsSource.Genius
+        Providers.KUGOU -> LyricsSource.Kugou
+        Providers.BINILYRICS -> LyricsSource.BiniLyrics
+        Providers.GENIE -> LyricsSource.Genie
+        Providers.PETITLYRICS -> LyricsSource.PetitLyrics
+        Providers.LRCMUX -> LyricsSource.Lrcmux
+        Providers.LYRICSOVH -> LyricsSource.LyricsOvh
+    }
 
     /**
      * Refreshes the access token by sending a request to the Spotify API.
@@ -80,10 +48,9 @@ class LyricsProviderService {
     }
 
     /**
-     * Gets song information from the Spotify API.
-     * @param query The SongInfo object with songName and artistName fields filled.
+     * Searches [provider] for [query].
      * @param offset (optional) The offset used for trying to find a better match or searching again.
-     * @return The SongInfo object containing the song information.
+     * @return The match, carrying the IDs [getSyncedLyrics] needs.
      */
     @Throws(
         UnknownHostException::class,
@@ -92,65 +59,9 @@ class LyricsProviderService {
         EmptyQueryException::class,
         InternalErrorException::class
     )
-    suspend fun getSongInfo(query: SongInfo, offset: Int = 0, provider: Providers): SongInfo? {
+    suspend fun getSongInfo(query: SongInfo, offset: Int = 0, provider: Providers): SongInfo {
         return try {
-            when (provider) {
-                Providers.SPOTIFY -> spotifyAPI.getSongInfo(query, offset).also {
-                    spotifyUrl = it?.songLink ?: ""
-                } ?: throw NoTrackFoundException()
-                
-                Providers.LRCLIB -> LRCLibAPI().getSongInfo(query, offset).also {
-                    lrcLibID = it?.lrcLibID ?: 0
-                } ?: throw NoTrackFoundException()
-
-                Providers.NETEASE -> NeteaseAPI().getSongInfo(query, offset).also {
-                    neteaseID = it?.neteaseID ?: 0
-                } ?: throw NoTrackFoundException()
-
-                Providers.QQMUSIC -> QQMusicAPI().getSongInfo(query, offset).also {
-                    qqPayload = it?.qqPayload ?: ""
-                } ?: throw NoTrackFoundException()
-
-                Providers.APPLE -> appleAPI.getSongInfo(query, offset).also {
-                    appleID = it?.appleID ?: 0
-                } ?: throw NoTrackFoundException()
-
-                Providers.MUSIXMATCH -> MusixmatchAPI().getSongInfo(query, offset).also {
-                    musixmatchSongInfo = it
-                } ?: throw NoTrackFoundException()
-
-                Providers.DEEZER -> DeezerAPI().getSongInfo(query, offset).also {
-                    deezerID = it?.deezerID ?: 0
-                } ?: throw NoTrackFoundException()
-
-                Providers.GENIUS -> GeniusAPI().getSongInfo(query, offset).also {
-                    geniusID = it?.geniusID ?: 0
-                } ?: throw NoTrackFoundException()
-
-                Providers.PETITLYRICS -> PetitLyricsAPI().getSongInfo(query, offset).also {
-                    prefetched[provider] = it
-                } ?: throw NoTrackFoundException()
-
-                Providers.LRCMUX -> LrcmuxAPI().getSongInfo(query, offset).also {
-                    prefetched[provider] = it
-                } ?: throw NoTrackFoundException()
-
-                Providers.LYRICSOVH -> LyricsOvhAPI().getSongInfo(query, offset).also {
-                    prefetched[provider] = it
-                } ?: throw NoTrackFoundException()
-
-                Providers.KUGOU -> KugouAPI().getSongInfo(query, offset).also {
-                    kugouSongInfo = it
-                } ?: throw NoTrackFoundException()
-
-                Providers.BINILYRICS -> BiniLyricsAPI().getSongInfo(query, offset).also {
-                    biniLyricsUrl = it?.songLink
-                } ?: throw NoTrackFoundException()
-
-                Providers.GENIE -> GenieAPI().getSongInfo(query, offset).also {
-                    genieID = it?.genieID
-                } ?: throw NoTrackFoundException()
-            }
+            sourceFor(provider).search(query, offset) ?: throw NoTrackFoundException()
         } catch (e: Exception) {
             when (e) {
                 is InternalErrorException, is NoTrackFoundException, is EmptyQueryException,
@@ -161,48 +72,16 @@ class LyricsProviderService {
     }
 
     /**
-     * Gets synced lyrics using the song link and returns them as a string formatted as an LRC file.
-     * @param songLink The link to the song.
-     * @return The synced lyrics as a string.
+     * Gets the lyrics for [match], a result of [getSongInfo] from the same [provider].
+     * @return The lyrics, LRC-formatted when synced.
      */
     suspend fun getSyncedLyrics(
-        songTitle: String,
-        artistName: String,
+        match: SongInfo,
         provider: Providers,
-        // TODO providers could be a sealed interface to include such parameters
-        includeTranslationNetEase: Boolean = false,
-        includeRomanizationNetEase: Boolean = false,
-        multiPersonWordByWord: Boolean = false,
-        unsyncedFallbackMusixmatch: Boolean = true
-    ): String? {
+        options: LyricsOptions = LyricsOptions(),
+    ): String? =
         // Strip credits, metadata and section labels whichever provider answered
-        return LyricsCleanup.clean(when (provider) {
-            Providers.SPOTIFY -> SpotifyLyricsAPI().getSyncedLyrics(spotifyUrl)
-            Providers.LRCLIB -> LRCLibAPI().getSyncedLyrics(lrcLibID)
-            Providers.NETEASE -> NeteaseAPI().getSyncedLyrics(
-                neteaseID, includeTranslationNetEase, includeRomanizationNetEase
-            )
-
-            Providers.QQMUSIC -> QQMusicAPI().getSyncedLyrics(qqPayload, multiPersonWordByWord)
-
-            Providers.APPLE -> appleAPI.getSyncedLyrics(
-                appleID, multiPersonWordByWord
-            )
-
-            Providers.MUSIXMATCH -> MusixmatchAPI().getLyrics(
-                musixmatchSongInfo,
-                unsyncedFallbackMusixmatch
-            )
-
-            Providers.DEEZER -> DeezerAPI().getSyncedLyrics(deezerID)
-            Providers.GENIUS -> GeniusAPI().getLyrics(geniusID)
-            Providers.PETITLYRICS, Providers.LRCMUX, Providers.LYRICSOVH ->
-                prefetched[provider]?.let { it.syncedLyrics ?: it.unsyncedLyrics }
-            Providers.BINILYRICS -> biniLyricsUrl?.let { BiniLyricsAPI().getSyncedLyrics(it) }
-            Providers.GENIE -> genieID?.let { GenieAPI().getSyncedLyrics(it) }
-            Providers.KUGOU -> kugouSongInfo?.kugouHash?.let { KugouAPI().getSyncedLyrics(it, kugouSongInfo?.durationMs) }
-        })
-    }
+        LyricsCleanup.clean(sourceFor(provider).lyrics(match, options))
 
     /**
      * Searches each of [providers] in turn (see [ProviderChain]) and returns the first match with
@@ -211,10 +90,7 @@ class LyricsProviderService {
     suspend fun findLyrics(
         query: SongInfo,
         providers: List<Providers>,
-        includeTranslationNetEase: Boolean = false,
-        includeRomanizationNetEase: Boolean = false,
-        multiPersonWordByWord: Boolean = false,
-        unsyncedFallbackMusixmatch: Boolean = true,
+        options: LyricsOptions = LyricsOptions(),
         onAttempt: (ProviderChain.Progress) -> Unit = {},
     ): ProviderChain.Found<LyricsLookup>? =
         ProviderChain.find(
@@ -222,16 +98,8 @@ class LyricsProviderService {
             isSynced = { ProviderChain.isSynced(it.lyrics) },
             onAttempt = onAttempt,
         ) { provider ->
-            val songInfo = getSongInfo(query, provider = provider) ?: return@find null
-            val lyrics = getSyncedLyrics(
-                songInfo.songName.orEmpty(),
-                songInfo.artistName.orEmpty(),
-                provider,
-                includeTranslationNetEase,
-                includeRomanizationNetEase,
-                multiPersonWordByWord,
-                unsyncedFallbackMusixmatch,
-            ) ?: return@find null
+            val songInfo = getSongInfo(query, provider = provider)
+            val lyrics = getSyncedLyrics(songInfo, provider, options) ?: return@find null
             LyricsLookup(songInfo, lyrics)
         }
 
