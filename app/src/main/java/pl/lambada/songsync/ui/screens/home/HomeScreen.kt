@@ -380,7 +380,7 @@ fun HomeScreenLoaded(
         ) {
             item {
                 Column(
-                    modifier = Modifier.padding(start = 22.dp, end = 4.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp),
                 ) {
                     // Library search, opened from the search button in the bottom toolbar
                     AnimatedVisibility(

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.imeAnimationTarget
 import androidx.compose.foundation.layout.isImeVisible
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -125,7 +126,9 @@ fun HomeSearchBar(
             disabledIndicatorColor = Color.Transparent
         ),
         modifier = Modifier
-            .padding(end = 18.dp)
+            // Clear of the app bar, which turns frosted once the list scrolls
+            .padding(top = 8.dp)
+            .fillMaxWidth()
             .focusRequester(focusRequester)
             .onFocusChanged {
                 if (it.isFocused && !showingIme) willShowIme = true
