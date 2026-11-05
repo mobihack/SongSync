@@ -38,9 +38,24 @@ class PowerampLyricsReceiver : BroadcastReceiver() {
             durationMs = intent.getIntExtra(EXTRA_DURATION_MS, 0).takeIf { it > 0 }?.toLong(),
         )
 
+        val appContext = context.applicationContext
+        when (limiter.check(realId)) {
+            LyricsRequestLimiter.Decision.SEARCH -> Unit
+            // Asked again (or flooded): answer at once, so Poweramp stops showing progress
+            LyricsRequestLimiter.Decision.REPEAT -> {
+                val stored = runCatching { PowerampLyricsStore.load(appContext, realId) }.getOrNull()
+                sendLyrics(appContext, realId, stored?.lyrics, stored?.provider?.let { "Lyrics from $it via SongSync+" })
+                return
+            }
+            LyricsRequestLimiter.Decision.LIMITED -> {
+                Log.w(TAG, "Too many lyrics requests; not searching for id=$realId")
+                sendLyrics(appContext, realId, lyrics = null, infoLine = null)
+                return
+            }
+        }
+
         val rawPath = intent.getStringExtra(EXTRA_PATH)
         Log.i(TAG, "Poweramp asked for \"$title\" by \"${query.artistName}\" (id=$realId, path=$rawPath)")
-        val appContext = context.applicationContext
         val pending = goAsync()
         scope.launch {
             try {
@@ -95,6 +110,9 @@ class PowerampLyricsReceiver : BroadcastReceiver() {
     }
 
     private companion object {
+        /** Process-wide, so it holds across broadcasts (each gets a new receiver). */
+        val limiter = LyricsRequestLimiter()
+
         const val TAG = "PowerampLyrics"
 
         /** Long enough to walk the provider list, short of the background broadcast limit (60s). */
