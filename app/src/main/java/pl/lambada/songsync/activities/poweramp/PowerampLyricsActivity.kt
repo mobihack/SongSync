@@ -106,6 +106,16 @@ class PowerampLyricsActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Single instance, so a link tapped for another track while this sheet is open arrives here:
+     * show that track instead of the stale sheet.
+     */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        recreate()
+    }
+
     private fun realId(intent: Intent): Long? {
         // Track fields come as extras; also accept them bundled under "track"
         val id = intent.getLongExtra(EXTRA_REAL_ID, 0L).takeIf { it != 0L }
