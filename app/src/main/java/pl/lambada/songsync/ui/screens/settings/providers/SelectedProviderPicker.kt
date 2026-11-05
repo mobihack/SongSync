@@ -1,5 +1,8 @@
 package pl.lambada.songsync.ui.screens.settings.providers
 
+import pl.lambada.songsync.util.ProviderChoice
+import pl.lambada.songsync.ui.components.listGroupItems
+import pl.lambada.songsync.ui.components.ProviderChoiceRow
 import androidx.compose.foundation.layout.height
 import pl.lambada.songsync.ui.components.listGroupRow
 import androidx.compose.animation.core.Spring
@@ -46,32 +49,18 @@ private fun Modifier.pickerItem(scope: LazyItemScope) = with(scope) {
  * Same providers and order as the provider menus.
  */
 fun LazyListScope.selectedProviderPicker(settings: UserSettingsController) {
-    item(key = "providerDivider") {
-        Spacer(Modifier.pickerItem(this).height(8.dp))
-    }
     item(key = "providerHeader") {
-        Box(Modifier.pickerItem(this)) { SettingsHeadLabel(stringResource(R.string.settings_selected_provider)) }
+        Box(Modifier.pickerItem(this)) { SettingsHeadLabel(stringResource(R.string.provider_only_one)) }
     }
-    val providers = Providers.entries.filter { it.enabled }
-    items(providers, key = { "pick:${it.name}" }) { provider ->
-        val selected = settings.selectedProvider == provider
-        Row(
-            Modifier
-                .pickerItem(this)
-                .listGroupRow(index = providers.indexOf(provider), count = providers.size)
-                .fillMaxWidth()
-                .selectable(
-                    selected = selected,
-                    role = Role.RadioButton,
-                    onClick = { settings.updateSelectedProviders(provider) },
-                )
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            RadioButton(selected = selected, onClick = null)
-            Spacer(Modifier.width(16.dp))
-            Text(provider.displayName)
-            if (provider.hasWordByWord) WordByWordBadge()
-        }
+    // Same rows as the Lyrics provider sheet
+    val choices = Providers.entries.filter { it.enabled }.map { ProviderChoice.Only(it) }
+    listGroupItems(choices, key = { "pick:${it.provider.name}" }) { choice, shapes, padding ->
+        ProviderChoiceRow(
+            choice = choice,
+            selected = settings.selectedProvider == choice.provider,
+            shapes = shapes,
+            modifier = Modifier.pickerItem(this).padding(padding),
+            onClick = { settings.updateSelectedProviders(choice.provider) },
+        )
     }
 }

@@ -2,6 +2,7 @@
 
 package pl.lambada.songsync.ui.components
 
+import androidx.compose.material3.ListItemShapes
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.ModalBottomSheet
@@ -88,19 +89,7 @@ fun ProviderChoiceList(
     @Composable
     fun Group(choices: List<ProviderChoice>) = ListGroup {
         choices.forEach { choice ->
-            row { shapes ->
-                val isSelected = selected == choice
-                SegmentedListItem(
-                    selected = isSelected,
-                    onClick = { pick(choice) },
-                    shapes = shapes,
-                    colors = listGroupColors(),
-                    leadingContent = { RadioButton(selected = isSelected, onClick = null) },
-                    trailingContent = if (choice is ProviderChoice.Only && choice.provider.hasWordByWord) {
-                        { WordByWordBadge() }
-                    } else null,
-                ) { Text(providerChoiceLabel(choice)) }
-            }
+            row { shapes -> ProviderChoiceRow(choice, selected == choice, shapes, onClick = { pick(choice) }) }
         }
     }
 
@@ -108,6 +97,29 @@ fun ProviderChoiceList(
     SettingsHeadLabel(stringResource(R.string.provider_only_one))
     Group(Providers.entries.filter { it.enabled }.map { ProviderChoice.Only(it) })
 }
+
+/**
+ * One provider choice as a grouped row: radio, name, and the word-by-word badge where it
+ * applies. Shared by [ProvidersSheet] and Settings › Lyrics provider.
+ */
+@Composable
+fun ProviderChoiceRow(
+    choice: ProviderChoice,
+    selected: Boolean,
+    shapes: ListItemShapes,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) = SegmentedListItem(
+    selected = selected,
+    onClick = onClick,
+    shapes = shapes,
+    colors = listGroupColors(),
+    modifier = modifier,
+    leadingContent = { RadioButton(selected = selected, onClick = null) },
+    trailingContent = if (choice is ProviderChoice.Only && choice.provider.hasWordByWord) {
+        { WordByWordBadge() }
+    } else null,
+) { Text(providerChoiceLabel(choice)) }
 
 /** Short name of a provider choice, e.g. "Auto" or "LRCLib". */
 @Composable

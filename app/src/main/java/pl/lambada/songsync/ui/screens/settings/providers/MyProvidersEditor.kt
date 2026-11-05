@@ -1,5 +1,6 @@
 package pl.lambada.songsync.ui.screens.settings.providers
 
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import pl.lambada.songsync.ui.components.listGroupRow
 import androidx.compose.animation.core.Spring
@@ -231,7 +232,6 @@ fun LazyListScope.myProvidersEditor(editor: MyProvidersEditorState) {
         val moveDown = stringResource(R.string.move_down)
         ProviderRow(
             provider = provider,
-            position = index + 1,
             modifier = Modifier
                 .zIndex(if (isDragged) 1f else 0f)
                 .then(
@@ -295,7 +295,6 @@ fun LazyListScope.myProvidersEditor(editor: MyProvidersEditorState) {
         items(available, key = { it.name }) { provider ->
             ProviderRow(
                 provider = provider,
-                position = null,
                 modifier = Modifier
                     .editorItem(this)
                     .listGroupRow(index = available.indexOf(provider), count = available.size),
@@ -316,7 +315,6 @@ fun LazyListScope.myProvidersEditor(editor: MyProvidersEditorState) {
 @Composable
 private fun ProviderRow(
     provider: Providers,
-    position: Int?,
     modifier: Modifier,
     leading: @Composable () -> Unit,
     trailing: @Composable () -> Unit,
@@ -324,18 +322,13 @@ private fun ProviderRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 2.dp),
+            // Same height as the provider rows above and below (SegmentedListItem, one line)
+            .heightIn(min = 56.dp)
+            .padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         leading()
         Spacer(modifier = Modifier.width(8.dp))
-        if (position != null) {
-            Text(
-                text = "$position.",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.width(28.dp),
-            )
-        }
         Text(text = provider.displayName)
         if (provider.hasWordByWord) WordByWordBadge()
         Spacer(modifier = Modifier.weight(1f))
