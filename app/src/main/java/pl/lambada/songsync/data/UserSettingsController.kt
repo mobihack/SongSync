@@ -14,6 +14,7 @@ import pl.lambada.songsync.data.remote.lyrics_providers.LyricsOptions
 import pl.lambada.songsync.domain.model.SortOrders
 import pl.lambada.songsync.domain.model.SortValues
 import pl.lambada.songsync.util.FolderMode
+import pl.lambada.songsync.util.MusicFolders
 import pl.lambada.songsync.util.ProviderChain
 import pl.lambada.songsync.util.ProviderChoice
 import pl.lambada.songsync.util.ProviderMode
@@ -60,13 +61,13 @@ class UserSettingsController(private val dataStore: DataStore<Preferences>) {
 
     /** Folders ignored in [FolderMode.IGNORE]. */
     var blacklistedFolders by mutableStateOf(
-        dataStore.get(blacklistedFoldersKey, "").split(",").filter { it.isNotBlank() }
+        MusicFolders.decode(dataStore.get(blacklistedFoldersKey, ""))
     )
         private set
 
     /** Folders shown in [FolderMode.ONLY]. */
     var onlyFolders by mutableStateOf(
-        dataStore.get(onlyFoldersKey, "").split(",").filter { it.isNotBlank() }
+        MusicFolders.decode(dataStore.get(onlyFoldersKey, ""))
     )
         private set
 
@@ -204,12 +205,12 @@ class UserSettingsController(private val dataStore: DataStore<Preferences>) {
     }
 
     fun updateBlacklistedFolders(to: List<String>) {
-        dataStore.set(blacklistedFoldersKey, to.joinToString(","))
+        dataStore.set(blacklistedFoldersKey, MusicFolders.encode(to))
         blacklistedFolders = to
     }
 
     fun updateOnlyFolders(to: List<String>) {
-        dataStore.set(onlyFoldersKey, to.joinToString(","))
+        dataStore.set(onlyFoldersKey, MusicFolders.encode(to))
         onlyFolders = to
     }
 

@@ -45,4 +45,36 @@ class MusicFoldersTest {
     fun `folder of a file path is its parent directory`() {
         MusicFolders.folderOf("$music/Rock/song.mp3") shouldBe "$music/Rock"
     }
+
+    @Test
+    fun `folders with commas in their names survive saving`() {
+        val folders = listOf(
+            "$music/Tyler, The Creator - CHROMAKOPIA (2024)",
+            "$music/Rock",
+            "$music/Hardwell & Friends, Vol. 1 (Extended Mix)",
+        )
+        MusicFolders.decode(MusicFolders.encode(folders)) shouldBe folders
+    }
+
+    @Test
+    fun `a single comma folder saved by the old comma format is read back whole`() {
+        val folder = "$music/Tiësto - Club Life, Vol. 4 - New York City"
+        MusicFolders.decode(folder) shouldBe listOf(folder)
+    }
+
+    @Test
+    fun `old comma-joined lists are split only where a new path starts`() {
+        val old = "$music/Tyler, The Creator - CHROMAKOPIA (2024),$music/Rock,$music/DTG, Vol. 1"
+        MusicFolders.decode(old) shouldBe listOf(
+            "$music/Tyler, The Creator - CHROMAKOPIA (2024)",
+            "$music/Rock",
+            "$music/DTG, Vol. 1",
+        )
+    }
+
+    @Test
+    fun `an empty setting is an empty list`() {
+        MusicFolders.decode("") shouldBe emptyList()
+        MusicFolders.encode(emptyList()) shouldBe ""
+    }
 }

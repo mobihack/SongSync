@@ -32,6 +32,23 @@ object MusicFolders {
 
     fun folderOf(filePath: String): String = filePath.substringBeforeLast('/', "")
 
+    /** Stores a folder list one path per line: folder names can contain commas ("Tyler, The Creator"). */
+    fun encode(folders: List<String>): String = folders.joinToString("\n")
+
+    /**
+     * Reads a list saved by [encode]. Older versions joined paths with commas, which split any folder
+     * with a comma in its name; every path starts with "/", so a piece that doesn't is glued back on.
+     */
+    fun decode(stored: String): List<String> {
+        if ('\n' in stored) return stored.split('\n').filter { it.isNotBlank() }
+        val folders = mutableListOf<String>()
+        for (piece in stored.split(',')) {
+            if (piece.startsWith("/") || folders.isEmpty()) folders += piece
+            else folders[folders.lastIndex] += ",$piece"
+        }
+        return folders.filter { it.isNotBlank() }
+    }
+
     /** Folders that contain music, with how many songs each holds, sorted by path. */
     fun load(context: Context): List<Pair<String, Int>> {
         val counts = HashMap<String, Int>()
