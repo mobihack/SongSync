@@ -167,8 +167,21 @@ fun SharedTransitionScope.LyricsFetchScreen(
                         providerMenu = providerMenu,
                     )
 
-                    // Shown centred on the screen instead (after the scrolling column)
-                    QueryStatus.Pending -> Spacer(Modifier.fillMaxWidth())
+                    // The provider stays here; the indicator and "Provider x of y" are centred
+                    // on the screen (after the scrolling column)
+                    QueryStatus.Pending -> Column(
+                        Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        CloudProviderTitle(
+                            // Follows the fallback live: shows the provider being tried right now
+                            selectedProvider = viewModel.searchProgress?.provider
+                                ?: viewModel.lookupProviders().first(),
+                            onExpandProvidersRequest = { expandedProviders = true },
+                            menu = providerMenu,
+                        )
+                    }
 
                     is QueryStatus.Success -> SuccessContent(
                         result = queryState.song,
@@ -236,7 +249,7 @@ fun SharedTransitionScope.LyricsFetchScreen(
                 }
             }
         }
-        // Searching: provider being tried, indicator and "Provider x of y", in the middle of the screen
+        // Searching: indicator and "Provider x of y" in the middle of the screen
         AnimatedVisibility(
             visible = viewModel.queryState == QueryStatus.Pending,
             enter = fadeIn(MaterialTheme.motionScheme.defaultEffectsSpec()),
@@ -246,14 +259,6 @@ fun SharedTransitionScope.LyricsFetchScreen(
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     val progress = viewModel.searchProgress
-                    CloudProviderTitle(
-                        // Follows the fallback live: shows the provider being tried right now
-                        selectedProvider = progress?.provider
-                            ?: viewModel.lookupProviders().first(),
-                        onExpandProvidersRequest = { expandedProviders = true },
-                        menu = providerMenu,
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
                     LoadingIndicator()
                     if (progress != null && progress.total > 1) {
                         Spacer(modifier = Modifier.height(8.dp))
