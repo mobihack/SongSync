@@ -12,6 +12,7 @@ import pl.lambada.songsync.domain.model.SongInfo
 import pl.lambada.songsync.domain.model.lyrics_providers.others.PaxQQPayload
 import pl.lambada.songsync.domain.model.lyrics_providers.others.QQMusicSearchResponse
 import pl.lambada.songsync.util.EmptyQueryException
+import pl.lambada.songsync.util.SearchMatching
 import pl.lambada.songsync.util.networking.Ktor
 import pl.lambada.songsync.util.networking.Ktor.json
 
@@ -59,11 +60,15 @@ class QQMusicAPI(private val client: HttpClient = Ktor.client) {
 
         val result = json.decodeFromString<QQMusicSearchResponse>(responseBody)
 
-        val song = try {
-            result.data.song.list[offset]
-        } catch (e: IndexOutOfBoundsException) {
-            return null
-        }
+        // Reorder (never drop) by title/artist/duration so the right version comes first
+        val song = SearchMatching.rank(
+            result.data.song.list, query.songName, query.artistName,
+            candidateTitle = { it.title },
+            candidateArtist = { it.singer.joinToString(", ") { singer -> singer.name } },
+            durationMs = query.durationMs,
+            candidateDuration = { it.interval?.times(1000L) },
+            strict = false,
+        ).getOrNull(offset) ?: return null
 
         val artists = song.singer.joinToString(", ") { it.name }
 

@@ -22,7 +22,8 @@ data class QQMusicSongInfo(
     val title: String,
     val singer: List<QQMusicSinger>,
     val album: QQMusicAlbum,
-    val id: Long
+    val id: Long,
+    val interval: Int? = null, // seconds
 )
 
 @Serializable

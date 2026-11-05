@@ -38,6 +38,7 @@ class PetitLyricsAPI(
                 append("key_title", title)
                 append("key_artist", query.artistName.orEmpty())
                 append("key_album", "")
+                query.durationMs?.takeIf { it > 0 }?.let { append("key_duration", it.toString()) }
                 append("lyricsType", "1")
                 append("terminalType", "10")
                 append("clientAppId", clientId)

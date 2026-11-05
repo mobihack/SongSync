@@ -16,5 +16,6 @@ data class Song(
     val title: String?,
     val artist: String?,
     val imgUri: Uri?,
-    val filePath: String?
+    val filePath: String?,
+    val durationMs: Long? = null,
 ) : Parcelable

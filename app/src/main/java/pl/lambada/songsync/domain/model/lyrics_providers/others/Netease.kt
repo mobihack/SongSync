@@ -19,6 +19,7 @@ data class NeteaseSong(
     val name: String,
     val id: Long,
     val artists: List<NeteaseArtist>,
+    val duration: Long? = null, // milliseconds
 )
 
 @Serializable

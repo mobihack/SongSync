@@ -66,6 +66,50 @@ class SearchMatchingTest {
         SearchMatching.score("Bohemian Rhapsody", null, "Bohemian Rhapsody", "Queen") shouldBe 1.0
     }
 
+    private data class Timed(val title: String, val artist: String, val durationMs: Long?)
+
+    private fun rankTimed(hits: List<Timed>, durationMs: Long?, strict: Boolean = true) =
+        SearchMatching.rank(
+            hits, "Bohemian Rhapsody", "Queen",
+            candidateTitle = { it.title }, candidateArtist = { it.artist },
+            durationMs = durationMs, candidateDuration = { it.durationMs }, strict = strict,
+        )
+
+    @Test
+    fun `prefers the version whose duration matches`() {
+        val live = Timed("Bohemian Rhapsody", "Queen", 370_000)
+        val studio = Timed("Bohemian Rhapsody", "Queen", 354_000)
+        rankTimed(listOf(live, studio), durationMs = 355_000).first() shouldBe studio
+    }
+
+    @Test
+    fun `strict mode rejects a duration far off`() {
+        rankTimed(listOf(Timed("Bohemian Rhapsody", "Queen", 600_000)), durationMs = 355_000).shouldBeEmpty()
+    }
+
+    @Test
+    fun `unknown durations do not affect matching`() {
+        val hit = Timed("Bohemian Rhapsody", "Queen", null)
+        rankTimed(listOf(hit), durationMs = 355_000).shouldContainExactly(hit)
+        rankTimed(listOf(Timed("Bohemian Rhapsody", "Queen", 600_000)), durationMs = null).size shouldBe 1
+    }
+
+    @Test
+    fun `soft mode reorders but never drops results`() {
+        // e.g. a romanized local title vs. the provider's native-script title
+        val native = Timed("夜に駆ける", "YOASOBI", 261_000)
+        val exact = Timed("Bohemian Rhapsody", "Queen", 354_000)
+        rankTimed(listOf(native, exact), durationMs = 354_000, strict = false)
+            .shouldContainExactly(exact, native)
+    }
+
+    @Test
+    fun `soft mode keeps the provider's order on ties`() {
+        val a = Timed("Unrelated A", "X", null)
+        val b = Timed("Unrelated B", "Y", null)
+        rankTimed(listOf(a, b), durationMs = null, strict = false).shouldContainExactly(a, b)
+    }
+
     @Test
     fun `exact artist match outranks a cover`() {
         val original = SearchMatching.score("Hallelujah", "Leonard Cohen", "Hallelujah", "Leonard Cohen")

@@ -339,7 +339,8 @@ fun HomeScreenLoaded(
                                 songName = song.title ?: error("song.title was null"),
                                 artists = song.artist ?: "",
                                 coverUri = song.imgUri.toString(),
-                                filePath = song.filePath
+                                filePath = song.filePath,
+                                durationMs = song.durationMs ?: 0
                             )
                         )
                     },

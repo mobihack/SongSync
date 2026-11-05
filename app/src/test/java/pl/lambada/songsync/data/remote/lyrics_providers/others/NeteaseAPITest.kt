@@ -15,7 +15,7 @@ class NeteaseAPITest {
     private val query = SongInfo(songName = "3005", artistName = "Childish Gambino")
 
     private val searchResponse = """
-        {"result":{"songs":[{"id":28059274,"name":"3005",
+        {"result":{"songs":[{"id":28059274,"name":"3005","duration":234215,
           "artists":[{"name":"Childish Gambino"},{"name":"Someone"}]}],"songCount":5},"code":200}
     """.trimIndent()
 
@@ -42,10 +42,10 @@ class NeteaseAPITest {
         NeteaseAPI(http.client).getSongInfo(query, offset = 2)
 
         val request = http.requests.single()
+        request.url.parameters["limit"] shouldBe "10"
         request.url.protocol.name shouldBe "https"
         request.url.encodedPath shouldBe "/api/search/get"
         request.url.parameters["s"] shouldBe "3005 Childish Gambino"
-        request.url.parameters["offset"] shouldBe "2"
         request.headers["Cookie"].shouldBeNull()
     }
 
@@ -106,5 +106,23 @@ class NeteaseAPITest {
     fun `empty lyrics give null`() = runTest {
         val http = FakeHttp { respondJson("""{"lrc":{"lyric":""},"tlyric":null,"romalrc":null,"code":200}""") }
         NeteaseAPI(http.client).getSyncedLyrics(1).shouldBeNull()
+    }
+
+    @Test
+    fun `picks the search result whose duration matches`() = runTest {
+        val http = FakeHttp {
+            respondJson(
+                """
+                {"result":{"songs":[
+                  {"id":1,"name":"3005","duration":290000,"artists":[{"name":"Childish Gambino"}]},
+                  {"id":2,"name":"3005","duration":234215,"artists":[{"name":"Childish Gambino"}]}
+                ],"songCount":2},"code":200}
+                """.trimIndent()
+            )
+        }
+        val api = NeteaseAPI(http.client)
+        api.getSongInfo(query.copy(durationMs = 234_000))!!.neteaseID shouldBe 2
+        api.getSongInfo(query.copy(durationMs = 234_000), offset = 1)!!.neteaseID shouldBe 1
+        api.getSongInfo(query.copy(durationMs = 234_000), offset = 2).shouldBeNull()
     }
 }

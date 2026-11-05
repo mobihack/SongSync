@@ -19,8 +19,12 @@ object SearchMatching {
         title.orEmpty().replace(bracketed, "").replace(featuring, "").trim()
 
     /**
-     * Sorts [candidates] by how well they match the requested [title] and [artist], dropping ones
-     * that clearly aren't the same song. Returns the remaining candidates, best first.
+     * Sorts [candidates] by how well they match the requested [title], [artist] and [durationMs].
+     *
+     * In [strict] mode, candidates that clearly aren't the same song are dropped: use it for
+     * providers whose search ranks loosely. Otherwise results are only reordered (ties keep the
+     * provider's order), so a correct match the scorer can't recognise, e.g. a native-script title
+     * for a romanized local one, is never lost.
      */
     fun <T> rank(
         candidates: List<T>,
@@ -28,25 +32,50 @@ object SearchMatching {
         artist: String?,
         candidateTitle: (T) -> String?,
         candidateArtist: (T) -> String?,
-    ): List<T> = candidates
-        .map { it to score(title, artist, candidateTitle(it), candidateArtist(it)) }
-        .filter { (_, score) -> score >= MIN_SCORE }
-        .sortedByDescending { (_, score) -> score }
-        .map { (candidate, _) -> candidate }
+        durationMs: Long? = null,
+        candidateDuration: (T) -> Long? = { null },
+        strict: Boolean = true,
+    ): List<T> {
+        val scored = candidates.map {
+            it to score(title, artist, candidateTitle(it), candidateArtist(it), durationMs, candidateDuration(it))
+        }
+        return scored
+            .filter { (_, score) -> !strict || score >= MIN_SCORE }
+            .sortedByDescending { (_, score) -> score } // stable: ties keep provider order
+            .map { (candidate, _) -> candidate }
+    }
 
-    /** 0..1 similarity; title counts 60%, artist 40%. A weak title match is always rejected. */
-    fun score(title: String?, artist: String?, candidateTitle: String?, candidateArtist: String?): Double {
+    /**
+     * 0..1 similarity. Title counts 60% and artist 40%; when both durations are known they take a
+     * 20% share, and a duration more than [DURATION_TOLERANCE_MS] off rules the candidate out.
+     * A weak title match is always rejected.
+     */
+    fun score(
+        title: String?,
+        artist: String?,
+        candidateTitle: String?,
+        candidateArtist: String?,
+        durationMs: Long? = null,
+        candidateDurationMs: Long? = null,
+    ): Double {
+        val durationDiff = if (durationMs != null && durationMs > 0 && candidateDurationMs != null && candidateDurationMs > 0)
+            kotlin.math.abs(durationMs - candidateDurationMs) else null
+        if (durationDiff != null && durationDiff > DURATION_TOLERANCE_MS) return 0.0
+
         val titleScore = similarity(normalize(cleanTitle(title)), normalize(cleanTitle(candidateTitle)))
         if (titleScore < MIN_TITLE_SCORE) return 0.0
 
         // No artist to compare against: rely on the title alone
-        if (artist.isNullOrBlank()) return titleScore
+        val textScore = if (artist.isNullOrBlank()) titleScore else {
+            val wanted = splitArtists(artist)
+            val found = splitArtists(candidateArtist)
+            val artistScore = wanted.maxOfOrNull { w -> found.maxOfOrNull { f -> similarity(w, f) } ?: 0.0 } ?: 0.0
+            0.6 * titleScore + 0.4 * artistScore
+        }
+        if (durationDiff == null) return textScore
 
-        val wanted = splitArtists(artist)
-        val found = splitArtists(candidateArtist)
-        val artistScore = wanted.maxOfOrNull { w -> found.maxOfOrNull { f -> similarity(w, f) } ?: 0.0 } ?: 0.0
-
-        return 0.6 * titleScore + 0.4 * artistScore
+        val durationScore = 1.0 - durationDiff.toDouble() / DURATION_TOLERANCE_MS
+        return 0.8 * textScore + 0.2 * durationScore
     }
 
     private fun splitArtists(artists: String?): List<String> =
@@ -71,4 +100,5 @@ object SearchMatching {
 
     private const val MIN_TITLE_SCORE = 0.5
     private const val MIN_SCORE = 0.55
+    private const val DURATION_TOLERANCE_MS = 10_000L
 }

@@ -10,6 +10,7 @@ import pl.lambada.songsync.data.remote.PaxMusicHelper
 import pl.lambada.songsync.domain.model.SongInfo
 import pl.lambada.songsync.domain.model.lyrics_providers.others.AppleMusicSearchResponse
 import pl.lambada.songsync.util.EmptyQueryException
+import pl.lambada.songsync.util.SearchMatching
 import pl.lambada.songsync.util.networking.Ktor
 import pl.lambada.songsync.util.networking.Ktor.json
 import java.net.URLEncoder
@@ -77,11 +78,17 @@ class AppleAPI(private val client: HttpClient = Ktor.client) {
 
             val songs = searchResponse.results.songs?.data ?: return null
             
-            if (offset >= songs.size)
-                return null
-
-            val songId = songs[offset].id
-            val songDetail = searchResponse.resources?.songs?.get(songId) ?: return null
+            val details = songs.mapNotNull { searchResponse.resources?.songs?.get(it.id) }
+            // Reorder (never drop) by title/artist/duration so the right version comes first
+            val songDetail = SearchMatching.rank(
+                details, query.songName, query.artistName,
+                candidateTitle = { it.attributes.name },
+                candidateArtist = { it.attributes.artistName },
+                durationMs = query.durationMs,
+                candidateDuration = { it.attributes.durationInMillis },
+                strict = false,
+            ).getOrNull(offset) ?: return null
+            val songId = songDetail.id
             val attributes = songDetail.attributes
 
             val artworkUrl = attributes.artwork.url

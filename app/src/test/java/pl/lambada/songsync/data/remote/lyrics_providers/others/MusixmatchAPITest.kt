@@ -180,4 +180,12 @@ class MusixmatchAPITest {
             MusixmatchAPI(backend().client).getSongInfo(SongInfo(songName = "Song", artistName = ""))
         }
     }
+
+    @Test
+    fun `sends the track length in seconds when known`() = runTest {
+        val http = backend()
+        MusixmatchAPI(http.client).getSongInfo(query.copy(durationMs = 254_600))
+
+        http.requests.single { it.action == "macro.subtitles.get" }.url.parameters["q_duration"] shouldBe "255"
+    }
 }

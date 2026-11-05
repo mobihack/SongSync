@@ -126,6 +126,7 @@ class HomeViewModel(
                 MediaStore.Audio.Media.ARTIST,
                 MediaStore.Audio.Media.DATA,
                 MediaStore.Audio.Media.ALBUM_ID,
+                MediaStore.Audio.Media.DURATION,
             )
             val sortOrder = sortBy.name + " " + sortOrder.queryName
 
@@ -143,6 +144,7 @@ class HomeViewModel(
                 val artistColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)
                 val albumIdColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.ALBUM_ID)
                 val pathColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA)
+                val durationColumn = it.getColumnIndexOrThrow(MediaStore.Audio.Media.DURATION)
 
                 while (it.moveToNext()) {
                     val title = it.getString(titleColumn).let { str ->
@@ -161,7 +163,9 @@ class HomeViewModel(
                         albumId
                     )
 
-                    val song = Song(title, artist, imgUri, filePath)
+                    val durationMs = it.getLong(durationColumn).takeIf { ms -> ms > 0 }
+
+                    val song = Song(title, artist, imgUri, filePath, durationMs)
                     songs.add(song)
                 }
             }

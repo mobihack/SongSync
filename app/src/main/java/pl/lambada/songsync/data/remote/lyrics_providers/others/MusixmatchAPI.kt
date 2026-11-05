@@ -41,7 +41,8 @@ class MusixmatchAPI(private val client: HttpClient = Ktor.client) {
         if (offset > 0)
             return null
 
-        val calls = macroSubtitles(artist, title) ?: return null
+        val durationSec = query.durationMs?.takeIf { it > 0 }?.let { (it + 500) / 1000 }
+        val calls = macroSubtitles(artist, title, durationSec) ?: return null
 
         val track = calls.body("matcher.track.get")?.obj("track") ?: return null
         val commontrackId = track.long("commontrack_id")
@@ -94,7 +95,12 @@ class MusixmatchAPI(private val client: HttpClient = Ktor.client) {
     }
 
     /** Calls macro.subtitles.get, which matches the track and returns all lyric formats. */
-    private suspend fun macroSubtitles(artist: String, title: String, retry: Boolean = true): JsonObject? {
+    private suspend fun macroSubtitles(
+        artist: String,
+        title: String,
+        durationSec: Long?,
+        retry: Boolean = true
+    ): JsonObject? {
         val token = getToken()
         val response = get("macro.subtitles.get") {
             parameter("format", "json")
@@ -104,13 +110,14 @@ class MusixmatchAPI(private val client: HttpClient = Ktor.client) {
             parameter("q_artist", artist)
             parameter("q_track", title)
             parameter("usertoken", token)
+            durationSec?.let { parameter("q_duration", it) }
         }
         when (response.status()) {
             200 -> {}
             UNAUTHORIZED -> {
                 // Expired token, or Musixmatch blocking us: retry once with a fresh token
                 userToken = null
-                if (retry) return macroSubtitles(artist, title, retry = false)
+                if (retry) return macroSubtitles(artist, title, durationSec, retry = false)
                 throw ProviderUnavailableException("Musixmatch is blocking requests right now. Try again later.")
             }
             else -> return null

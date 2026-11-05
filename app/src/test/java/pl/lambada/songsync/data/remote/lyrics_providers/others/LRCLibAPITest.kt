@@ -74,4 +74,19 @@ class LRCLibAPITest {
         val http = FakeHttp { notFound() }
         LRCLibAPI(http.client).getSyncedLyrics(404).shouldBeNull()
     }
+
+    @Test
+    fun `prefers the result whose duration matches the local track`() = runTest {
+        val live = track(1, "Bohemian Rhapsody", "Queen").replace("200.0", "370.0")
+        val studio = track(2, "Bohemian Rhapsody", "Queen").replace("200.0", "354.0")
+        val http = FakeHttp { respondJson("[$live,$studio]") }
+
+        LRCLibAPI(http.client).getSongInfo(query.copy(durationMs = 355_000))!!.lrcLibID shouldBe 2
+    }
+
+    @Test
+    fun `never drops a result just because the title differs`() = runTest {
+        val http = FakeHttp { respondJson("[${track(1, "夜に駆ける", "YOASOBI")}]") }
+        LRCLibAPI(http.client).getSongInfo(SongInfo("Yoru ni Kakeru", "YOASOBI"))!!.lrcLibID shouldBe 1
+    }
 }

@@ -247,7 +247,7 @@ private suspend fun downloadLyricsForSong(
 ) {
     runCatching {
         viewModel
-            .getSongInfo(SongInfo(song.title, song.artist))
+            .getSongInfo(SongInfo(song.title, song.artist, durationMs = song.durationMs))
             ?: throw NullPointerException("Song info result is null")
     }
         .onFailure(onFailedSongInfoResponse)

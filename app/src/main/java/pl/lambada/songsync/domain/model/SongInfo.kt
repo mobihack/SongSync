@@ -37,6 +37,7 @@ data class SongInfo(
     var musixmatchID: Long? = null, // Musixmatch-only
     var deezerID: Long? = null, // Deezer-only
     var geniusID: Long? = null, // Genius-only
+    var durationMs: Long? = null, // Track length, used to pick the right search result
     var hasSyncedLyrics: Boolean? = null, // Musixmatch-only
     var hasUnsyncedLyrics: Boolean? = null, // Musixmatch-only
     var syncedLyrics: String? = null, // Musixmatch-only

@@ -65,7 +65,9 @@ class DeezerAPI(private val client: HttpClient = Ktor.client) {
             tracks.mapNotNull { toSongInfo(it) },
             query.songName, query.artistName,
             candidateTitle = { it.songName },
-            candidateArtist = { it.artistName }
+            candidateArtist = { it.artistName },
+            durationMs = query.durationMs,
+            candidateDuration = { it.durationMs },
         ).getOrNull(offset)
     }
 
@@ -85,7 +87,8 @@ class DeezerAPI(private val client: HttpClient = Ktor.client) {
             artistName = artist,
             songLink = "https://www.deezer.com/track/$id",
             albumCoverLink = cover,
-            deezerID = id
+            deezerID = id,
+            durationMs = track.string("duration")?.toLongOrNull()?.let { if (it < 36_000) it * 1000 else it }
         )
     }
 
@@ -161,6 +164,7 @@ class DeezerAPI(private val client: HttpClient = Ktor.client) {
                       node {
                         id
                         title
+                        duration
                         album { cover { urls(pictureRequest: ${'$'}pictureRequest) } }
                         contributors { edges { node { ... on Artist { name } } roles } }
                       }

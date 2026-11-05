@@ -63,7 +63,14 @@ class LyricsFetchViewModel(
 
                 val result = lyricsProviderService
                     .getSongInfo(
-                        query = SongInfo(querySongName, queryArtistName),
+                        query = SongInfo(
+                            querySongName,
+                            queryArtistName,
+                            // Only meaningful while the query still describes the local song
+                            durationMs = source?.durationMs?.takeIf {
+                                querySongName == source.songName && queryArtistName == source.artists
+                            }
+                        ),
                         offset = queryOffset,
                         provider = userSettingsController.selectedProvider
                     )

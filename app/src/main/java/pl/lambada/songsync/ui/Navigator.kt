@@ -94,9 +94,10 @@ data class LyricsFetchScreen(
     private val artists: String? = null,
     private val coverUri: String? = null,
     private val filePath: String? = null,
+    private val durationMs: Long = 0, // 0 = unknown
 ) {
     fun source() = if (songName != null && artists != null && filePath != null) {
-        LocalSong(songName, artists, coverUri, filePath)
+        LocalSong(songName, artists, coverUri, filePath, durationMs.takeIf { it > 0 })
     } else null
 }
 
@@ -106,6 +107,7 @@ data class LocalSong(
     val artists: String,
     val coverUri: String?,
     val filePath: String,
+    val durationMs: Long? = null,
 )
 
 @Serializable

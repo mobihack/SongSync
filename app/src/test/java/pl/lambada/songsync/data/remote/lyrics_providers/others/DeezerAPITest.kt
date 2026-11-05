@@ -21,8 +21,8 @@ class DeezerAPITest {
     @Before
     fun resetSession() = DeezerAPI.clearSession()
 
-    private fun node(id: String, title: String, artist: String) = """
-        {"node":{"id":"$id","title":"$title",
+    private fun node(id: String, title: String, artist: String, duration: Int = 234) = """
+        {"node":{"id":"$id","title":"$title","duration":$duration,
           "album":{"cover":{"urls":["https://cdn/$id.jpg"]}},
           "contributors":{"edges":[
             {"node":{"name":"Featured Person"},"roles":["FEATURED"]},
@@ -142,5 +142,17 @@ class DeezerAPITest {
     fun `no lyrics gives null`() = runTest {
         val http = backend("""{"data":{"track":{"lyrics":null}}}""")
         DeezerAPI(http.client).getSyncedLyrics(1).shouldBeNull()
+    }
+
+    @Test
+    fun `rejects a track whose duration is far off`() = runTest {
+        val http = backend(search(node("1", "3005", "Childish Gambino", duration = 400)))
+        DeezerAPI(http.client).getSongInfo(query.copy(durationMs = 234_000)).shouldBeNull()
+    }
+
+    @Test
+    fun `search asks for durations`() = runTest {
+        val http = backend(search(node("1", "3005", "Childish Gambino")))
+        DeezerAPI(http.client).getSongInfo(query)!!.durationMs shouldBe 234_000
     }
 }

@@ -8,6 +8,7 @@ import kotlinx.coroutines.withContext
 import pl.lambada.songsync.domain.model.SongInfo
 import pl.lambada.songsync.domain.model.lyrics_providers.others.LRCLibResponse
 import pl.lambada.songsync.util.EmptyQueryException
+import pl.lambada.songsync.util.SearchMatching
 import pl.lambada.songsync.util.networking.Ktor
 import pl.lambada.songsync.util.networking.Ktor.json
 import java.net.URLEncoder
@@ -42,16 +43,21 @@ class LRCLibAPI(private val client: HttpClient = Ktor.client) {
 
         val json = json.decodeFromString<List<LRCLibResponse>>(responseBody)
 
-        val song = try {
-            json[offset]
-        } catch (e: IndexOutOfBoundsException) {
-            return null
-        }
+        // Reorder (never drop) by title/artist/duration so the right version comes first
+        val song = SearchMatching.rank(
+            json, query.songName, query.artistName,
+            candidateTitle = { it.trackName },
+            candidateArtist = { it.artistName },
+            durationMs = query.durationMs,
+            candidateDuration = { (it.duration * 1000).toLong() },
+            strict = false,
+        ).getOrNull(offset) ?: return null
 
         return SongInfo(
             songName = song.trackName,
             artistName = song.artistName,
-            lrcLibID = song.id
+            lrcLibID = song.id,
+            durationMs = (song.duration * 1000).toLong()
         )
     }
 

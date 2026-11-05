@@ -12,6 +12,7 @@ import pl.lambada.songsync.domain.model.lyrics_providers.others.NeteaseLyricsRes
 import pl.lambada.songsync.domain.model.lyrics_providers.others.NeteaseResponse
 import pl.lambada.songsync.util.EmptyQueryException
 import pl.lambada.songsync.util.InternalErrorException
+import pl.lambada.songsync.util.SearchMatching
 import pl.lambada.songsync.util.WordSync
 import pl.lambada.songsync.util.networking.Ktor
 import pl.lambada.songsync.util.networking.Ktor.json
@@ -54,9 +55,8 @@ class NeteaseAPI(private val client: HttpClient = Ktor.client) {
             reqHeaders.forEach {
                 header(it.key, it.value)
             }
-            parameter("limit", 1)
+            parameter("limit", SEARCH_LIMIT)
             parameter("type", 1)
-            parameter("offset", offset)
             parameter("s", search)
         }
         val responseBody = response.bodyAsText(Charsets.UTF_8)
@@ -71,13 +71,26 @@ class NeteaseAPI(private val client: HttpClient = Ktor.client) {
             throw InternalErrorException(Log.getStackTraceString(e))
         }
 
-        val artists = neteaseResponse.result.songs[0].artists.joinToString(", ") { it.name }
+        // Reorder (never drop) by title/artist/duration so the right version comes first
+        val song = SearchMatching.rank(
+            neteaseResponse.result.songs, query.songName, query.artistName,
+            candidateTitle = { it.name },
+            candidateArtist = { it.artists.joinToString(", ") { artist -> artist.name } },
+            durationMs = query.durationMs,
+            candidateDuration = { it.duration },
+            strict = false,
+        ).getOrNull(offset ?: 0) ?: return null
 
         return SongInfo(
-            songName = neteaseResponse.result.songs[0].name,
-            artistName = artists,
-            neteaseID = neteaseResponse.result.songs[0].id
+            songName = song.name,
+            artistName = song.artists.joinToString(", ") { it.name },
+            neteaseID = song.id,
+            durationMs = song.duration
         )
+    }
+
+    private companion object {
+        const val SEARCH_LIMIT = 10
     }
 
     /**
