@@ -1,5 +1,6 @@
 package pl.lambada.songsync.ui.screens.settings
 
+import pl.lambada.songsync.ui.navigateOnce
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import androidx.compose.foundation.layout.padding
@@ -62,7 +63,7 @@ fun SettingsScreen(
     val context = LocalContext.current
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val hazeState = rememberHazeState()
-    fun open(section: SettingsSection) = navController.navigate(ScreenSettingsSection(section.name))
+    fun open(section: SettingsSection) = navController.navigateOnce(ScreenSettingsSection(section.name))
 
     // The plugin switch lives on another page; re-read it when coming back
     var pluginOn by remember { mutableStateOf(PowerampPlugin.isEnabled(context)) }
@@ -101,7 +102,7 @@ fun SettingsScreen(
                         ) {
                             // Before Android 11 the SD card setting shares the page; otherwise skip it
                             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) open(SettingsSection.LIBRARY)
-                            else navController.navigate(ScreenMusicFolders)
+                            else navController.navigateOnce(ScreenMusicFolders)
                         }
                     }
                     row {

@@ -1,5 +1,6 @@
 package pl.lambada.songsync.ui.screens.settings.folders
 
+import pl.lambada.songsync.ui.popBackStackOnce
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import pl.lambada.songsync.ui.components.ListGroup
@@ -111,7 +112,7 @@ fun MusicFoldersScreen(
                 title = stringResource(R.string.music_folders),
                 scrollBehavior = scrollBehavior,
                 hazeState = hazeState,
-                onBack = { navController.popBackStack() },
+                onBack = { navController.popBackStackOnce() },
             )
         }
     ) { padding ->

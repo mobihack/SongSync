@@ -1,5 +1,6 @@
 package pl.lambada.songsync.ui.screens.home
 
+import pl.lambada.songsync.ui.navigateOnce
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.Spring
@@ -213,7 +214,7 @@ fun HomeScreen(
         ) {
             HomeOverflowMenu(
                 hazeState = hazeState,
-                onNavigateToSettingsSectionRequest = { navController.navigate(ScreenSettings) },
+                onNavigateToSettingsSectionRequest = { navController.navigateOnce(ScreenSettings) },
                 providerChoice = viewModel.userSettingsController.providerChoice,
                 onProviderChoice = viewModel.userSettingsController::choose,
                 onBatchDownloadRequest = { isBatchDownload = true },

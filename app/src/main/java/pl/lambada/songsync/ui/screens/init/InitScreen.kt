@@ -65,8 +65,10 @@ fun InitScreen(
                 Button(
                     onClick = {
                         viewModel.onProceed()
+                        // Setup leaves the back stack: Back from Home exits rather than returning here
                         navController.navigate(ScreenHome) {
-                            popUpTo(ScreenHome) { inclusive = true }
+                            popUpTo<pl.lambada.songsync.ui.InitScreen> { inclusive = true }
+                            launchSingleTop = true
                         }
                     },
                     enabled = viewModel.allFilesPermissionGranted,

@@ -1,5 +1,7 @@
 package pl.lambada.songsync.ui.screens.settings
 
+import pl.lambada.songsync.ui.navigateOnce
+import pl.lambada.songsync.ui.popBackStackOnce
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 import androidx.compose.ui.unit.dp
@@ -90,7 +92,7 @@ fun SettingsSectionScreen(
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            SubScreenTopBar(title = title, scrollBehavior = scrollBehavior, hazeState = hazeState, onBack = { navController.popBackStack() })
+            SubScreenTopBar(title = title, scrollBehavior = scrollBehavior, hazeState = hazeState, onBack = { navController.popBackStackOnce() })
         },
     ) { padding ->
         LazyColumn(
@@ -149,7 +151,7 @@ private fun LazyListScope.library(settings: UserSettingsController, navControlle
                     label = stringResource(R.string.music_folders),
                     description = summary,
                     shapes = it,
-                    onClick = { navController.navigate(ScreenMusicFolders) },
+                    onClick = { navController.navigateOnce(ScreenMusicFolders) },
                 )
             }
         }
