@@ -3,6 +3,7 @@ package pl.lambada.songsync.data.remote.lyrics_providers.others
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import pl.lambada.songsync.domain.model.SongInfo
@@ -56,6 +57,13 @@ class QQMusicAPITest {
 
         lyrics shouldBe "[00:29.000]故事的小黄花\n[00:31.500]从出生那年就飘着"
         http.requests.single().textBody shouldContain "97773"
+    }
+
+    @Test
+    fun `a server error gives null instead of parsing the error page`() = runTest {
+        // Lyrics that would parse, so only the status check can turn them away
+        val http = FakeHttp { respondJson(lineLyrics, status = HttpStatusCode.BadGateway) }
+        QQMusicAPI(http.client).getSyncedLyrics("{}").shouldBeNull()
     }
 
     @Test

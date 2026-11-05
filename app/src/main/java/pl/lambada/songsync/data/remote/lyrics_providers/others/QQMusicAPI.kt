@@ -1,5 +1,6 @@
 package pl.lambada.songsync.data.remote.lyrics_providers.others
 
+import io.ktor.http.isSuccess
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -97,6 +98,7 @@ class QQMusicAPI(private val client: HttpClient = Ktor.clientFor(Providers.QQMUS
         val response = client.post(lyricsURL) {
             setBody(payload)
         }
+        if (!response.status.isSuccess()) return null
         val responseBody = response.bodyAsText(Charsets.UTF_8)
 
         return PaxMusicHelper().formatWordByWordLyrics(responseBody, multiPersonWordByWord)
