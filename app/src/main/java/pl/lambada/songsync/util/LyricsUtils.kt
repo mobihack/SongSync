@@ -1,7 +1,6 @@
 package pl.lambada.songsync.util
 
 import pl.lambada.songsync.BuildConfig
-import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.app.RecoverableSecurityException
 import android.content.Context
@@ -87,30 +86,29 @@ fun saveLrcFile(
     return file
 }
 
-@SuppressLint("Range")
+/** The MediaStore uri of the audio file at [filePath], or null if the library doesn't have it. */
+fun mediaStoreUriFor(context: Context, filePath: String): Uri? {
+    val uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
+    val projection = arrayOf(MediaStore.Files.FileColumns._ID)
+    val selection = "${MediaStore.Files.FileColumns.DATA}=?"
+
+    return context.contentResolver.query(uri, projection, selection, arrayOf(filePath), null)?.use { cursor ->
+        val column = cursor.getColumnIndex(MediaStore.Files.FileColumns._ID)
+        if (column != -1 && cursor.moveToFirst()) {
+            Uri.withAppendedPath(uri, cursor.getLong(column).toString())
+        } else null
+    }
+}
+
 fun getFileDescriptorFromPath(
     context: Context, filePath: String, mode: String = "r"
 ): ParcelFileDescriptor? {
-    val resolver = context.contentResolver
-    val uri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
-
-    val projection = arrayOf(MediaStore.Files.FileColumns._ID)
-    val selection = "${MediaStore.Files.FileColumns.DATA}=?"
-    val selectionArgs = arrayOf(filePath)
-
-    return resolver.query(uri, projection, selection, selectionArgs, null)?.use { cursor ->
-        if (cursor.moveToFirst()) {
-            val fileId = cursor.getInt(cursor.getColumnIndex(MediaStore.Files.FileColumns._ID))
-            if (fileId != -1) {
-                val fileUri = Uri.withAppendedPath(uri, fileId.toString())
-                try {
-                    resolver.openFileDescriptor(fileUri, mode)
-                } catch (e: FileNotFoundException) {
-                    Log.e("LyricsFetchViewModel", "File not found: ${e.message}")
-                    null
-                }
-            } else null
-        } else null
+    val fileUri = mediaStoreUriFor(context, filePath) ?: return null
+    return try {
+        context.contentResolver.openFileDescriptor(fileUri, mode)
+    } catch (e: FileNotFoundException) {
+        Log.e("LyricsUtils", "File not found: ${e.message}")
+        null
     }
 }
 

@@ -1,12 +1,11 @@
 package pl.lambada.songsync.util
 
 import android.content.Context
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.os.Build
 import android.widget.Toast
-import androidx.core.content.FileProvider
 import java.io.File
-import java.nio.file.Files
 
 fun isLegacyFileAccessRequired(filePath: String?): Boolean {
     // Before Android 11, not in internal storage
@@ -14,30 +13,27 @@ fun isLegacyFileAccessRequired(filePath: String?): Boolean {
             && filePath?.contains("/storage/emulated/0/") == false
 }
 
+/**
+ * Opens the song at [filePath] in another app, through its MediaStore uri: that works for songs
+ * on SD cards too, and shares only that one song.
+ */
 fun openFileFromPath(context: Context, filePath: String) {
-    val file = File(filePath)
-    if (!file.exists()) {
+    if (!File(filePath).exists()) {
         showToast(context, "File does not exist")
         return
     }
-
-    val uri = FileProvider.getUriForFile(context, context.packageName + ".provider", file)
-
-    val mime = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        Files.probeContentType(file.toPath())
-    } else run {
-        val extension = file.extension
-        val mimeTypeMap = android.webkit.MimeTypeMap.getSingleton()
-        mimeTypeMap.getMimeTypeFromExtension(extension)
+    val uri = mediaStoreUriFor(context, filePath) ?: run {
+        showToast(context, "This song isn't in the music library yet.")
+        return
     }
 
     val intent = Intent(Intent.ACTION_VIEW)
-        .setDataAndType(uri, mime)
+        .setDataAndType(uri, context.contentResolver.getType(uri) ?: "audio/*")
         .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
 
-    if (intent.resolveActivity(context.packageManager) != null) {
+    try {
         context.startActivity(intent)
-    } else {
+    } catch (e: ActivityNotFoundException) {
         Toast.makeText(context, "No app found to open the music file.", Toast.LENGTH_SHORT).show()
     }
 }

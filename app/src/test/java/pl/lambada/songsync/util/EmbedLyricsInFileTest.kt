@@ -8,9 +8,14 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
 // TagLib loads a native library, so these tests stop before it is reached: they cover how the
 // song file is opened and that a failure is reported, not the tag writing itself.
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [34])
 class EmbedLyricsInFileTest {
 
     private val mode = slot<String>()
@@ -19,7 +24,7 @@ class EmbedLyricsInFileTest {
         val cursor = mockk<Cursor>(relaxed = true) {
             every { moveToFirst() } returns true
             every { getColumnIndex(any()) } returns 0
-            every { getInt(0) } returns 42
+            every { getLong(0) } returns 42
         }
         val resolver = mockk<ContentResolver> {
             every { query(any(), any(), any(), any(), any()) } returns cursor
