@@ -7,7 +7,6 @@ import dev.turingcomplete.kotlinonetimepassword.TimeBasedOneTimePasswordGenerato
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
-import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.client.statement.request
 import kotlinx.coroutines.Dispatchers
@@ -20,7 +19,6 @@ import pl.lambada.songsync.domain.model.lyrics_providers.spotify.TrackSearchResu
 import pl.lambada.songsync.domain.model.lyrics_providers.spotify.WebPlayerTokenResponse
 import pl.lambada.songsync.util.EmptyQueryException
 import pl.lambada.songsync.util.NoTrackFoundException
-import pl.lambada.songsync.util.ProviderUnavailableException
 import pl.lambada.songsync.util.Providers
 import pl.lambada.songsync.util.networking.Ktor
 import pl.lambada.songsync.util.networking.Ktor.json
@@ -116,7 +114,8 @@ class SpotifyAPI {
         ) {
             reqHeaders.forEach { (key, value) -> header(key, value) }
         }
-        return json.decodeFromString<ServerTimeResponse>(response.jsonBody()).serverTime * 1000
+        val body = response.bodyAsText(Charsets.UTF_8)
+        return json.decodeFromString<ServerTimeResponse>(body).serverTime * 1000
     }
 
     /**
@@ -149,24 +148,12 @@ class SpotifyAPI {
                 parameter("totp", totp.second)
                 parameter("totpVer", totpVer)
             }
-            val json = json.decodeFromString<WebPlayerTokenResponse>(response.jsonBody())
+            val responseBody = response.bodyAsText(Charsets.UTF_8)
+            val json = json.decodeFromString<WebPlayerTokenResponse>(responseBody)
 
             this.spotifyToken = json.accessToken
             this.tokenTime = System.currentTimeMillis()
         }
-    }
-
-    /**
-     * The body of a successful JSON response. Spotify's edge answers blocked clients (some regions,
-     * VPNs, datacenter IPs) with an HTML "Access Denied" page, which would otherwise fail to parse.
-     */
-    private suspend fun HttpResponse.jsonBody(): String {
-        val body = bodyAsText(Charsets.UTF_8)
-        if (status.value !in 200..299 || !body.trimStart().startsWith("{"))
-            throw ProviderUnavailableException(
-                "Spotify is blocking requests from your network right now. Try again later or use a proxy."
-            )
-        return body
     }
 
     /**
@@ -205,12 +192,9 @@ class SpotifyAPI {
         ) {
            headers.append("Authorization", "Bearer $spotifyToken")
         }
-        if (response.status.value == 401) {
-            // Token expired early: make the next search fetch a new one
-            spotifyToken = ""
-            tokenTime = 0
-        }
-        val json = json.decodeFromString<TrackSearchResult>(response.jsonBody())
+        val responseBody = response.bodyAsText(Charsets.UTF_8)
+
+        val json = json.decodeFromString<TrackSearchResult>(responseBody)
         if (json.data.searchV2.tracksV2.items.isEmpty())
            throw NoTrackFoundException()
 
