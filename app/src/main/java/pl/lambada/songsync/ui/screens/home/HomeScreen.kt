@@ -83,7 +83,6 @@ import pl.lambada.songsync.ui.screens.home.components.HomeSearchBar
 import pl.lambada.songsync.ui.screens.home.components.SongItem
 import pl.lambada.songsync.ui.screens.home.components.SortSheet
 import pl.lambada.songsync.util.ext.BackPressHandler
-import pl.lambada.songsync.util.ext.lowercaseWithLocale
 import pl.lambada.songsync.util.ui.SearchFABBoundsTransform
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -397,7 +396,6 @@ fun HomeScreenLoaded(
                             query = viewModel.searchQuery,
                             onQueryChange = { newQuery ->
                                 viewModel.searchQuery = newQuery
-                                viewModel.updateSearchResults(newQuery.lowercaseWithLocale())
                                 viewModel.showingSearch = true
                             },
                             showSearch = viewModel.showSearch,

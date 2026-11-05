@@ -28,7 +28,8 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -48,6 +49,19 @@ import pl.lambada.songsync.util.saveBatchLyrics
 import pl.lambada.songsync.util.ext.toLrcFile
 import java.io.File
 import java.util.UUID
+
+/**
+ * The songs the list shows: [filtered] (or [all] when nothing is filtered), narrowed to those whose
+ * title or artist contains [query].
+ */
+internal fun songsToDisplay(all: List<Song>, filtered: List<Song>?, query: String): List<Song> {
+    val songs = filtered ?: all
+    if (query.isEmpty()) return songs
+    return songs.filter {
+        it.title?.contains(query, ignoreCase = true) == true ||
+            it.artist?.contains(query, ignoreCase = true) == true
+    }
+}
 
 /**
  * ViewModel class for the main functionality of the app.
@@ -90,15 +104,7 @@ class HomeViewModel(
     // (An empty list is a real result, e.g. "only these folders" with none chosen.)
     private var _cachedFilteredSongs = MutableStateFlow<List<Song>?>(null)
 
-    // searching
-    private var _searchResults = MutableStateFlow<List<Song>>(emptyList())
-
-    var displaySongs by mutableStateOf(
-        when {
-            searchQuery.isNotEmpty() -> _searchResults.value
-            else -> _cachedFilteredSongs.value ?: allSongs ?: listOf()
-        }
-    )
+    var displaySongs by mutableStateOf(allSongs ?: listOf())
 
     var showFilters by mutableStateOf(false)
     var showSort by mutableStateOf(false)
@@ -114,19 +120,18 @@ class HomeViewModel(
 
     init { viewModelScope.launch { updateSongsToDisplay() } }
 
+    // Recomputed whenever the songs, the filters or the query change, so a search always matches
+    // the current filters; the latest inputs win over a slower earlier search
     @OptIn(ExperimentalCoroutinesApi::class)
     private suspend fun updateSongsToDisplay() = coroutineScope {
-        snapshotFlow { allSongs }
-            .filterNotNull()
-            // simple .combine wasn't enough apparently, so im using this
-            .flatMapLatest { all ->
-                _cachedFilteredSongs.combine(_searchResults) { filtered, searchResults ->
-                    when {
-                        searchQuery.isNotEmpty() -> searchResults
-                        else -> filtered ?: all
-                    }
-                }
-            }.collect { newDisplaySongs ->
+        combine(
+            snapshotFlow { allSongs }.filterNotNull(),
+            _cachedFilteredSongs,
+            snapshotFlow { searchQuery },
+        ) { all, filtered, query -> Triple(all, filtered, query) }
+            .mapLatest { (all, filtered, query) -> songsToDisplay(all, filtered, query) }
+            .flowOn(Dispatchers.Default)
+            .collect { newDisplaySongs ->
                 displaySongs = newDisplaySongs
             }
     }
@@ -197,32 +202,6 @@ class HomeViewModel(
             viewModelScope.launch { filterSongs() }
             viewModelScope.launch { updatePlayingSongInfo(context) }
             cachedSongs!!
-        }
-    }
-
-    /**
-     * Updates song search (filter) results based on the query.
-     * @param query The search query.
-     */
-    fun updateSearchResults(query: String) {
-        viewModelScope.launch(Dispatchers.IO) {
-            if (query.isEmpty()) {
-                _searchResults.value = _cachedFilteredSongs.value ?: emptyList()
-                return@launch
-            }
-
-            val data: List<Song> = when {
-                _cachedFilteredSongs.value != null -> _cachedFilteredSongs.value!!
-                cachedSongs != null -> cachedSongs!!
-                else -> { return@launch }
-            }
-
-            val results = data.filter {
-                it.title?.contains(query, ignoreCase = true) == true ||
-                it.artist?.contains(query, ignoreCase = true) == true
-            }
-
-            _searchResults.value = results
         }
     }
 
