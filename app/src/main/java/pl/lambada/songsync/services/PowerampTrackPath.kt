@@ -13,33 +13,50 @@ object PowerampTrackPath {
     /**
      * @param raw Poweramp's path extra: an absolute path, a content:// uri, a path relative to
      * storage, or missing.
-     * @return an absolute path to an existing file, or null.
+     * @return an absolute path to an existing audio file on shared storage (see [safeSongPath]),
+     * or null.
      */
-    fun resolve(context: Context, raw: String?, title: String, artist: String?, durationMs: Long?): String? {
-        raw?.trim()?.takeIf { it.isNotEmpty() }?.let { path ->
-            when {
-                path.startsWith("/") -> if (File(path).exists()) return path
-                // Poweramp's form: "<volume>/<path>", "primary" being internal storage
-                path.startsWith("primary/") -> {
-                    @Suppress("DEPRECATION")
-                    val file = File(Environment.getExternalStorageDirectory(), path.removePrefix("primary/"))
-                    if (file.exists()) return file.absolutePath
-                }
-                Regex("^[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}/").containsMatchIn(path) -> {
-                    val file = File("/storage", path) // SD card, e.g. 1A2B-3C4D/Music/song.flac
-                    if (file.exists()) return file.absolutePath
-                }
-                path.startsWith("content://") -> fromContentUri(context, Uri.parse(path))?.let { return it }
-                path.startsWith("file://") -> Uri.parse(path).path?.takeIf { File(it).exists() }?.let { return it }
-                !path.contains("://") -> {
-                    @Suppress("DEPRECATION")
-                    val onStorage = File(Environment.getExternalStorageDirectory(), path)
-                    if (onStorage.exists()) return onStorage.absolutePath
-                }
-            }
+    fun resolve(context: Context, raw: String?, title: String, artist: String?, durationMs: Long?): String? =
+        fromExtra(context, raw)?.let(::safeSongPath)
+            ?: fromMediaStore(context, title, artist, durationMs)?.let(::safeSongPath)
+
+    private fun fromExtra(context: Context, raw: String?): String? {
+        val path = raw?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+        val candidate = when {
+            path.startsWith("/") -> path
+            // Poweramp's form: "<volume>/<path>", "primary" being internal storage
+            @Suppress("DEPRECATION")
+            path.startsWith("primary/") ->
+                File(Environment.getExternalStorageDirectory(), path.removePrefix("primary/")).absolutePath
+            Regex("^[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}/").containsMatchIn(path) ->
+                File("/storage", path).absolutePath // SD card, e.g. 1A2B-3C4D/Music/song.flac
+            path.startsWith("content://") -> fromContentUri(context, Uri.parse(path))
+            path.startsWith("file://") -> Uri.parse(path).path
+            @Suppress("DEPRECATION")
+            !path.contains("://") -> File(Environment.getExternalStorageDirectory(), path).absolutePath
+            else -> null
         }
-        return fromMediaStore(context, title, artist, durationMs)
+        return candidate?.takeIf { File(it).exists() }
     }
+
+    /**
+     * [path] made canonical if it is an audio file on shared storage, else null.
+     *
+     * The path comes from another app's intent, and lyrics are written beside it or into it with
+     * SongSync's all-files access, so anything else (the app's own data, a non-audio file, a
+     * "../" escape) is refused.
+     */
+    fun safeSongPath(path: String): String? {
+        val canonical = runCatching { File(path).canonicalPath }.getOrNull() ?: return null
+        if (!canonical.startsWith("/storage/")) return null
+        if (canonical.substringAfterLast('/').substringAfterLast('.', "").lowercase() !in AUDIO_EXTENSIONS) return null
+        return canonical
+    }
+
+    private val AUDIO_EXTENSIONS = setOf(
+        "mp3", "mp2", "flac", "m4a", "m4b", "mp4", "aac", "alac", "ogg", "oga", "opus", "wav", "wave",
+        "aif", "aiff", "aifc", "wma", "ape", "wv", "mpc", "tta", "dsf", "dff", "mka", "webm", "3gp", "amr",
+    )
 
     @Suppress("DEPRECATION")
     private fun fromContentUri(context: Context, uri: Uri): String? = runCatching {
