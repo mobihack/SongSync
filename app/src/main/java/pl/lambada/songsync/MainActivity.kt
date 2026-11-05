@@ -7,10 +7,7 @@ import coil.ImageLoader
 import pl.lambada.songsync.util.networking.Ktor
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.content.Context
-import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import androidx.activity.ComponentActivity
@@ -59,7 +56,6 @@ class MainActivity : ComponentActivity() {
         // Cover art from providers follows the proxy setting too
         Coil.setImageLoader { ImageLoader.Builder(applicationContext).okHttpClient { Ktor.baseOkHttp }.build() }
         checkOrCreateDownloadSubFolder()
-        createNotificationChannel()
 
         setContent {
             val navController = rememberNavController()
@@ -95,13 +91,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
-    override fun onResume() {
-        val notificationManager =
-            getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.cancel(2) // "Done" notification
-        super.onResume()
-    }
 }
 
 @Composable
@@ -134,20 +123,4 @@ private fun checkOrCreateDownloadSubFolder() {
     val songSyncDir = File(downloadsDir, "SongSync+")
 
     if (!songSyncDir.exists()) songSyncDir.mkdir()
-}
-
-private fun Activity.createNotificationChannel() {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-        val notificationManager =
-            getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-
-        val channelId = getString(R.string.batch_download_lyrics)
-        val channelName = getString(R.string.batch_download_lyrics)
-        val channelDescription = getString(R.string.batch_download_lyrics)
-        val importance = NotificationManager.IMPORTANCE_LOW
-        val channel = NotificationChannel(channelId, channelName, importance)
-        channel.description = channelDescription
-
-        notificationManager.createNotificationChannel(channel)
-    }
 }

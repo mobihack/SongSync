@@ -102,7 +102,6 @@
     <string name="ascending">Vzestupně</string>
     <string name="descending">Sestupně</string>
     <string name="show_notification_permission">Ukázat notifikace (Volitelné)</string>
-    <string name="show_notification_description">Použito pro ukázování průběhu stažení ve notifikaci</string>
     <string name="by">od</string>
     <string name="accept">Přijmout</string>
     <string name="we_are_open_source">SongSync+ je open-source projekt. Můžete najít zdrojový kód na GitHubu.</string>

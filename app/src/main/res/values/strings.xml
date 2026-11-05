@@ -170,7 +170,6 @@
     <string name="all_files_access">All files access</string>
     <string name="all_files_access_description">Required for saving lrc files in song\'s directory without opening the file picker each time</string>
     <string name="show_notification_permission">Show notification (Optional)</string>
-    <string name="show_notification_description">Used to show download progress notification</string>
     <string name="_continue">Continue</string>
     <string name="init_screen_title">Welcome to SongSync+!</string>
     <string name="init_screen_description">To get started, please grant the following permissions:</string>
@@ -183,7 +182,6 @@
     <string name="setup_subtitle">One permission is needed. The rest are up to you.</string>
     <string name="setup_required">Required</string>
     <string name="setup_optional">Optional</string>
-    <string name="setup_notifications">Notifications</string>
     <string name="setup_notification_access">Notification access</string>
     <string name="setup_allow">Allow</string>
     <string name="setup_allowed">Allowed</string>

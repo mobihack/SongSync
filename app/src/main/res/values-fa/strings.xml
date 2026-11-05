@@ -151,7 +151,6 @@
     <string name="all_files_access">دسترسی همۀ پرونده‌ها</string>
     <string name="all_files_access_description">برای ذخیرۀ پرونده‌های lrc در شاخۀ آهنگ بدون هر بار باز کردن انتخاب‌گر پرونده نیاز است</string>
     <string name="show_notification_permission">نمایش اعلان (اختیاری)</string>
-    <string name="show_notification_description">برای نمایش اعلان پیشرفت بارگیری استفاده شده</string>
     <string name="_continue">ادامه</string>
     <string name="init_screen_title">به SongSync+ خوش‌آمدید!</string>
     <string name="init_screen_description">برای شروع، لطفا اجازۀ دسترسی‌های زیر را بدهید:</string>

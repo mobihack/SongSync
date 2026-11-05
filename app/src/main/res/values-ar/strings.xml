@@ -156,7 +156,6 @@
     <string name="song_name_not_provided">لم يُعطَ أي اسمٍ للأغنية</string>
     <string name="unknown_error_occurred">حدث خطأٌ مجهول</string>
     <string name="show_notification_permission">اعرض إشعاراً (اختياري)</string>
-    <string name="show_notification_description">يُستعمَل لعرض إشعار تقدم التحميل</string>
     <string name="_continue">تابِع</string>
     <string name="init_screen_title">مرحباً بكَِ في سونغ‌سينك!</string>
     <plurals name="songs_count">

@@ -152,7 +152,6 @@
     <string name="init_screen_title">SongSync+ にようこそ！</string>
     <string name="show_notification_permission">通知を表示 (オプション)</string>
     <string name="all_files_access_description">ファイルピッカーを毎回開かずに曲のディレクトリに lrc ファイルを保存するために必要です</string>
-    <string name="show_notification_description">ダウンロードの進捗通知を表示するために使用します</string>
     <string name="init_screen_description">開始するには次の権限を許可してください:</string>
     <string name="now_playing_song">再生中の曲</string>
     <string name="notification_access">通知のアクセス (オプション)</string>

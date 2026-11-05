@@ -152,7 +152,6 @@
     <string name="all_files_access">Akses semua file</string>
     <string name="all_files_access_description">Dibutuhkan untuk menyimpan file lrc di dalam direktori lagu tanpa perlu membuka pemilih file setiap waktu</string>
     <string name="show_notification_permission">Tampilkan notifikasi (Opsional)</string>
-    <string name="show_notification_description">Digunakan untuk menampilkan notifikasi kemajuan pengunduhan</string>
     <string name="_continue">Lanjut</string>
     <string name="init_screen_title">Selamat datang di SongSync+!</string>
     <string name="init_screen_description">Untuk memulai, mohon izinkan perizinan berikut:</string>

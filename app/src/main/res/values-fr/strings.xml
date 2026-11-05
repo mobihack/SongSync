@@ -152,7 +152,6 @@
     <string name="pure_black_theme_summary">Utiliser le thème noir lorsque le mode sombre est activé</string>
     <string name="all_files_access">Accès à tous les fichiers</string>
     <string name="show_notification_permission">Afficher les notifications (facultatif)</string>
-    <string name="show_notification_description">Utilisé pour afficher une notification de progression du téléchargement</string>
     <string name="_continue">Continuer</string>
     <string name="init_screen_title">Bienvenue sur SongSync+ !</string>
     <string name="init_screen_description">Pour commencer, veuillez accorder les autorisations suivantes :</string>

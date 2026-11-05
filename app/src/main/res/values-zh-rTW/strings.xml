@@ -138,7 +138,6 @@
     <string name="ascending">升序</string>
     <string name="descending">降序</string>
     <string name="show_notification_permission">顯示通知(可選)</string>
-    <string name="show_notification_description">用於顯示下載進度通知</string>
     <string name="showing_lyrics_for">顯示歌詞</string>
     <string name="all_files_access_description">如果不想每次都打開檔案選擇器將rc檔案保存在歌曲路徑中，那麼必須授於該權限</string>
     <string name="success_failed">成功: %1$d, 沒有歌詞: %2$d, 失敗: %3$d</string>

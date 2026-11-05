@@ -3,7 +3,6 @@
 package pl.lambada.songsync.ui.screens.init
 
 import androidx.lifecycle.compose.LifecycleResumeEffect
-import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,7 +20,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material.icons.outlined.MusicNote
-import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -44,7 +42,6 @@ import pl.lambada.songsync.ui.components.ListGroup
 import pl.lambada.songsync.ui.screens.init.components.PermissionRow
 import pl.lambada.songsync.ui.screens.init.components.permissions.AllFilesAccess
 import pl.lambada.songsync.ui.screens.init.components.permissions.NotificationPermission
-import pl.lambada.songsync.ui.screens.init.components.permissions.PostNotifications
 
 /**
  * First-run setup: the logo and title, then the one required permission and the optional ones
@@ -112,17 +109,6 @@ fun InitScreen(
 
             SectionLabel(R.string.setup_optional)
             ListGroup {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) row {
-                    PermissionRow(
-                        icon = Icons.Outlined.NotificationsActive,
-                        title = R.string.setup_notifications,
-                        description = R.string.show_notification_description,
-                        granted = viewModel.notificationPermissionGranted,
-                        requesting = viewModel.notificationClicked,
-                        onRequest = { viewModel.notificationClicked = true },
-                        shapes = it,
-                    )
-                }
                 row {
                     PermissionRow(
                         icon = Icons.Outlined.MusicNote,
@@ -150,12 +136,6 @@ fun InitScreen(
         AllFilesAccess(
             onGranted = { viewModel.allFilesPermissionGranted = true },
             onDismiss = { viewModel.allFilesClicked = false },
-        )
-    }
-    if (viewModel.notificationClicked && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        PostNotifications(
-            onGranted = { viewModel.notificationPermissionGranted = true },
-            onDismiss = { viewModel.notificationClicked = false },
         )
     }
     if (viewModel.notificationAccessClicked) {

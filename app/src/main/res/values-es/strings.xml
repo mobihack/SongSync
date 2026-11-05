@@ -158,7 +158,6 @@
     <string name="all_files_access">Acceso a todos los archivos</string>
     <string name="all_files_access_description">Requerido para guardar archivos lrc en el directorio de la canción sin abrir el selector de archivos cada vez</string>
     <string name="show_notification_permission">Mostrar notificación (Opcional)</string>
-    <string name="show_notification_description">Usado para mostrar la notificación de progreso de descarga</string>
     <string name="_continue">Continuar</string>
     <string name="init_screen_title">¡Bienvenido a SongSync+!</string>
     <string name="init_screen_description">Para comenzar, por favor otorga los siguientes permisos:</string>

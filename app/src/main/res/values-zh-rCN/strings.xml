@@ -141,7 +141,6 @@
     <string name="unknown_error_occurred">发生了未知错误</string>
     <string name="all_files_access">访问所有文件</string>
     <string name="show_notification_permission">显示通知（可选）</string>
-    <string name="show_notification_description">用于显示下载进度通知</string>
     <string name="_continue">继续</string>
     <string name="all_files_access_description">如果不想每次都打开文件选择器将歌词文件保存在歌曲目录中，那么必须授予该权限</string>
     <string name="init_screen_title">欢迎来到 SongSync+！</string>

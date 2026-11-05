@@ -154,7 +154,6 @@
     <string name="all_files_access">எல்லா கோப்புகளும் அணுகலாம்</string>
     <string name="all_files_access_description">ஒவ்வொரு முறையும் கோப்பு தேர்வாளரைத் திறக்காமல் பாடலின் கோப்பகத்தில் எல்.ஆர்.சி கோப்புகளைச் சேமிக்க வேண்டும்</string>
     <string name="show_notification_permission">அறிவிப்பைக் காட்டு (விரும்பினால்)</string>
-    <string name="show_notification_description">பதிவிறக்க முன்னேற்ற அறிவிப்பைக் காட்டப் பயன்படுகிறது</string>
     <string name="init_screen_title">பாடல்களுக்கு வருக!</string>
     <string name="init_screen_description">தொடங்க, தயவுசெய்து பின்வரும் அனுமதிகளை வழங்கவும்:</string>
     <string name="now_playing_song">இப்போது பாடல் வாசிக்கும்</string>

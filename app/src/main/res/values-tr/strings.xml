@@ -158,7 +158,6 @@
     <string name="all_files_access">Tüm dosyalara erişim</string>
     <string name="all_files_access_description">Her seferinde dosya seçiciyi açmadan şarkı dizinine lrc dosyalarını kaydetmek için gereklidir</string>
     <string name="show_notification_permission">Bildirim göster (İsteğe bağlı)</string>
-    <string name="show_notification_description">İndirme ilerleme bildirimini göstermek için kullanılır</string>
     <string name="_continue">Devam et</string>
     <string name="init_screen_title">SongSync+’e Hoş Geldiniz!</string>
     <string name="init_screen_description">Başlamak için lütfen aşağıdaki izinleri verin:</string>

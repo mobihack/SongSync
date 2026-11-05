@@ -161,7 +161,6 @@
     <string name="all_files_access">Quyền truy cập mọi tệp</string>
     <string name="all_files_access_description">Cần để lưu tệp lrc vào thư mục của bài hát mà không phải mở trình chọn tệp mỗi lần</string>
     <string name="show_notification_permission">Hiện thông báo (Tùy chọn)</string>
-    <string name="show_notification_description">Dùng để hiện thông báo tiến trình tải xuống</string>
     <string name="_continue">Tiếp tục</string>
     <string name="init_screen_title">Chào mừng đến với SongSync+!</string>
     <string name="init_screen_description">Để bắt đầu, vui lòng cấp các quyền sau:</string>

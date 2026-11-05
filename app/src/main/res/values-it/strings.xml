@@ -143,7 +143,6 @@
     <string name="duration">Durata</string>
     <string name="showing_lyrics_for">Mostrando testi per</string>
     <string name="by">da</string>
-    <string name="show_notification_description">Utilizzato per mostrare la notifica di progresso del doenload</string>
     <string name="_continue">Continua</string>
     <string name="init_screen_title">Benvenuto su SongSync+!</string>
     <string name="init_screen_description">Per iniziare, concedi le seguenti autorizzazioni:</string>

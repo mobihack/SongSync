@@ -88,7 +88,6 @@
     <string name="all_files_access">Dostęp do wszystkich plików</string>
     <string name="all_files_access_description">Wymagany aby zapisać plik LRC w katalogu utworu bez otwierania menedżera plików</string>
     <string name="show_notification_permission">Pokaż powiadomienie (Opcjonalne)</string>
-    <string name="show_notification_description">Pokaż powiadomienie postępu pobierania</string>
     <string name="_continue">Kontynuuj</string>
     <string name="init_screen_title">Witaj w SongSync+!</string>
     <string name="init_screen_description">Aby rozpocząć, proszę, zezwól na wymagane uprawnienia:</string>

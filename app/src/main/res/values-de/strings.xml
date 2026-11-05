@@ -156,7 +156,6 @@
     <string name="song_name_not_provided">Der Liedname wurde nicht bereitgestellt</string>
     <string name="unknown_error_occurred">Ein unbekannter Fehler ist aufgetreten</string>
     <string name="show_notification_permission">Benachrichtigungen anzeigen (optional)</string>
-    <string name="show_notification_description">Wird verwendet, um die Download Fortschritt Benachrichtigung anzuzeigen</string>
     <string name="_continue">Fortsetzen</string>
     <string name="init_screen_title">Willkommen bei SongSync+!</string>
     <string name="init_screen_description">Um loszulegen, erlaube bitte die folgenden Berechtigungen:</string>
