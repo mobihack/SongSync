@@ -20,7 +20,7 @@
     <string name="success_failed">Tagumpay: %1$d, No lyrics: %2$d, Failed: %3$d</string>
     <string name="download_complete">Natapos na ang pag download</string>
     <string name="success">Tagumpay: %1$d</string>
-    <string name="failed">Nabigo</string>
+    <string name="failed">Nabigo: %1$d</string>
     <string name="please_try_again_later">Pakiusap, subukan muli mamaya</string>
     <string name="save_lrc_file">I-save ang .lrc na file</string>
     <string name="no_internet_server">Walang koneksyon sa internet o naka-off ang server</string>
