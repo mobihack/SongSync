@@ -6,6 +6,7 @@ import androidx.compose.animation.core.Spring
 import dev.chrisbanes.haze.rememberHazeState
 import dev.chrisbanes.haze.hazeSource
 import pl.lambada.songsync.ui.screens.home.components.HomeOverflowMenu
+import pl.lambada.songsync.ui.screens.home.components.NowPlayingCard
 import pl.lambada.songsync.ui.screens.home.components.LibraryHeader
 import pl.lambada.songsync.ui.screens.home.components.HomeLibraryToolbar
 import androidx.compose.material3.IconButtonDefaults
@@ -409,44 +410,83 @@ fun HomeScreenLoaded(
             }
 
             item {
-                if (viewModel.showNowPlaying) {
-                    Text(stringResource(id = R.string.now_playing_song))
-                    SongItem(
-                        filePath = viewModel.playingSongFilePath,
-                        selected = false,
-                        quickSelect = false,
-                        onSelectionChanged = {},
-                        onNavigateToSongRequest = {
-                            openWithTransition(viewModel.playingSongFilePath) {
-                                navController.navigate(
-                                    LyricsFetchScreen(
-                                        songName = viewModel.playingSongTitle,
-                                        artists = viewModel.playingSongArtist,
-                                        coverUri = viewModel.playingSongAlbumArt.toString(),
-                                        filePath = viewModel.playingSongFilePath
-                                    )
-                                )
-                            }
-                        },
-                        song = Song(
-                            title = viewModel.playingSongTitle,
-                            artist = viewModel.playingSongArtist,
-                            imgUri = viewModel.playingSongAlbumArt,
+                fun openNowPlaying() = openWithTransition(viewModel.playingSongFilePath) {
+                    navController.navigate(
+                        LyricsFetchScreen(
+                            songName = viewModel.playingSongTitle,
+                            artists = viewModel.playingSongArtist,
+                            coverUri = viewModel.playingSongAlbumArt.toString(),
                             filePath = viewModel.playingSongFilePath
-                        ),
-                        sharedTransitionScope = sharedTransitionScope,
-                        animatedVisibilityScope = animatedVisibilityScope,
-                        sharedElementsEnabled = viewModel.transitionKey == viewModel.playingSongFilePath,
-                        disableMarquee = viewModel.userSettingsController.disableMarquee,
-                        showPath = viewModel.userSettingsController.showPath
+                        )
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                }
+                if (viewModel.showNowPlaying) {
+                    val motionScheme = MaterialTheme.motionScheme
+                    // A poster normally; while searching it steps back to a plain row among the results
+                    AnimatedContent(
+                        targetState = viewModel.showingSearch,
+                        transitionSpec = {
+                            fadeIn(motionScheme.defaultEffectsSpec()) togetherWith
+                                fadeOut(motionScheme.fastEffectsSpec()) using
+                                // Heights don't overshoot: a bounce would shove the list
+                                SizeTransform(clip = false) { _, _ ->
+                                    spring(dampingRatio = 1f, stiffness = Spring.StiffnessMediumLow)
+                                }
+                        },
+                        label = "nowPlaying",
+                    ) { searching ->
+                        if (!searching) {
+                            NowPlayingCard(
+                                title = viewModel.playingSongTitle,
+                                artist = viewModel.playingSongArtist,
+                                imgUri = viewModel.playingSongAlbumArt,
+                                filePath = viewModel.playingSongFilePath,
+                                isPlaying = viewModel.playingSongIsPlaying,
+                                direction = viewModel.playingSongDirection,
+                                onClick = ::openNowPlaying,
+                                sharedTransitionScope = sharedTransitionScope,
+                                animatedVisibilityScope = animatedVisibilityScope,
+                                sharedElementsEnabled = viewModel.transitionKey == viewModel.playingSongFilePath,
+                            )
+                        } else Column {
+                            Text(
+                                text = stringResource(
+                                    if (viewModel.playingSongIsPlaying) R.string.now_playing else R.string.last_played
+                                ),
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(start = 24.dp, top = 8.dp),
+                            )
+                            SongItem(
+                                filePath = viewModel.playingSongFilePath,
+                                selected = false,
+                                quickSelect = false,
+                                onSelectionChanged = {},
+                                onNavigateToSongRequest = ::openNowPlaying,
+                                song = Song(
+                                    title = viewModel.playingSongTitle,
+                                    artist = viewModel.playingSongArtist,
+                                    imgUri = viewModel.playingSongAlbumArt,
+                                    filePath = viewModel.playingSongFilePath
+                                ),
+                                sharedTransitionScope = sharedTransitionScope,
+                                animatedVisibilityScope = animatedVisibilityScope,
+                                sharedElementsEnabled = viewModel.transitionKey == viewModel.playingSongFilePath,
+                                disableMarquee = viewModel.userSettingsController.disableMarquee,
+                                showPath = viewModel.userSettingsController.showPath
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            HorizontalDivider(
+                                modifier = Modifier.padding(horizontal = 24.dp),
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                            )
+                        }
+                    }
                 }
             }
 
             item(key = "libraryHeader") {
                 Column {
-                    if (viewModel.showNowPlaying) HorizontalDivider()
                     LibraryHeader(songCount = viewModel.displaySongs.size)
                 }
             }
