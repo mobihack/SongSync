@@ -10,7 +10,8 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.FilterAlt
 import androidx.compose.material.icons.filled.SelectAll
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilledTonalIconToggleButton
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
@@ -24,7 +25,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Modifier
@@ -83,13 +85,17 @@ fun HomeLibraryToolbar(
         IconButton(onClick = onSort, shapes = IconButtonDefaults.shapes()) {
             Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = stringResource(R.string.sort))
         }
-        FilledTonalIconToggleButton(
-            checked = filterActive,
-            onCheckedChange = { onFilter() },
-            shapes = IconButtonDefaults.toggleableShapes(),
-            colors = IconButtonDefaults.filledTonalIconToggleButtonColors(containerColor = Color.Transparent),
+        // A dot on the icon (not a filled button) marks that a filter is hiding songs
+        IconButton(
+            onClick = onFilter,
+            shapes = IconButtonDefaults.shapes(),
+            modifier = Modifier.semantics {
+                if (filterActive) stateDescription = "On"
+            },
         ) {
-            Icon(Icons.Outlined.FilterAlt, contentDescription = stringResource(R.string.filters))
+            BadgedBox(badge = { if (filterActive) Badge() }) {
+                Icon(Icons.Outlined.FilterAlt, contentDescription = stringResource(R.string.filters))
+            }
         }
     }
 }
