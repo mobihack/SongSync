@@ -44,16 +44,23 @@ fun BatchDownloadLyrics(viewModel: HomeViewModel, onDone: () -> Unit) {
         }
     }
 
+    // Closing the dialog stops the download too, not just the dialog
+    val cancel = {
+        viewModel.cancelBatchDownload()
+        uiState = UiState.Cancelled
+    }
+
     when (uiState) {
         UiState.Cancelled -> onDone()
         UiState.Warning -> BatchDownloadWarningDialog(
             songsCount = songs.size,
             onConfirm = {
-                uiState = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-                    UiState.LegacyPrompt
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+                    uiState = UiState.LegacyPrompt
                 } else {
+                    // Pending first: an empty batch completes (sets Done) as soon as it starts
+                    uiState = UiState.Pending
                     startBatchDownload()
-                    UiState.Pending
                 }
             },
             onDismiss = { uiState = UiState.Cancelled },
@@ -74,14 +81,14 @@ fun BatchDownloadLyrics(viewModel: HomeViewModel, onDone: () -> Unit) {
                 if (total != 0) (count.toFloat() / total.toFloat() * 100).roundToInt() else 0
 
             DownloadProgressDialog(
-                currentSongTitle = songs.getOrNull(count % total)?.title,
+                currentSongTitle = songs.getOrNull(count)?.title,
                 count = count,
                 total = total,
                 percentage = percentage,
                 successCount = successCount,
                 noLyricsCount = noLyricsCount,
                 failedCount = failedCount,
-                onCancel = { uiState = UiState.Cancelled },
+                onCancel = cancel,
                 disableMarquee = viewModel.userSettingsController.disableMarquee
             )
         }
@@ -93,7 +100,7 @@ fun BatchDownloadLyrics(viewModel: HomeViewModel, onDone: () -> Unit) {
             onDismiss = { uiState = UiState.Cancelled }
         )
 
-        UiState.RateLimited -> RateLimitedDialog(onDismiss = { uiState = UiState.Cancelled })
+        UiState.RateLimited -> RateLimitedDialog(onDismiss = cancel)
     }
 }
 

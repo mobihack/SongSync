@@ -44,6 +44,7 @@ import pl.lambada.songsync.services.NotificationListener
 import pl.lambada.songsync.util.FolderMode
 import pl.lambada.songsync.util.MusicFolders
 import pl.lambada.songsync.util.downloadLyrics
+import pl.lambada.songsync.util.saveBatchLyrics
 import pl.lambada.songsync.util.ext.toLrcFile
 import java.io.File
 import java.util.UUID
@@ -282,20 +283,45 @@ class HomeViewModel(
         }
     }
 
+    private var batchJob: Job? = null
+
+    /** Starts a batch download of [songsToBatchDownload], replacing any one still running. */
     fun batchDownloadLyrics(
         context: Context,
         onProgressUpdate: (successCount: Int, noLyricsCount: Int, failedCount: Int) -> Unit,
         onDownloadComplete: () -> Unit,
         onRateLimitReached: () -> Unit
-    ) = viewModelScope.launch {
-        downloadLyrics(
-            songs = songsToBatchDownload,
-            viewModel = this@HomeViewModel,
-            context = context,
-            onProgressUpdate = onProgressUpdate,
-            onDownloadComplete = onDownloadComplete,
-            onRateLimitReached = onRateLimitReached,
-        )
+    ) {
+        batchJob?.cancel()
+        val appContext = context.applicationContext
+        val settings = userSettingsController
+        batchJob = viewModelScope.launch {
+            downloadLyrics(
+                songs = songsToBatchDownload,
+                findLyrics = { song ->
+                    findLyrics(SongInfo(song.title, song.artist, durationMs = song.durationMs))?.value
+                },
+                saveLyrics = { song, lyrics ->
+                    withContext(Dispatchers.IO) {
+                        saveBatchLyrics(
+                            appContext, song, lyrics,
+                            embed = settings.embedLyricsIntoFiles,
+                            directOffset = settings.directlyModifyTimestamps,
+                            sdCardPath = settings.sdCardPath,
+                        )
+                    }
+                },
+                onProgressUpdate = onProgressUpdate,
+                onDownloadComplete = onDownloadComplete,
+                onRateLimitReached = onRateLimitReached,
+            )
+        }
+    }
+
+    /** Stops the running batch download, if any; songs already saved stay saved. */
+    fun cancelBatchDownload() {
+        batchJob?.cancel()
+        batchJob = null
     }
 
     // Live now-playing tracking: every active media session is watched, so pausing, skipping or

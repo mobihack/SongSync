@@ -16,7 +16,10 @@ import com.kyant.taglib.TagLib
 import pl.lambada.songsync.R
 import pl.lambada.songsync.domain.model.Song
 import pl.lambada.songsync.domain.model.SongInfo
-import pl.lambada.songsync.ui.screens.home.HomeViewModel
+import pl.lambada.songsync.data.remote.lyrics_providers.LyricsLookup
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import pl.lambada.songsync.util.ext.toLrcFile
 import java.io.File
 import java.io.FileNotFoundException
@@ -173,11 +176,18 @@ enum class Providers(
     LYRICSOVH("lyrics.ovh", false),
 }
 
-// only for invoking the task and handling and reporting progress
+/**
+ * Finds and saves lyrics for each of [songs] in turn, reporting counts through [onProgressUpdate].
+ *
+ * A song counts as failed when [findLyrics] throws, or when [saveLyrics] throws or returns false;
+ * as having no lyrics when nothing is found. After [RATE_LIMIT_FAILURES] lookups in a row fail,
+ * [onRateLimitReached] is called and the download stops. Cancelling the calling coroutine stops it
+ * before the next song.
+ */
 suspend fun downloadLyrics(
     songs: List<Song>,
-    viewModel: HomeViewModel,
-    context: Context,
+    findLyrics: suspend (Song) -> LyricsLookup?,
+    saveLyrics: suspend (Song, LyricsLookup) -> Boolean,
     onProgressUpdate: (successCount: Int, noLyricsCount: Int, failedCount: Int) -> Unit,
     onDownloadComplete: () -> Unit,
     onRateLimitReached: () -> Unit,
@@ -185,100 +195,72 @@ suspend fun downloadLyrics(
     var successCount = 0
     var noLyricsCount = 0
     var failedCount = 0
-    var consecutiveNotFound = 0
+    var consecutiveFailures = 0
 
-    songs.forEach { song ->
-        downloadLyricsForSong(
-            song,
-            viewModel,
-            context,
-            onFailedSongInfoResponse = {
-                failedCount++
-                consecutiveNotFound++
-                if (consecutiveNotFound >= 5) onRateLimitReached()
-            },
-            onSuccessfulSongInfoResponse = { consecutiveNotFound = 0 },
-            onFailedLyricsResponse = {
-                if (it is NullPointerException || it is FileNotFoundException)
-                    noLyricsCount++
-                else {
-                    failedCount++
-                    consecutiveNotFound++
-                }
-            },
-            onLyricsSaved = { successCount++ }
-        )
+    for (song in songs) {
+        currentCoroutineContext().ensureActive()
 
+        val found = try {
+            findLyrics(song).also { consecutiveFailures = 0 }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            failedCount++
+            consecutiveFailures++
+            onProgressUpdate(successCount, noLyricsCount, failedCount)
+            if (consecutiveFailures >= RATE_LIMIT_FAILURES) return onRateLimitReached()
+            continue
+        }
+
+        if (found == null) {
+            noLyricsCount++
+        } else {
+            val saved = try {
+                saveLyrics(song, found)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e("LyricsUtils", "Couldn't save lyrics for ${song.filePath}: ${e.message}")
+                false
+            }
+            if (saved) successCount++ else failedCount++
+        }
         onProgressUpdate(successCount, noLyricsCount, failedCount)
     }
 
     onDownloadComplete()
 }
 
-// only for retrieval, processing, and saving data
-private suspend fun downloadLyricsForSong(
+/** Lookups failing in a row before a batch download assumes it is being rate limited. */
+const val RATE_LIMIT_FAILURES = 5
+
+/**
+ * Saves batch-downloaded [lyrics] for [song]: embedded in the song file when [embed] is set,
+ * otherwise as an .lrc file beside it.
+ *
+ * @return whether it was saved
+ */
+fun saveBatchLyrics(
+    context: Context,
     song: Song,
-    viewModel: HomeViewModel,
-    context: Context,
-    onFailedSongInfoResponse: (Throwable) -> Unit,
-    onSuccessfulSongInfoResponse: () -> Unit,
-    onFailedLyricsResponse: (Throwable) -> Unit,
-    onLyricsSaved: () -> Unit
-) {
-    runCatching {
-        viewModel.findLyrics(SongInfo(song.title, song.artist, durationMs = song.durationMs))
-    }
-        .onFailure(onFailedSongInfoResponse)
-        .onSuccess { found ->
-            onSuccessfulSongInfoResponse()
-
-            runCatching {
-                found?.value?.lyrics ?: throw NullPointerException("Lyrics result is null")
-            }
-                .onFailure(onFailedLyricsResponse)
-                .onSuccess {
-                    val lrcContent = formatLyrics(
-                        found!!.value.songInfo, // non-null: we have its lyrics
-                        it,
-                        context,
-                        viewModel.userSettingsController.directlyModifyTimestamps
-                    )
-
-                    if (viewModel.userSettingsController.embedLyricsIntoFiles) {
-                        embedLyricsInFile(
-                            context,
-                            song.filePath ?: throw NullPointerException("File path is null"),
-                            lrcContent
-                        )
-                    } else {
-                        saveLrcFile(
-                            context,
-                            song.filePath ?: throw NullPointerException("File path is null"),
-                            SongInfo(song.title, song.artist),
-                            lrcContent,
-                            viewModel.userSettingsController.sdCardPath
-                        )
-                    }
-
-                    onLyricsSaved()
-                }
-        }
-}
-
-private fun formatLyrics(
-    songInfo: SongInfo,
-    lyrics: String,
-    context: Context,
-    directOffset: Boolean
-): String {
+    lyrics: LyricsLookup,
+    embed: Boolean,
+    directOffset: Boolean,
+    sdCardPath: String?,
+): Boolean {
+    val filePath = song.filePath ?: return false
     val lrcContent = generateLrcContent(
-        songInfo,
-        lyrics,
+        lyrics.songInfo,
+        lyrics.lyrics,
         context.getString(R.string.generated_using),
         directOffset = directOffset
     )
-
-    return lrcContent
+    return if (embed) {
+        embedLyricsInFile(context, filePath, lrcContent)
+    } else {
+        saveLrcFile(context, filePath, SongInfo(song.title, song.artist), lrcContent, sdCardPath)
+        true
+    }
 }
 
 fun saveToExternalPath(
