@@ -38,17 +38,33 @@ class UpdateService {
      * @param latestRelease The latest release from the GitHub API.
      * @return True if the latest release is newer, false otherwise.
      */
-    private fun isNewerRelease(context: Context, latestRelease: Release): Boolean {
-        val currentVersion = context
-            .getVersion()
-            .replace(".", "")
-            .toInt()
-        val latestVersion = latestRelease.tagName
-            .replace(".", "")
-            .replace("v", "")
-            .toInt()
+    private fun isNewerRelease(context: Context, latestRelease: Release): Boolean =
+        isNewerVersion(latest = latestRelease.tagName, current = context.getVersion())
 
-        return latestVersion > currentVersion
+    companion object {
+        /**
+         * Compares dotted versions part by part, so 4.3.10 is newer than 4.3.9 and older than 4.4.0.
+         * A leading "v" and any suffix ("-beta", "+build") are ignored; missing parts count as 0.
+         */
+        fun isNewerVersion(latest: String, current: String): Boolean {
+            val a = parts(latest)
+            val b = parts(current)
+            for (i in 0 until maxOf(a.size, b.size)) {
+                val x = a.getOrElse(i) { 0 }
+                val y = b.getOrElse(i) { 0 }
+                if (x != y) return x > y
+            }
+            return false
+        }
+
+        private fun parts(version: String): List<Int> = version
+            .trim()
+            .removePrefix("v")
+            .removePrefix("V")
+            .substringBefore('-')
+            .substringBefore('+')
+            .split('.')
+            .map { part -> part.takeWhile { it.isDigit() }.toIntOrNull() ?: 0 }
     }
 }
 

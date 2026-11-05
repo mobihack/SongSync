@@ -16,33 +16,30 @@ jobs:
 
     permissions:
       contents: read
-      packages: write
-      checks: write
-      pull-requests: write
-      statuses: write
-      security-events: write
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
 
       - name: Set up JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v5
         with:
           distribution: "zulu"
           java-version: "17"
+          cache: gradle
 
       - name: Build debug APK
         run: ./gradlew assembleDebug
 
       - name: Upload debug APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: app-debug.apk
           path: ./app/build/outputs/apk/debug/app-debug.apk
 
   build-release:
-    if: github.event_name == 'push'
+    # Needs the signing secrets, which pull requests don't get
+    if: github.event_name != 'pull_request'
     name: Build signed release APK
     runs-on: ubuntu-latest
 
@@ -53,33 +50,75 @@ jobs:
       KEYSTORE_BASE_64: ${{ secrets.KEYSTORE_BASE_64 }}
 
     permissions:
-      contents: read
-      packages: write
-      checks: write
-      pull-requests: write
-      statuses: write
-      security-events: write
+      # Write is needed to create the tag and GitHub Release
+      contents: write
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
+
+      - name: Read version
+        id: version
+        run: |
+          name=$(sed -nE 's/^[[:space:]]*versionName = "([^"]+)".*/\1/p' app/build.gradle.kts)
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "Building version $name"
+
+      - name: Is this a new version?
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="v${{ steps.version.outputs.name }}"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          if [ "$GITHUB_REF" != "refs/heads/master" ]; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "Not master: building only."
+          elif gh release view "$tag" -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "$tag is already released: building only. Bump versionName to publish a new release."
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+            echo "$tag has no release yet: it will be published."
+          fi
 
       - name: Set up JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v5
         with:
           distribution: "zulu"
           java-version: "17"
+          cache: gradle
 
       - name: Set up signing key
         run: |
-          base64 -d <<< $KEYSTORE_BASE_64 > release.keystore
-          echo "RELEASE_STORE_FILE=$(realpath release.keystore)" >> $GITHUB_ENV
+          if [ -z "$KEYSTORE_BASE_64" ]; then
+            echo "::error::The KEYSTORE_BASE_64 secret is not set."
+            exit 1
+          fi
+          base64 -d <<< "$KEYSTORE_BASE_64" > release.keystore
+          echo "RELEASE_STORE_FILE=$(realpath release.keystore)" >> "$GITHUB_ENV"
 
       - name: Build release APK
         run: ./gradlew assembleRelease
 
+      - name: Name the APK after the version
+        run: |
+          mkdir -p dist
+          cp app/build/outputs/apk/release/app-release.apk "dist/SongSyncPlus-${{ steps.version.outputs.name }}.apk"
+
       - name: Upload release APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
-          name: app-release.apk
-          path: ./app/build/outputs/apk/release/app-release.apk
+          name: SongSyncPlus-${{ steps.version.outputs.name }}.apk
+          path: dist/*.apk
+
+      - name: Publish GitHub Release
+        if: steps.release.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Creates the tag on this commit as well as the release
+          gh release create "${{ steps.release.outputs.tag }}" dist/*.apk \
+            --target "$GITHUB_SHA" \
+            --title "SongSync+ ${{ steps.version.outputs.name }}" \
+            --generate-notes
