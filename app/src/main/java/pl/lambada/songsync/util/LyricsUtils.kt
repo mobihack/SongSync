@@ -246,26 +246,19 @@ private suspend fun downloadLyricsForSong(
     onLyricsSaved: () -> Unit
 ) {
     runCatching {
-        viewModel
-            .getSongInfo(SongInfo(song.title, song.artist, durationMs = song.durationMs))
-            ?: throw NullPointerException("Song info result is null")
+        viewModel.findLyrics(SongInfo(song.title, song.artist, durationMs = song.durationMs))
     }
         .onFailure(onFailedSongInfoResponse)
-        .onSuccess { songInfo ->
+        .onSuccess { found ->
             onSuccessfulSongInfoResponse()
 
             runCatching {
-                viewModel
-                    .getSyncedLyrics(
-                        songInfo.songName!!,
-                        songInfo.artistName!!
-                    )
-                    ?: throw NullPointerException("Lyrics result is null")
+                found?.value?.lyrics ?: throw NullPointerException("Lyrics result is null")
             }
                 .onFailure(onFailedLyricsResponse)
                 .onSuccess {
                     val lrcContent = formatLyrics(
-                        songInfo,
+                        found!!.value.songInfo, // non-null: we have its lyrics
                         it,
                         context,
                         viewModel.userSettingsController.directlyModifyTimestamps

@@ -219,9 +219,9 @@ fun SharedTransitionScope.LyricsFetchScreen(
                         lyricsFetchState = viewModel.lyricsFetchState,
                         animatedVisibilityScope = animatedVisibilityScope,
                         disableMarquee = viewModel.userSettingsController.disableMarquee,
-                        allowTryingAgain =
-                            viewModel.userSettingsController.selectedProvider != Providers.MUSIXMATCH,
-                        selectedProvider = viewModel.userSettingsController.selectedProvider,
+                        allowTryingAgain = viewModel.activeProvider != Providers.MUSIXMATCH,
+                        // Show the provider that actually answered (may be a fallback)
+                        selectedProvider = viewModel.activeProvider,
                         onExpandProvidersRequest = { expandedProviders = true },
                     )
 

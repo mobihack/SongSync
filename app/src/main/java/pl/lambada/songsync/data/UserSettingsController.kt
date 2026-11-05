@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import pl.lambada.songsync.domain.model.SortOrders
 import pl.lambada.songsync.domain.model.SortValues
+import pl.lambada.songsync.util.ProviderChain
 import pl.lambada.songsync.util.Providers
 import pl.lambada.songsync.util.get
 import pl.lambada.songsync.util.set
@@ -52,6 +53,10 @@ class UserSettingsController(private val dataStore: DataStore<Preferences>) {
         private set
 
     var disableMarquee by mutableStateOf(dataStore.get(disableMarqueeKey, false))
+        private set
+
+    /** Try other providers when the selected one has no (synced) lyrics. */
+    var providerFallback by mutableStateOf(dataStore.get(providerFallbackKey, true))
         private set
 
     var sdCardPath by mutableStateOf(dataStore.get(sdCardPathKey, null))
@@ -120,6 +125,14 @@ class UserSettingsController(private val dataStore: DataStore<Preferences>) {
         unsyncedFallbackMusixmatch = to
     }
 
+    fun updateProviderFallback(to: Boolean) {
+        dataStore.set(providerFallbackKey, to)
+        providerFallback = to
+    }
+
+    /** Providers to search, in order: the selected one, then fallbacks if enabled. */
+    fun lookupProviders(): List<Providers> = ProviderChain.order(selectedProvider, providerFallback)
+
     fun updateDisableMarquee(to: Boolean) {
         dataStore.set(disableMarqueeKey, to)
         disableMarquee = to
@@ -166,6 +179,7 @@ private val includeRomanizationKey = booleanPreferencesKey("include_romanization
 private val multiPersonWordByWordKey = booleanPreferencesKey("multi_person_word_by_word")
 private val unsyncedFallbackMusixmatchKey = booleanPreferencesKey("unsynced_lyrics_fallback")
 private val disableMarqueeKey = booleanPreferencesKey("marquee_disable")
+private val providerFallbackKey = booleanPreferencesKey("provider_fallback")
 private val pureBlackKey = booleanPreferencesKey("pure_black")
 private val sdCardPathKey = stringPreferencesKey("sd_card_path")
 private val showPathKey = booleanPreferencesKey("show_path")

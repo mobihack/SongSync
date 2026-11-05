@@ -18,6 +18,7 @@ import pl.lambada.songsync.util.embedLyricsInFile
 import pl.lambada.songsync.util.ext.getVersion
 import pl.lambada.songsync.util.generateLrcContent
 import pl.lambada.songsync.util.isLegacyFileAccessRequired
+import pl.lambada.songsync.util.NoTrackFoundException
 import pl.lambada.songsync.util.newLyricsFilePath
 import pl.lambada.songsync.util.saveToExternalPath
 import pl.lambada.songsync.util.showToast
@@ -43,41 +44,62 @@ class LyricsFetchViewModel(
 
     var lyricsFetchState by mutableStateOf<LyricsFetchState>(LyricsFetchState.NotSubmitted)
 
+    /** The provider that supplied the current result; can differ from the selected one. */
+    var activeProvider by mutableStateOf(userSettingsController.selectedProvider)
+        private set
+
     private suspend fun getSyncedLyrics(title: String, artist: String): String? =
         lyricsProviderService.getSyncedLyrics(
             title,
             artist,
-            userSettingsController.selectedProvider,
+            activeProvider,
             userSettingsController.includeTranslation,
             userSettingsController.includeRomanization,
             userSettingsController.multiPersonWordByWord,
             userSettingsController.unsyncedFallbackMusixmatch
         )
 
+    private fun buildQuery() = SongInfo(
+        querySongName,
+        queryArtistName,
+        // Only meaningful while the query still describes the local song
+        durationMs = source?.durationMs?.takeIf {
+            querySongName == source.songName && queryArtistName == source.artists
+        }
+    )
+
     fun loadSongInfo(context: Context, tryingAgain: Boolean = false) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 queryState = QueryStatus.Pending
                 lyricsFetchState = LyricsFetchState.NotSubmitted
-                queryOffset = if (tryingAgain) queryOffset + 1 else 0
 
-                val result = lyricsProviderService
-                    .getSongInfo(
-                        query = SongInfo(
-                            querySongName,
-                            queryArtistName,
-                            // Only meaningful while the query still describes the local song
-                            durationMs = source?.durationMs?.takeIf {
-                                querySongName == source.songName && queryArtistName == source.artists
-                            }
-                        ),
-                        offset = queryOffset,
-                        provider = userSettingsController.selectedProvider
-                    )
-                    ?: error("Error fetching lyrics for the song.")
+                if (tryingAgain) {
+                    // Next result from the provider that answered last time
+                    queryOffset += 1
+                    val result = lyricsProviderService
+                        .getSongInfo(query = buildQuery(), offset = queryOffset, provider = activeProvider)
+                        ?: error("Error fetching lyrics for the song.")
 
-                queryState = QueryStatus.Success(result)
-                loadLyrics(result.songName!!, result.artistName!!)
+                    queryState = QueryStatus.Success(result)
+                    loadLyrics(result.songName!!, result.artistName!!)
+                } else {
+                    // Fresh search: selected provider first, then fallbacks if enabled
+                    queryOffset = 0
+                    activeProvider = userSettingsController.selectedProvider
+                    val found = lyricsProviderService.findLyrics(
+                        buildQuery(),
+                        userSettingsController.lookupProviders(),
+                        includeTranslationNetEase = userSettingsController.includeTranslation,
+                        includeRomanizationNetEase = userSettingsController.includeRomanization,
+                        multiPersonWordByWord = userSettingsController.multiPersonWordByWord,
+                        unsyncedFallbackMusixmatch = userSettingsController.unsyncedFallbackMusixmatch,
+                    ) ?: throw NoTrackFoundException()
+
+                    activeProvider = found.provider
+                    queryState = QueryStatus.Success(found.value.songInfo)
+                    lyricsFetchState = LyricsFetchState.Success(found.value.lyrics)
+                }
             } catch (e: Exception) {
                 queryState = when (e) {
                     is UnknownHostException -> QueryStatus.NoConnection

@@ -17,6 +17,7 @@ import pl.lambada.songsync.util.InternalErrorException
 import pl.lambada.songsync.util.LyricsCleanup
 import pl.lambada.songsync.util.NoTrackFoundException
 import pl.lambada.songsync.util.ProviderUnavailableException
+import pl.lambada.songsync.util.ProviderChain
 import pl.lambada.songsync.util.Providers
 import java.io.FileNotFoundException
 import java.net.UnknownHostException
@@ -165,7 +166,36 @@ class LyricsProviderService {
         })
     }
 
+    /**
+     * Searches each of [providers] in turn (see [ProviderChain]) and returns the first match with
+     * synced lyrics, or plain lyrics if no provider has synced ones.
+     */
+    suspend fun findLyrics(
+        query: SongInfo,
+        providers: List<Providers>,
+        includeTranslationNetEase: Boolean = false,
+        includeRomanizationNetEase: Boolean = false,
+        multiPersonWordByWord: Boolean = false,
+        unsyncedFallbackMusixmatch: Boolean = true,
+    ): ProviderChain.Found<LyricsLookup>? =
+        ProviderChain.find(providers, isSynced = { ProviderChain.isSynced(it.lyrics) }) { provider ->
+            val songInfo = getSongInfo(query, provider = provider) ?: return@find null
+            val lyrics = getSyncedLyrics(
+                songInfo.songName.orEmpty(),
+                songInfo.artistName.orEmpty(),
+                provider,
+                includeTranslationNetEase,
+                includeRomanizationNetEase,
+                multiPersonWordByWord,
+                unsyncedFallbackMusixmatch,
+            ) ?: return@find null
+            LyricsLookup(songInfo, lyrics)
+        }
+
     suspend fun getLyricsInLanguage(songId: Long, language: String): String? {
         return MusixmatchAPI().getLyricsInLanguage(songId, language)
     }
 }
+
+/** A matched song together with its lyrics. */
+data class LyricsLookup(val songInfo: SongInfo, val lyrics: String)

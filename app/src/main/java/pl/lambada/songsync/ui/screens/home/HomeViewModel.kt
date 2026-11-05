@@ -292,6 +292,16 @@ class HomeViewModel(
         }
     }
 
+    /** Finds lyrics for [query], falling back to other providers if enabled. */
+    suspend fun findLyrics(query: SongInfo) = lyricsProviderService.findLyrics(
+        query,
+        userSettingsController.lookupProviders(),
+        includeTranslationNetEase = userSettingsController.includeTranslation,
+        includeRomanizationNetEase = userSettingsController.includeRomanization,
+        multiPersonWordByWord = userSettingsController.multiPersonWordByWord,
+        unsyncedFallbackMusixmatch = userSettingsController.unsyncedFallbackMusixmatch,
+    )
+
     suspend fun getSongInfo(query: SongInfo): SongInfo? =
         lyricsProviderService.getSongInfo(query, provider = userSettingsController.selectedProvider)
 

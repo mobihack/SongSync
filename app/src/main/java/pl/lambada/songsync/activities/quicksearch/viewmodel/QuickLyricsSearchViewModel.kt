@@ -8,10 +8,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import pl.lambada.songsync.R
 import pl.lambada.songsync.data.UserSettingsController
 import pl.lambada.songsync.data.remote.lyrics_providers.LyricsProviderService
 import pl.lambada.songsync.domain.model.SongInfo
+import pl.lambada.songsync.util.NoTrackFoundException
 import pl.lambada.songsync.util.ResourceState
 import pl.lambada.songsync.util.ScreenState
 import pl.lambada.songsync.util.ext.getVersion
@@ -35,87 +35,32 @@ class QuickLyricsSearchViewModel(
         updateScreenState(ScreenState.Loading)
 
         viewModelScope.launch(Dispatchers.IO) {
-            val songInfoCall = runCatching {
-                lyricsProviderService
-                    .getSongInfo(
-                        query = SongInfo(song.first, song.second),
-                        offset = 0,
-                        provider = userSettingsController.selectedProvider
-                    )
+            // Selected provider first, then fallbacks if enabled
+            val lookup = runCatching {
+                lyricsProviderService.findLyrics(
+                    SongInfo(song.first, song.second),
+                    userSettingsController.lookupProviders(),
+                    includeTranslationNetEase = userSettingsController.includeTranslation,
+                    includeRomanizationNetEase = userSettingsController.includeRomanization,
+                    multiPersonWordByWord = userSettingsController.multiPersonWordByWord,
+                    unsyncedFallbackMusixmatch = userSettingsController.unsyncedFallbackMusixmatch,
+                )
             }
 
-            if (songInfoCall.isSuccess) {
-                val result = songInfoCall.getOrNull()
-
-                if (result == null) {
-                    updateScreenState(
-                        ScreenState.Error(
-                            Exception("The song information retrieved is null")
-                        )
-                    )
-                } else {
-                    updateScreenState(ScreenState.Success(result))
-                    fetchLyrics(result.songName!!, result.artistName!!, context)
+            lookup.onFailure { exception ->
+                updateScreenState(ScreenState.Error(exception))
+            }
+            lookup.onSuccess { found ->
+                if (found == null) {
+                    updateScreenState(ScreenState.Error(NoTrackFoundException()))
+                    return@onSuccess
                 }
-
-            } else {
-                val exception = songInfoCall.exceptionOrNull()
-                updateScreenState(
-                    ScreenState.Error(
-                        exception ?: Exception("An unknown error has occurred")
-                    )
-                )
+                updateScreenState(ScreenState.Success(found.value.songInfo))
+                updateLyricsState(ResourceState.Success(found.value.lyrics))
+                mutableState.update { it.copy(parsedLyrics = parseLyrics(found.value.lyrics)) }
             }
         }
     }
-
-    private fun fetchLyrics(title: String, artist: String, context: Context) {
-        updateLyricsState(ResourceState.Loading())
-        viewModelScope.launch(Dispatchers.IO) {
-
-            val lyricsCall = runCatching {
-                getSyncedLyrics(
-                    title,
-                    artist
-                )
-            }
-
-            if (lyricsCall.isSuccess) {
-                val syncedLyrics = lyricsCall.getOrNull()
-
-                if (syncedLyrics == null) updateLyricsState(
-                    ResourceState.Error("The fetched lyrics content is null.")
-                ) else {
-                    updateLyricsState(ResourceState.Success(syncedLyrics))
-                    parseLyrics(syncedLyrics).let { parsedLyrics ->
-                        mutableState.update {
-                            it.copy(parsedLyrics = parsedLyrics)
-                        }
-                    }
-                }
-
-            } else {
-                val exception = lyricsCall.exceptionOrNull()
-                updateLyricsState(
-                    ResourceState.Error(
-                        exception?.localizedMessage
-                            ?: (context.getString(R.string.unknown) + exception?.stackTrace.toString())
-                    )
-                )
-            }
-        }
-    }
-
-    private suspend fun getSyncedLyrics(title: String, artist: String): String? =
-        lyricsProviderService.getSyncedLyrics(
-            title,
-            artist,
-            userSettingsController.selectedProvider,
-            userSettingsController.includeTranslation,
-            userSettingsController.includeRomanization,
-            userSettingsController.multiPersonWordByWord,
-            userSettingsController.unsyncedFallbackMusixmatch
-        )
 
     private fun updateScreenState(screenState: ScreenState<SongInfo>) {
         if (screenState != mutableState.value.screenState) {

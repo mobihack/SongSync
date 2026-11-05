@@ -27,6 +27,7 @@ import pl.lambada.songsync.ui.screens.settings.components.ContributorsSection
 import pl.lambada.songsync.ui.screens.settings.components.CreditsSection
 import pl.lambada.songsync.ui.screens.settings.components.ExternalLinkSection
 import pl.lambada.songsync.ui.screens.settings.components.MarqueeSwitch
+import pl.lambada.songsync.ui.screens.settings.components.ProviderFallbackSwitch
 import pl.lambada.songsync.ui.screens.settings.components.MultiPersonSwitch
 import pl.lambada.songsync.ui.screens.settings.components.PureBlackThemeSwitch
 import pl.lambada.songsync.ui.screens.settings.components.RomanizationSwitch
@@ -72,6 +73,12 @@ fun SettingsScreen(
                 if (isSystemInDarkTheme()) PureBlackThemeSwitch(
                     selected = userSettingsController.pureBlack,
                     onToggle = { userSettingsController.updatePureBlack(it) }
+                )
+            }
+            item {
+                ProviderFallbackSwitch(
+                    selected = userSettingsController.providerFallback,
+                    onToggle = { userSettingsController.updateProviderFallback(it) }
                 )
             }
             item {
