@@ -2,6 +2,7 @@ package pl.lambada.songsync.data.remote.lyrics_providers
 
 import android.util.Log
 import pl.lambada.songsync.data.remote.lyrics_providers.apple.AppleAPI
+import pl.lambada.songsync.data.remote.lyrics_providers.others.BiniLyricsAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.others.DeezerAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.others.GeniusAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.others.KugouAPI
@@ -62,6 +63,9 @@ class LyricsProviderService {
 
     // KuGou looks lyrics up by the song's hash
     private var kugouSongInfo: SongInfo? = null
+
+    // BiniLyrics: URL of the matched song's TTML file
+    private var biniLyricsUrl: String? = null
     // TODO: Use values from SongInfo object returned by search instead of storing them here
 
     /**
@@ -134,6 +138,10 @@ class LyricsProviderService {
                 Providers.KUGOU -> KugouAPI().getSongInfo(query, offset).also {
                     kugouSongInfo = it
                 } ?: throw NoTrackFoundException()
+
+                Providers.BINILYRICS -> BiniLyricsAPI().getSongInfo(query, offset).also {
+                    biniLyricsUrl = it?.songLink
+                } ?: throw NoTrackFoundException()
             }
         } catch (e: Exception) {
             when (e) {
@@ -182,6 +190,7 @@ class LyricsProviderService {
             Providers.GENIUS -> GeniusAPI().getLyrics(geniusID)
             Providers.PETITLYRICS, Providers.LRCMUX, Providers.LYRICSOVH ->
                 prefetched[provider]?.let { it.syncedLyrics ?: it.unsyncedLyrics }
+            Providers.BINILYRICS -> biniLyricsUrl?.let { BiniLyricsAPI().getSyncedLyrics(it) }
             Providers.KUGOU -> kugouSongInfo?.kugouHash?.let { KugouAPI().getSyncedLyrics(it, kugouSongInfo?.durationMs) }
         })
     }

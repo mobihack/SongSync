@@ -18,6 +18,7 @@ object ProviderChain {
         Providers.NETEASE,
         Providers.LRCMUX,
         Providers.KUGOU,
+        Providers.BINILYRICS,
         Providers.MUSIXMATCH,
         Providers.QQMUSIC,
         Providers.APPLE,
