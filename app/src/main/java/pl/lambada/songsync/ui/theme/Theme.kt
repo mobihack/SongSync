@@ -35,6 +35,20 @@ private val lightColorScheme = expressiveLightColorScheme().copy(
 )
 
 /**
+ * The colour scheme without dynamic colour (before Android 12, or when it is off). Pure black only
+ * applies in dark theme: the setting stays saved while the system is light.
+ */
+internal fun fallbackColorScheme(darkTheme: Boolean, pureBlack: Boolean): ColorScheme = when {
+    darkTheme && pureBlack -> darkColorScheme.copy(
+        surface = Color.Black,
+        background = Color.Black,
+        surfaceContainerLowest = Color.Black,
+    )
+    darkTheme -> darkColorScheme
+    else -> lightColorScheme
+}
+
+/**
  * Custom SongSync theme that applies the desired color scheme and system UI adjustments.
  *
  * @param darkTheme Whether to use dark theme based on system settings.
@@ -64,14 +78,7 @@ fun SongSyncTheme(
                 dynamicLightColorScheme(context)
         }
 
-        pureBlack -> darkColorScheme.copy(
-            surface = Color.Black,
-            background = Color.Black,
-            surfaceContainerLowest = Color.Black,
-        )
-
-        darkTheme -> darkColorScheme
-        else -> lightColorScheme
+        else -> fallbackColorScheme(darkTheme, pureBlack)
     }.let { scheme ->
         // Pure black stays black; otherwise lean the background and containers slightly
         // toward the primary colour so the app isn't flat grey
