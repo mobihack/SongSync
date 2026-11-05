@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.filled.OpenInNew
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemShapes
@@ -46,6 +47,7 @@ fun RadioItem(
             selected = selected,
             onClick = onClick,
             shapes = shapes,
+            colors = listGroupColors(),
             leadingContent = { RadioButton(selected = selected, onClick = null) },
             supportingContent = description.takeIf { it.isNotEmpty() }?.let { { Text(it) } },
         ) {
@@ -80,6 +82,7 @@ fun NavigationItem(
         SegmentedListItem(
             onClick = onClick,
             shapes = shapes,
+            colors = listGroupColors(),
             modifier = modifier,
             supportingContent = description.takeIf { it.isNotEmpty() }?.let { { Text(it) } },
             trailingContent = { Chevron() },
@@ -99,6 +102,31 @@ fun NavigationItem(
         ItemTexts(label, description, Modifier.weight(1f))
         Spacer(modifier = Modifier.width(12.dp))
         Chevron()
+    }
+}
+
+/** A grouped row that opens a web page. */
+@Composable
+fun LinkItem(
+    label: String,
+    description: String = "",
+    shapes: ListItemShapes,
+    onClick: () -> Unit,
+) {
+    SegmentedListItem(
+        onClick = onClick,
+        shapes = shapes,
+        colors = listGroupColors(),
+        supportingContent = description.takeIf { it.isNotEmpty() }?.let { { Text(it) } },
+        trailingContent = {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.OpenInNew,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        },
+    ) {
+        Text(label)
     }
 }
 

@@ -1,5 +1,8 @@
 package pl.lambada.songsync.ui.screens.settings
 
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.PaddingValues
+import pl.lambada.songsync.ui.components.ListGroup
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -85,7 +88,14 @@ fun SettingsSectionScreen(
             SubScreenTopBar(title = title, scrollBehavior = scrollBehavior, onBack = { navController.popBackStack() })
         },
     ) { padding ->
-        LazyColumn(state = listState, modifier = Modifier.fillMaxWidth(), contentPadding = padding) {
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxWidth(),
+            contentPadding = PaddingValues(
+                top = padding.calculateTopPadding() + 8.dp,
+                bottom = padding.calculateBottomPadding() + 16.dp,
+            ),
+        ) {
             when (section) {
                 SettingsSection.APPEARANCE -> appearance(userSettingsController)
                 SettingsSection.LIBRARY -> library(userSettingsController, navController)
@@ -112,23 +122,31 @@ fun SettingsSectionScreen(
 
 private fun LazyListScope.appearance(settings: UserSettingsController) {
     item {
-        if (isSystemInDarkTheme()) PureBlackThemeSwitch(
-            selected = settings.pureBlack,
-            onToggle = { settings.updatePureBlack(it) },
-        )
+        val dark = isSystemInDarkTheme()
+        ListGroup {
+            if (dark) row {
+                PureBlackThemeSwitch(selected = settings.pureBlack, onToggle = { settings.updatePureBlack(it) }, shapes = it)
+            }
+            row { MarqueeSwitch(selected = settings.disableMarquee, onToggle = { settings.updateDisableMarquee(it) }, shapes = it) }
+            row { ShowPathSwitch(selected = settings.showPath, onToggle = { settings.updateShowPath(it) }, shapes = it) }
+        }
     }
-    item { MarqueeSwitch(selected = settings.disableMarquee, onToggle = { settings.updateDisableMarquee(it) }) }
-    item { ShowPathSwitch(selected = settings.showPath, onToggle = { settings.updateShowPath(it) }) }
 }
 
 /** Only reached before Android 11, where the SD card location is needed too. */
 private fun LazyListScope.library(settings: UserSettingsController, navController: NavController) {
     item {
-        NavigationItem(
-            label = stringResource(R.string.music_folders),
-            description = folderModeSummary(settings),
-            onClick = { navController.navigate(ScreenMusicFolders) },
-        )
+        val summary = folderModeSummary(settings)
+        ListGroup {
+            row {
+                NavigationItem(
+                    label = stringResource(R.string.music_folders),
+                    description = summary,
+                    shapes = it,
+                    onClick = { navController.navigate(ScreenMusicFolders) },
+                )
+            }
+        }
     }
     item { SettingsHeadLabel(label = stringResource(R.string.sd_card)) }
     item {
@@ -151,20 +169,26 @@ private fun LazyListScope.search(settings: UserSettingsController, editor: MyPro
 }
 
 private fun LazyListScope.content(settings: UserSettingsController) {
-    item { TranslationSwitch(selected = settings.includeTranslation, onToggle = { settings.updateIncludeTranslation(it) }) }
-    item { RomanizationSwitch(selected = settings.includeRomanization, onToggle = { settings.updateIncludeRomanization(it) }) }
-    item { MultiPersonSwitch(selected = settings.multiPersonWordByWord, onToggle = { settings.updateMultiPersonWordByWord(it) }) }
     item {
-        SyncedLyricsSwitch(
-            selected = settings.unsyncedFallbackMusixmatch,
-            onToggle = { settings.updateUnsyncedFallbackMusixmatch(it) },
-        )
-    }
-    item {
-        OffsetModeSwitch(
-            selected = settings.directlyModifyTimestamps,
-            onToggle = { settings.updateDirectlyModifyTimestamps(it) },
-        )
+        ListGroup {
+            row { TranslationSwitch(selected = settings.includeTranslation, onToggle = { settings.updateIncludeTranslation(it) }, shapes = it) }
+            row { RomanizationSwitch(selected = settings.includeRomanization, onToggle = { settings.updateIncludeRomanization(it) }, shapes = it) }
+            row { MultiPersonSwitch(selected = settings.multiPersonWordByWord, onToggle = { settings.updateMultiPersonWordByWord(it) }, shapes = it) }
+            row {
+                SyncedLyricsSwitch(
+                    selected = settings.unsyncedFallbackMusixmatch,
+                    onToggle = { settings.updateUnsyncedFallbackMusixmatch(it) },
+                    shapes = it,
+                )
+            }
+            row {
+                OffsetModeSwitch(
+                    selected = settings.directlyModifyTimestamps,
+                    onToggle = { settings.updateDirectlyModifyTimestamps(it) },
+                    shapes = it,
+                )
+            }
+        }
     }
 }
 
@@ -172,22 +196,30 @@ private fun LazyListScope.poweramp(settings: UserSettingsController) {
     item {
         val context = LocalContext.current
         var pluginOn by remember { mutableStateOf(PowerampPlugin.isEnabled(context)) }
-        SwitchItem(
-            label = stringResource(R.string.poweramp_plugin),
-            description = stringResource(R.string.poweramp_plugin_description),
-            selected = pluginOn,
-            onClick = {
-                PowerampPlugin.setEnabled(context, !pluginOn)
-                pluginOn = !pluginOn
-            },
-        )
-        // Saving only happens from lyrics the plugin supplied
-        if (pluginOn) SwitchItem(
-            label = stringResource(R.string.poweramp_rescan_after_save),
-            description = stringResource(R.string.poweramp_rescan_after_save_description),
-            selected = settings.powerampRescanAfterSave,
-            onClick = { settings.updatePowerampRescanAfterSave(!settings.powerampRescanAfterSave) },
-        )
+        ListGroup {
+            row {
+                SwitchItem(
+                    label = stringResource(R.string.poweramp_plugin),
+                    description = stringResource(R.string.poweramp_plugin_description),
+                    selected = pluginOn,
+                    shapes = it,
+                    onClick = {
+                        PowerampPlugin.setEnabled(context, !pluginOn)
+                        pluginOn = !pluginOn
+                    },
+                )
+            }
+            // Saving only happens from lyrics the plugin supplied
+            if (pluginOn) row {
+                SwitchItem(
+                    label = stringResource(R.string.poweramp_rescan_after_save),
+                    description = stringResource(R.string.poweramp_rescan_after_save_description),
+                    selected = settings.powerampRescanAfterSave,
+                    shapes = it,
+                    onClick = { settings.updatePowerampRescanAfterSave(!settings.powerampRescanAfterSave) },
+                )
+            }
+        }
     }
 }
 
@@ -196,12 +228,15 @@ private fun LazyListScope.about(viewModel: SettingsViewModel) {
         val context = LocalContext.current
         AppInfoSection(version = context.getVersion(), onCheckForUpdates = { viewModel.checkForUpdates(context) })
     }
-    item { SettingsHeadLabel(label = stringResource(R.string.source_code)) }
-    item { ExternalLinkSection(url = "https://github.com/Lambada10/SongSync", uriHandler = LocalUriHandler.current) }
-    item { SettingsHeadLabel(stringResource(R.string.support)) }
-    item { SupportSection(uriHandler = LocalUriHandler.current) }
-    item { SettingsHeadLabel(label = stringResource(R.string.translation)) }
-    item { TranslationSection(uriHandler = LocalUriHandler.current) }
+    item { SettingsHeadLabel(label = stringResource(R.string.get_involved)) }
+    item {
+        val uriHandler = LocalUriHandler.current
+        ListGroup {
+            row { ExternalLinkSection(url = "https://github.com/Lambada10/SongSync", uriHandler = uriHandler, shapes = it) }
+            row { SupportSection(uriHandler = uriHandler, shapes = it) }
+            row { TranslationSection(uriHandler = uriHandler, shapes = it) }
+        }
+    }
     item { SettingsHeadLabel(stringResource(R.string.contributors)) }
     item { ContributorsSection(uriHandler = LocalUriHandler.current) }
     item { SettingsHeadLabel(label = stringResource(R.string.thanks_to)) }

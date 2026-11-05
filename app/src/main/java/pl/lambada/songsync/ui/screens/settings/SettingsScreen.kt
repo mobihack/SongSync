@@ -1,5 +1,7 @@
 package pl.lambada.songsync.ui.screens.settings
 
+import androidx.compose.foundation.layout.padding
+import pl.lambada.songsync.ui.components.ListGroup
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.PaddingValues
@@ -45,6 +47,9 @@ import pl.lambada.songsync.util.ext.getVersion
  * category's page ([SettingsSectionScreen]); Library goes straight to Music folders.
  */
 @OptIn(ExperimentalMaterial3Api::class)
+/** Space between groups of settings rows. */
+private val GroupSpacing = 16.dp
+
 @Composable
 fun SettingsScreen(
     userSettingsController: UserSettingsController,
@@ -72,57 +77,76 @@ fun SettingsScreen(
                 bottom = padding.calculateBottomPadding() + 16.dp,
             ),
         ) {
-            item {
-                SettingsHubRow(
-                    Icons.Outlined.Palette,
-                    stringResource(R.string.settings_appearance),
-                    appearanceSummary(userSettingsController),
-                ) { open(SettingsSection.APPEARANCE) }
-            }
-            item {
-                SettingsHubRow(
-                    Icons.Outlined.LibraryMusic,
-                    stringResource(R.string.library),
-                    folderModeSummary(userSettingsController),
-                ) {
-                    // Before Android 11 the SD card setting shares the page; otherwise skip it
-                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) open(SettingsSection.LIBRARY)
-                    else navController.navigate(ScreenMusicFolders)
+            item(key = "core") {
+                ListGroup(Modifier.padding(bottom = GroupSpacing)) {
+                    row {
+                        SettingsHubRow(
+                            Icons.Outlined.Palette,
+                            stringResource(R.string.settings_appearance),
+                            appearanceSummary(userSettingsController),
+                            shapes = it,
+                        ) { open(SettingsSection.APPEARANCE) }
+                    }
+                    row {
+                        SettingsHubRow(
+                            Icons.Outlined.LibraryMusic,
+                            stringResource(R.string.library),
+                            folderModeSummary(userSettingsController),
+                            shapes = it,
+                        ) {
+                            // Before Android 11 the SD card setting shares the page; otherwise skip it
+                            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) open(SettingsSection.LIBRARY)
+                            else navController.navigate(ScreenMusicFolders)
+                        }
+                    }
+                    row {
+                        SettingsHubRow(
+                            Icons.Outlined.Route,
+                            stringResource(R.string.settings_lyrics_search),
+                            searchSummary(userSettingsController),
+                            shapes = it,
+                        ) { open(SettingsSection.SEARCH) }
+                    }
+                    row {
+                        SettingsHubRow(
+                            Icons.Outlined.Lyrics,
+                            stringResource(R.string.settings_lyrics_content),
+                            contentSummary(userSettingsController),
+                            shapes = it,
+                        ) { open(SettingsSection.CONTENT) }
+                    }
                 }
             }
-            item {
-                SettingsHubRow(
-                    Icons.Outlined.Route,
-                    stringResource(R.string.settings_lyrics_search),
-                    searchSummary(userSettingsController),
-                ) { open(SettingsSection.SEARCH) }
+            item(key = "integrations") {
+                ListGroup(Modifier.padding(bottom = GroupSpacing)) {
+                    row {
+                        SettingsHubRow(
+                            Icons.Outlined.Speaker,
+                            stringResource(R.string.poweramp),
+                            stringResource(
+                                when {
+                                    !pluginOn -> R.string.poweramp_plugin_off
+                                    userSettingsController.powerampRescanAfterSave -> R.string.poweramp_plugin_on_rescan
+                                    else -> R.string.poweramp_plugin_on
+                                }
+                            ),
+                            shapes = it,
+                        ) { open(SettingsSection.POWERAMP) }
+                    }
+                }
             }
-            item {
-                SettingsHubRow(
-                    Icons.Outlined.Lyrics,
-                    stringResource(R.string.settings_lyrics_content),
-                    contentSummary(userSettingsController),
-                ) { open(SettingsSection.CONTENT) }
-            }
-            item {
-                SettingsHubRow(
-                    Icons.Outlined.Speaker,
-                    stringResource(R.string.poweramp),
-                    stringResource(
-                        when {
-                            !pluginOn -> R.string.poweramp_plugin_off
-                            userSettingsController.powerampRescanAfterSave -> R.string.poweramp_plugin_on_rescan
-                            else -> R.string.poweramp_plugin_on
-                        }
-                    ),
-                ) { open(SettingsSection.POWERAMP) }
-            }
-            item {
-                SettingsHubRow(
-                    Icons.Outlined.Info,
-                    stringResource(R.string.about_songsync),
-                    stringResource(R.string.app_version, context.getVersion()),
-                ) { open(SettingsSection.ABOUT) }
+            item(key = "about") {
+                ListGroup {
+                    row {
+                        SettingsHubRow(
+                            Icons.Outlined.Info,
+                            stringResource(R.string.about_songsync),
+                            stringResource(R.string.app_version, context.getVersion()),
+                            shapes = it,
+                            tertiary = true,
+                        ) { open(SettingsSection.ABOUT) }
+                    }
+                }
             }
         }
     }

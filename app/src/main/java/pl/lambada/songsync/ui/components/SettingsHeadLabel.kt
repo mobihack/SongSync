@@ -14,11 +14,12 @@ fun SettingsHeadLabel(
     Text(
         text = label,
         style = MaterialTheme.typography.labelMedium,
+        // Lines up with the text inside grouped rows (group margin + row padding)
         modifier = Modifier.padding(
-            start = 22.dp,
-            top = 22.dp,
-            end = 22.dp,
-            bottom = 0.dp
+            start = 32.dp,
+            top = 24.dp,
+            end = 32.dp,
+            bottom = 8.dp
         ),
         color = MaterialTheme.colorScheme.primary
     )

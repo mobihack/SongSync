@@ -1,33 +1,17 @@
 package pl.lambada.songsync.ui.screens.settings.components
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.ListItemShapes
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import pl.lambada.songsync.R
-
+import pl.lambada.songsync.ui.components.LinkItem
 
 /** Bug reports and suggestions go to the project's GitHub issues. */
 @Composable
-fun SupportSection(uriHandler: UriHandler) {
-    Column(
-        modifier = Modifier
-            .clickable { uriHandler.openUri("https://github.com/Lambada10/SongSync/issues") }
-            .padding(horizontal = 22.dp, vertical = 16.dp)
-    ) {
-        Text(stringResource(R.string.support_issues))
-        Text(
-            text = stringResource(R.string.support_issues_summary),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            fontSize = 12.sp,
-            lineHeight = 16.sp,
-        )
-    }
-}
+fun SupportSection(uriHandler: UriHandler, shapes: ListItemShapes) = LinkItem(
+    label = stringResource(R.string.support_issues),
+    description = stringResource(R.string.support_issues_summary),
+    shapes = shapes,
+    onClick = { uriHandler.openUri("https://github.com/Lambada10/SongSync/issues") },
+)

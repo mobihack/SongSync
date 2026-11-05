@@ -1,5 +1,6 @@
 package pl.lambada.songsync.ui.screens.settings.folders
 
+import pl.lambada.songsync.ui.components.ListGroup
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.animation.core.Spring
@@ -112,24 +113,36 @@ fun MusicFoldersScreen(
     ) { padding ->
         LazyColumn(contentPadding = padding, modifier = Modifier.fillMaxSize()) {
             item(key = "modes") {
-                RadioItem(
-                    label = stringResource(R.string.folder_mode_all),
-                    description = stringResource(R.string.folder_mode_all_summary),
-                    selected = mode == FolderMode.ALL,
-                    onClick = { userSettingsController.updateFolderMode(FolderMode.ALL) },
-                )
-                RadioItem(
-                    label = stringResource(R.string.folder_mode_ignore),
-                    description = stringResource(R.string.folder_mode_ignore_summary),
-                    selected = mode == FolderMode.IGNORE,
-                    onClick = { userSettingsController.updateFolderMode(FolderMode.IGNORE) },
-                )
-                RadioItem(
-                    label = stringResource(R.string.folder_mode_only),
-                    description = stringResource(R.string.folder_mode_only_summary),
-                    selected = mode == FolderMode.ONLY,
-                    onClick = { userSettingsController.updateFolderMode(FolderMode.ONLY) },
-                )
+                val update = userSettingsController::updateFolderMode
+                ListGroup(Modifier.padding(top = 8.dp)) {
+                    row {
+                        RadioItem(
+                            label = stringResource(R.string.folder_mode_all),
+                            description = stringResource(R.string.folder_mode_all_summary),
+                            selected = mode == FolderMode.ALL,
+                            shapes = it,
+                            onClick = { update(FolderMode.ALL) },
+                        )
+                    }
+                    row {
+                        RadioItem(
+                            label = stringResource(R.string.folder_mode_ignore),
+                            description = stringResource(R.string.folder_mode_ignore_summary),
+                            selected = mode == FolderMode.IGNORE,
+                            shapes = it,
+                            onClick = { update(FolderMode.IGNORE) },
+                        )
+                    }
+                    row {
+                        RadioItem(
+                            label = stringResource(R.string.folder_mode_only),
+                            description = stringResource(R.string.folder_mode_only_summary),
+                            selected = mode == FolderMode.ONLY,
+                            shapes = it,
+                            onClick = { update(FolderMode.ONLY) },
+                        )
+                    }
+                }
             }
 
             if (mode != FolderMode.ALL) {

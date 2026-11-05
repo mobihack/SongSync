@@ -11,7 +11,10 @@ import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ListItemColors
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ListItemShapes
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -19,6 +22,16 @@ import androidx.compose.ui.unit.dp
 
 /** Side margin of a grouped list, so its rounded corners don't touch the screen edge. */
 val ListGroupMargin = 16.dp
+
+/**
+ * Colours for grouped rows. M3's segmented default is `surface`, the same as our page background,
+ * so rows sit on a container colour instead, a step higher in dark theme to stay visible.
+ */
+@Composable
+fun listGroupColors(): ListItemColors = ListItemDefaults.segmentedColors(
+    containerColor = if (isSystemInDarkTheme()) MaterialTheme.colorScheme.surfaceContainerHigh
+    else MaterialTheme.colorScheme.surfaceContainer,
+)
 
 /** Padding for a row inside a group: side margin, plus the gap to the next row. */
 fun listGroupRowPadding(isLast: Boolean) = PaddingValues(

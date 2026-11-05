@@ -49,6 +49,7 @@ fun SwitchItem(
             checked = selected,
             onCheckedChange = { onClick() },
             shapes = shapes,
+            colors = listGroupColors(),
             modifier = modifier,
             supportingContent = description.takeIf { it.isNotEmpty() }?.let { { Text(it) } },
             trailingContent = { CheckSwitch(selected) },

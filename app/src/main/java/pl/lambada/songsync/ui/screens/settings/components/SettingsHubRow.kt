@@ -2,6 +2,7 @@
 
 package pl.lambada.songsync.ui.screens.settings.components
 
+import pl.lambada.songsync.ui.components.listGroupColors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
@@ -48,6 +49,7 @@ fun SettingsHubRow(
     SegmentedListItem(
         onClick = onClick,
         shapes = shapes,
+        colors = listGroupColors(),
         leadingContent = {
             Box(
                 Modifier
