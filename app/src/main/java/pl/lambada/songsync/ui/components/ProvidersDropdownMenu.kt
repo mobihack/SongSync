@@ -1,5 +1,17 @@
+@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
+
 package pl.lambada.songsync.ui.components
 
+import androidx.compose.material3.MenuDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.DropdownMenuPopup
+import androidx.compose.material3.DropdownMenuGroup
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.Icons
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -8,10 +20,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.SelectableDropdownMenuItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -26,13 +36,13 @@ import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import pl.lambada.songsync.R
-import pl.lambada.songsync.ui.components.dropdown.AnimatedDropdownMenu
 import pl.lambada.songsync.util.ProviderChoice
 import pl.lambada.songsync.util.Providers
 
 /**
- * Provider menu: Auto, Custom order, then every provider (picking one means "only this one").
- * The radio marks [selected]; [onChoose] receives the pick. Callers save it.
+ * Provider menu: Auto and Custom order in one group, then every provider (picking one means
+ * "only this one") in a second. The current choice is shown selected; [onChoose] receives the
+ * pick. Callers save it.
  */
 @Composable
 fun ProvidersDropdownMenu(
@@ -41,10 +51,7 @@ fun ProvidersDropdownMenu(
     selected: ProviderChoice,
     onChoose: (ProviderChoice) -> Unit,
 ) {
-    AnimatedDropdownMenu(
-        expanded = expanded,
-        onDismissRequest = onDismissRequest,
-    ) {
+    DropdownMenuPopup(expanded = expanded, onDismissRequest = onDismissRequest) {
         ProvidersDropdownMenuContent(
             onDismissRequest = onDismissRequest,
             selected = selected,
@@ -58,12 +65,16 @@ fun ProvidersDropdownMenuContent(
     onDismissRequest: () -> Unit,
     selected: ProviderChoice,
     onChoose: (ProviderChoice) -> Unit,
-) = Column {
+) = Column(
+    // The provider group is long; let the menu scroll on short screens
+    Modifier.verticalScroll(rememberScrollState()),
+    verticalArrangement = Arrangement.spacedBy(MenuDefaults.GroupSpacing),
+) {
     val providers = Providers.entries.filter { it.enabled }
     val scope = rememberCoroutineScope()
     fun pick(choice: ProviderChoice) {
         onChoose(choice)
-        // Let the radio change register before the menu closes
+        // Let the selection change register before the menu closes
         scope.launch {
             delay(200)
             onDismissRequest()
@@ -71,27 +82,33 @@ fun ProvidersDropdownMenuContent(
     }
 
     @Composable
-    fun Choice(choice: ProviderChoice, label: String, wordByWord: Boolean = false) = DropdownMenuItem(
-        text = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = label, modifier = Modifier.padding(start = 6.dp))
-                if (wordByWord) WordByWordBadge()
-                Spacer(modifier = Modifier.weight(1f))
-                RadioButton(selected = selected == choice, onClick = { pick(choice) })
-            }
-        },
-        onClick = { pick(choice) },
-    )
+    fun Choice(choice: ProviderChoice, label: String, index: Int, count: Int, wordByWord: Boolean = false) =
+        SelectableDropdownMenuItem(
+            selected = selected == choice,
+            onClick = { pick(choice) },
+            text = { Text(label) },
+            shapes = MenuDefaults.itemShape(index, count),
+            selectedLeadingIcon = { Icon(Icons.Filled.Check, contentDescription = null) },
+            trailingContent = if (wordByWord) {
+                { WordByWordBadge() }
+            } else null,
+        )
 
-    Text(
-        text = stringResource(id = R.string.provider),
-        modifier = Modifier.padding(start = 18.dp, top = 8.dp),
-        fontSize = 12.sp
-    )
-    Choice(ProviderChoice.Auto, stringResource(R.string.provider_mode_auto))
-    Choice(ProviderChoice.CustomOrder, stringResource(R.string.provider_mode_my_list))
-    HorizontalDivider(Modifier.padding(vertical = 4.dp))
-    providers.forEach { Choice(ProviderChoice.Only(it), it.displayName, it.hasWordByWord) }
+    DropdownMenuGroup(shapes = MenuDefaults.groupShape(0, 2)) {
+        Text(
+            text = stringResource(id = R.string.provider),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 16.dp, top = 8.dp, bottom = 4.dp),
+        )
+        Choice(ProviderChoice.Auto, stringResource(R.string.provider_mode_auto), 0, 2)
+        Choice(ProviderChoice.CustomOrder, stringResource(R.string.provider_mode_my_list), 1, 2)
+    }
+    DropdownMenuGroup(shapes = MenuDefaults.groupShape(1, 2)) {
+        providers.forEachIndexed { index, provider ->
+            Choice(ProviderChoice.Only(provider), provider.displayName, index, providers.size, provider.hasWordByWord)
+        }
+    }
 }
 
 /** Short name of a provider choice, e.g. "Auto" or "LRCLib". */

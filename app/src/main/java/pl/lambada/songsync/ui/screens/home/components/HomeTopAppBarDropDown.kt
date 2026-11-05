@@ -1,9 +1,15 @@
+@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
+
 package pl.lambada.songsync.ui.screens.home.components
 
+import androidx.compose.material3.MenuDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.DropdownMenuPopup
+import androidx.compose.material3.DropdownMenuGroup
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.ContentTransform
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowRight
@@ -22,10 +28,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import pl.lambada.songsync.R
 import pl.lambada.songsync.ui.components.ProvidersDropdownMenuContent
-import pl.lambada.songsync.ui.components.dropdown.AnimatedDropdownMenu
 import pl.lambada.songsync.util.ProviderChoice
-import pl.lambada.songsync.util.ui.tweenEnter
-import pl.lambada.songsync.util.ui.tweenExit
 
 @Composable
 fun HomeTopAppBarDropDown(
@@ -48,7 +51,8 @@ fun HomeTopAppBarDropDown(
             contentDescription = "More"
         )
     }
-    AnimatedDropdownMenu(
+    val motionScheme = MaterialTheme.motionScheme
+    DropdownMenuPopup(
         expanded = expanded,
         onDismissRequest = { expanded = false }
     ) {
@@ -59,11 +63,11 @@ fun HomeTopAppBarDropDown(
                 ContentTransform(
                     targetContentEnter = slideIntoContainer(
                         towards = AnimatedContentTransitionScope.SlideDirection.Start,
-                        animationSpec = tweenEnter()
+                        animationSpec = motionScheme.defaultSpatialSpec()
                     ),
                     initialContentExit = slideOutOfContainer(
                         towards = AnimatedContentTransitionScope.SlideDirection.Start,
-                        animationSpec = tweenExit()
+                        animationSpec = motionScheme.fastSpatialSpec()
                     ),
                 )
             },
@@ -95,38 +99,26 @@ fun HomeDropdownContent(
     onExpandProviders: () -> Unit,
     onBatchDownloadRequest: () -> Unit,
     onNavigateToSettingsSectionRequest: () -> Unit,
-) = Column {
+) = DropdownMenuGroup(shapes = MenuDefaults.groupShape(0, 1)) {
     DropdownMenuItem(
-        text = {
-            Text(
-                text = stringResource(R.string.provider),
-                modifier = Modifier.padding(horizontal = 6.dp),
-            )
-        },
-        trailingIcon = {
+        text = { Text(stringResource(R.string.provider)) },
+        shape = MenuDefaults.itemShape(0, 3).shape,
+        trailingContent = {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowRight,
-                contentDescription = "expand dropdown"
+                contentDescription = null,
             )
         },
         onClick = onExpandProviders
     )
     DropdownMenuItem(
-        text = {
-            Text(
-                text = stringResource(R.string.batch_download_lyrics),
-                modifier = Modifier.padding(horizontal = 6.dp),
-            )
-        },
+        text = { Text(stringResource(R.string.batch_download_lyrics)) },
+        shape = MenuDefaults.itemShape(1, 3).shape,
         onClick = onBatchDownloadRequest
     )
     DropdownMenuItem(
-        text = {
-            Text(
-                text = stringResource(id = R.string.settings),
-                modifier = Modifier.padding(horizontal = 6.dp),
-            )
-        },
+        text = { Text(stringResource(id = R.string.settings)) },
+        shape = MenuDefaults.itemShape(2, 3).shape,
         onClick = onNavigateToSettingsSectionRequest
     )
 }
