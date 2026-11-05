@@ -2,7 +2,10 @@
 
 package pl.lambada.songsync.ui.screens.home.components
 
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.ui.graphics.Color
 import pl.lambada.songsync.ui.components.frosted
 import dev.chrisbanes.haze.HazeState
@@ -100,6 +103,11 @@ fun HomeOverflowMenu(
                             expanded = false
                             providersDialog = true
                         },
+                    )
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        thickness = Dp.Hairline,
+                        color = MaterialTheme.colorScheme.outlineVariant,
                     )
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.batch_download_lyrics), style = MaterialTheme.typography.bodyLarge) },
