@@ -2,6 +2,10 @@
 
 package pl.lambada.songsync.ui.screens.lyricsFetch
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.AnimatedVisibility
 import pl.lambada.songsync.ui.components.providerChoiceLabel
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.Crossfade
@@ -126,6 +130,7 @@ fun SharedTransitionScope.LyricsFetchScreen(
             )
         }
     ) { paddingValues ->
+        Box(Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -162,30 +167,8 @@ fun SharedTransitionScope.LyricsFetchScreen(
                         providerMenu = providerMenu,
                     )
 
-                    QueryStatus.Pending -> Column(
-                        Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        val progress = viewModel.searchProgress
-                        Spacer(modifier = Modifier.height(10.dp))
-                        CloudProviderTitle(
-                            // Follows the fallback live: shows the provider being tried right now
-                            selectedProvider = progress?.provider
-                                ?: viewModel.lookupProviders().first(),
-                            onExpandProvidersRequest = { expandedProviders = true },
-                            menu = providerMenu,
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        LoadingIndicator()
-                        if (progress != null && progress.total > 1) {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = stringResource(R.string.provider_progress, progress.index, progress.total),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    }
+                    // Shown centred on the screen instead (after the scrolling column)
+                    QueryStatus.Pending -> Spacer(Modifier.fillMaxWidth())
 
                     is QueryStatus.Success -> SuccessContent(
                         result = queryState.song,
@@ -252,6 +235,37 @@ fun SharedTransitionScope.LyricsFetchScreen(
                     )
                 }
             }
+        }
+        // Searching: provider being tried, indicator and "Provider x of y", in the middle of the screen
+        AnimatedVisibility(
+            visible = viewModel.queryState == QueryStatus.Pending,
+            enter = fadeIn(MaterialTheme.motionScheme.defaultEffectsSpec()),
+            exit = fadeOut(MaterialTheme.motionScheme.fastEffectsSpec()),
+            modifier = Modifier.fillMaxSize().padding(paddingValues),
+        ) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    val progress = viewModel.searchProgress
+                    CloudProviderTitle(
+                        // Follows the fallback live: shows the provider being tried right now
+                        selectedProvider = progress?.provider
+                            ?: viewModel.lookupProviders().first(),
+                        onExpandProvidersRequest = { expandedProviders = true },
+                        menu = providerMenu,
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    LoadingIndicator()
+                    if (progress != null && progress.total > 1) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = stringResource(R.string.provider_progress, progress.index, progress.total),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        }
         }
     }
 }
