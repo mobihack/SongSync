@@ -75,6 +75,20 @@
             </intent-filter>
         </service>
 
+        <!-- Poweramp: opened from the plugin link under lyrics SongSync supplied -->
+        <activity
+            android:name=".activities.poweramp.PowerampLyricsActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:launchMode="singleInstance"
+            android:taskAffinity=""
+            android:theme="@style/Theme.SongSync.SharingActivity">
+            <intent-filter>
+                <action android:name="com.maxmpz.audioplayer.ACTION_LYRICS_LINK" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
         <!-- Poweramp lyrics plugin -->
         <receiver
             android:name=".services.PowerampLyricsReceiver"
