@@ -43,4 +43,14 @@ class LyricsRequestLimiterTest {
         now += 60_000
         (4L..6L).map(limiter::check) shouldBe List(3) { Decision.SEARCH }
     }
+
+    @Test
+    fun `by default, skipping through 20 tracks in a minute is all searched`() {
+        var time = 0L
+        val default = LyricsRequestLimiter(clock = { time })
+        (1L..20L).map { time += 1_000; default.check(it) } shouldBe List(20) { Decision.SEARCH }
+        default.check(21) shouldBe Decision.LIMITED
+        LyricsRequestLimiter.MAX_SEARCHES shouldBe 20
+        LyricsRequestLimiter.WINDOW_MS shouldBe 60_000L
+    }
 }

@@ -8,10 +8,16 @@ package pl.lambada.songsync.services
  * Allows at most [maxSearches] searches per [windowMs], and one per track ([key]) in that time.
  */
 class LyricsRequestLimiter(
-    private val maxSearches: Int = 10,
-    private val windowMs: Long = 60_000,
+    private val maxSearches: Int = MAX_SEARCHES,
+    private val windowMs: Long = WINDOW_MS,
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
+    companion object {
+        /** Room for skipping quickly through a playlist (next, next, next…). */
+        const val MAX_SEARCHES = 20
+        const val WINDOW_MS = 60_000L
+    }
+
     enum class Decision {
         /** Search the providers. */
         SEARCH,
