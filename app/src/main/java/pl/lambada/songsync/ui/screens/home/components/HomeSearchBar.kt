@@ -1,5 +1,7 @@
 package pl.lambada.songsync.ui.screens.home.components
 
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.WindowInsets
@@ -27,7 +29,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
@@ -68,6 +69,19 @@ fun HomeSearchBar(
         willShowIme = false
     }
     val focusManager = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
+
+    // Each tap on the search button focuses the field with the keyboard up. That includes the bar
+    // already being open with a query after the keyboard was closed: the field can still hold
+    // focus then, so focusing it alone wouldn't bring the keyboard back.
+    LaunchedEffect(showSearch) {
+        if (showSearch) {
+            willShowIme = true // don't collapse an empty bar before the keyboard starts opening
+            focusRequester.requestFocus()
+            keyboard?.show()
+            onShowSearchChange(false)
+        }
+    }
 
     BackPressHandler(
         enabled = showingSearch,
@@ -115,12 +129,6 @@ fun HomeSearchBar(
             .focusRequester(focusRequester)
             .onFocusChanged {
                 if (it.isFocused && !showingIme) willShowIme = true
-            }
-            .onGloballyPositioned {
-                if (showSearch && !showingIme) {
-                    focusRequester.requestFocus()
-                    onShowSearchChange(false)
-                }
             },
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
         keyboardActions = KeyboardActions(
