@@ -1,10 +1,11 @@
 package pl.lambada.songsync.ui.screens.home.components
 
 import android.net.Uri
-import android.provider.Settings
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.EnterExitState
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.animateDp
 import androidx.compose.foundation.Image
 import androidx.compose.runtime.mutableStateOf
@@ -52,6 +53,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -82,8 +84,11 @@ import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
 import coil.imageLoader
 import coil.request.ImageRequest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.withTimeoutOrNull
 import pl.lambada.songsync.R
+import pl.lambada.songsync.ui.components.rememberSystemAnimationsEnabled
 
 private val CardCorner = 32.dp
 private val CardShape = RoundedCornerShape(CardCorner)
@@ -97,10 +102,15 @@ private const val SpinMillis = 24_000
 private val TrackShift = 32.dp
 private const val TrackOutMillis = 140
 private const val TrackInMillis = 260
+/** The incoming text's fade: in step with the slide, done by 260ms. */
+private const val TrackFadeInMillis = 200
+private const val TrackFadeInDelayMillis = 60
+/** Longest the text waits for the new song's art, so the two change together. */
+private const val ArtWaitMillis = 300L
 private val TrackEasing = CubicBezierEasing(0.23f, 1f, 0.32f, 1f)
 /** Cover art swap: a shorter slide than the text (it is clipped to the cookie) and a blur. */
 private val ArtShift = 24.dp
-private val ArtBlur = 12.dp
+private val ArtBlur = 4.dp
 
 private data class Track(val title: String, val artist: String, val filePath: String)
 /** How far the cover spills past the card's end and bottom edges. */
@@ -136,6 +146,10 @@ private fun coverMorph(cornerFraction: Float): Morph {
  */
 private data class CoverClipShape(
     val morph: Morph,
+    /** Rest-shape cache; at rest the outline is just this cookie, turned. */
+    val cache: CookiePathCache,
+    /** In the shared transition: morph and crop. Otherwise the card's own clip does the crop. */
+    val transitioning: Boolean,
     val angle: Float,
     val restPx: Float,
     val endPx: Float,
@@ -145,6 +159,13 @@ private data class CoverClipShape(
     val cardCornerPx: Float,
 ) : Shape {
     override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
+        if (!transitioning) {
+            // The spin runs every frame: no morph or path ops, just the cached cookie, turned
+            val path = android.graphics.Path(cache.cookie(morph, size))
+            cache.matrix.setRotate(angle % 40f, size.width / 2f, size.height / 2f)
+            path.transform(cache.matrix)
+            return Outline.Generic(path.asComposePath())
+        }
         val progress = ((restPx - size.width) / (restPx - endPx)).coerceIn(0f, 1f)
         val path = android.graphics.Path()
         morph.toPath(progress, path)
@@ -171,6 +192,24 @@ private data class CoverClipShape(
         }
         path.op(crop, android.graphics.Path.Op.INTERSECT)
         return Outline.Generic(path.asComposePath())
+    }
+}
+
+/** The unturned cookie at the last size it was asked for, and a reusable matrix. */
+private class CookiePathCache {
+    private var size = Size.Unspecified
+    private val path = android.graphics.Path()
+    val matrix = android.graphics.Matrix()
+
+    fun cookie(morph: Morph, size: Size): android.graphics.Path {
+        if (size != this.size) {
+            path.reset()
+            morph.toPath(0f, path)
+            matrix.setScale(size.width, size.height)
+            path.transform(matrix)
+            this.size = size
+        }
+        return path
     }
 }
 
@@ -211,12 +250,12 @@ fun NowPlayingCard(
     val bleedXPx = with(density) { CoverBleedX.toPx() }
     val bleedYPx = with(density) { CoverBleedY.toPx() }
     val cardCornerPx = with(density) { CardCorner.toPx() }
+    val cookieCache = remember { CookiePathCache() }
+    val transitioning = sharedElementsEnabled && animatedVisibilityScope.transition.isRunning
 
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
-    val reduceMotion = remember {
-        Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
-    }
+    val reduceMotion = !rememberSystemAnimationsEnabled()
     // Only the outline turns; the art stays upright. It turns only while the
     // song plays, so paused stops it where it is; it also holds still while pressed.
     val angle = remember { Animatable(0f) }
@@ -227,6 +266,22 @@ fun NowPlayingCard(
             angle.animateTo(360f, tween((SpinMillis * remaining / 360f).toInt(), easing = LinearEasing))
             angle.snapTo(0f)
         }
+    }
+
+    // The art for a new song lands a little after its details (it is written to a file first).
+    // Hold the old details until the new art is on screen, at most ArtWaitMillis, so the text
+    // and the cover change in one movement instead of two.
+    var shownArtSource by remember { mutableStateOf<Any?>(null) }
+    val track = Track(title, artist, filePath)
+    var shownTrack by remember { mutableStateOf(track) }
+    LaunchedEffect(track) {
+        if (track.title == shownTrack.title && track.artist == shownTrack.artist) {
+            shownTrack = track // same song, e.g. its file was just matched
+            return@LaunchedEffect
+        }
+        val artBefore = shownArtSource
+        withTimeoutOrNull(ArtWaitMillis) { snapshotFlow { shownArtSource }.first { it != artBefore } }
+        shownTrack = track
     }
 
     Surface(
@@ -257,12 +312,18 @@ fun NowPlayingCard(
                     // Clipped here, inside the shared bounds, so the same shape follows the cover
                     // as it travels and resizes
                     .graphicsLayer {
-                        shape = CoverClipShape(morph, angle.value, coverRestPx, lyricsCoverPx, bleedXPx, bleedYPx, cardCornerPx)
+                        shape = CoverClipShape(morph, cookieCache, transitioning, angle.value, coverRestPx, lyricsCoverPx, bleedXPx, bleedYPx, cardCornerPx)
                         clip = true
                     }
                     .background(MaterialTheme.colorScheme.secondaryContainer),
             ) {
-                CoverArt(request = coverRequest, hasArt = imgUri != null, direction = direction, reduceMotion = reduceMotion)
+                CoverArt(
+                    request = coverRequest,
+                    hasArt = imgUri != null,
+                    direction = direction,
+                    reduceMotion = reduceMotion,
+                    onShown = { shownArtSource = it },
+                )
             }
 
             Column(Modifier.padding(start = 24.dp, top = 20.dp)) {
@@ -281,11 +342,11 @@ fun NowPlayingCard(
                 // A song change slides the details the way you skipped: next pushes them toward
                 // the start, previous toward the end
                 AnimatedContent(
-                    targetState = Track(title, artist, filePath),
+                    targetState = shownTrack,
                     contentKey = { it.title to it.artist },
                     transitionSpec = {
                         val shift = with(density) { TrackShift.roundToPx() } * if (reduceMotion) 0 else direction
-                        (fadeIn(tween(TrackInMillis, delayMillis = TrackOutMillis / 2)) +
+                        (fadeIn(tween(TrackFadeInMillis, delayMillis = TrackFadeInDelayMillis, easing = TrackEasing)) +
                             slideInHorizontally(tween(TrackInMillis, easing = TrackEasing)) { shift }) togetherWith
                             (fadeOut(tween(TrackOutMillis)) +
                                 slideOutHorizontally(tween(TrackOutMillis, easing = TrackEasing)) { -shift }) using
@@ -372,31 +433,52 @@ private class ShownArt(val source: Any?, val painter: Painter)
  * a song with no art, never as an in-between.
  */
 @Composable
-private fun CoverArt(request: ImageRequest, hasArt: Boolean, direction: Int, reduceMotion: Boolean) {
+private fun CoverArt(
+    request: ImageRequest,
+    hasArt: Boolean,
+    direction: Int,
+    reduceMotion: Boolean,
+    /** What the cover now shows (its uri, or null for the placeholder), once it starts swapping in. */
+    onShown: (Any?) -> Unit,
+) {
     val context = LocalContext.current
     val density = LocalDensity.current
     val placeholder = painterResource(R.drawable.ic_song)
     val loader = rememberAsyncImagePainter(model = request, imageLoader = context.imageLoader)
     val state = loader.state
     var shown by remember { mutableStateOf<ShownArt?>(null) }
-    LaunchedEffect(state, hasArt) {
-        when (val s = state) {
-            is AsyncImagePainter.State.Success -> if (shown?.source != request.data) shown = ShownArt(request.data, s.painter)
-            is AsyncImagePainter.State.Error -> if (shown?.source != null || shown == null) shown = ShownArt(null, placeholder)
-            else -> if (!hasArt && shown?.source != null) shown = ShownArt(null, placeholder)
+    // Picked up during composition, not in an effect: coming back from the lyrics screen the
+    // card is rebuilt, and the cached art must be there in the first frames of the transition
+    val next = when (state) {
+        // Tagged with what the result was loaded from: right after the uri changes, the loader
+        // still reports the previous image, which must not be filed under the new song
+        is AsyncImagePainter.State.Success -> state.result.request.data.let { loaded ->
+            if (loaded == request.data && shown?.source != loaded) ShownArt(loaded, state.painter) else null
         }
+        is AsyncImagePainter.State.Error ->
+            if (state.result.request.data == request.data && (shown == null || shown?.source != null))
+                ShownArt(null, placeholder) else null
+        else -> if (!hasArt && (shown == null || shown?.source != null)) ShownArt(null, placeholder) else null
     }
-    if (shown == null && !hasArt) shown = ShownArt(null, placeholder)
+    // Only a real swap blurs; the first image (also on coming back) appears sharp
+    var swapping by remember { mutableStateOf(false) }
+    if (next != null) {
+        if (shown != null) swapping = true
+        shown = next
+    }
+    LaunchedEffect(shown) { onShown(shown?.source) }
 
     AnimatedContent(
         targetState = shown,
         contentKey = { it?.source },
         transitionSpec = {
+            // The first image just appears: there's nothing to swap from
+            if (initialState == null) return@AnimatedContent EnterTransition.None togetherWith ExitTransition.None
             val shift = with(density) { ArtShift.roundToPx() } * if (reduceMotion) 0 else direction
             (fadeIn(tween(TrackInMillis, easing = TrackEasing)) +
                 slideInHorizontally(tween(TrackInMillis, easing = TrackEasing)) { shift }) togetherWith
-                (fadeOut(tween(TrackInMillis)) +
-                    slideOutHorizontally(tween(TrackInMillis, easing = TrackEasing)) { -shift })
+                (fadeOut(tween(TrackOutMillis, easing = TrackEasing)) +
+                    slideOutHorizontally(tween(TrackOutMillis, easing = TrackEasing)) { -shift })
         },
         label = "nowPlayingArt",
         modifier = Modifier.fillMaxSize(),
@@ -405,7 +487,7 @@ private fun CoverArt(request: ImageRequest, hasArt: Boolean, direction: Int, red
         val blur by transition.animateDp(
             transitionSpec = { tween(TrackInMillis, easing = TrackEasing) },
             label = "artBlur",
-        ) { if (it == EnterExitState.Visible || reduceMotion) 0.dp else ArtBlur }
+        ) { if (it == EnterExitState.Visible || reduceMotion || !swapping) 0.dp else ArtBlur }
         if (art != null) Image(
             painter = art.painter,
             contentDescription = stringResource(R.string.album_cover),

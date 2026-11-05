@@ -3,6 +3,7 @@ package pl.lambada.songsync.ui.screens.home
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.tween
 import dev.chrisbanes.haze.rememberHazeState
 import dev.chrisbanes.haze.hazeSource
 import pl.lambada.songsync.ui.screens.home.components.HomeOverflowMenu
@@ -426,8 +427,10 @@ fun HomeScreenLoaded(
                     AnimatedContent(
                         targetState = viewModel.showingSearch,
                         transitionSpec = {
-                            fadeIn(motionScheme.defaultEffectsSpec()) togetherWith
-                                fadeOut(motionScheme.fastEffectsSpec()) using
+                            // Collapsing to the row, the card leaves almost at once: it isn't
+                            // clipped while the slot shrinks, and would ghost over the results
+                            val out = if (targetState) fadeOut(tween(90)) else fadeOut(motionScheme.fastEffectsSpec())
+                            fadeIn(motionScheme.defaultEffectsSpec()) togetherWith out using
                                 // Heights don't overshoot: a bounce would shove the list
                                 SizeTransform(clip = false) { _, _ ->
                                     spring(dampingRatio = 1f, stiffness = Spring.StiffnessMediumLow)

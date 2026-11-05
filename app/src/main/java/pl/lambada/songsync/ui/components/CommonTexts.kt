@@ -1,5 +1,12 @@
 package pl.lambada.songsync.ui.components
 
+import android.database.ContentObserver
+import android.os.Handler
+import android.os.Looper
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import android.provider.Settings
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.MarqueeSpacing
@@ -51,10 +58,20 @@ fun AnimatedText(
     )
 }
 
+/** False when the system's "Remove animations" is on; follows the setting while on screen. */
 @Composable
-private fun rememberSystemAnimationsEnabled(): Boolean {
+internal fun rememberSystemAnimationsEnabled(): Boolean {
     val resolver = LocalContext.current.contentResolver
-    return remember(resolver) {
-        Settings.Global.getFloat(resolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) != 0f
+    fun read() = Settings.Global.getFloat(resolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) != 0f
+    var enabled by remember(resolver) { mutableStateOf(read()) }
+    DisposableEffect(resolver) {
+        val observer = object : ContentObserver(Handler(Looper.getMainLooper())) {
+            override fun onChange(selfChange: Boolean) { enabled = read() }
+        }
+        resolver.registerContentObserver(
+            Settings.Global.getUriFor(Settings.Global.ANIMATOR_DURATION_SCALE), false, observer,
+        )
+        onDispose { resolver.unregisterContentObserver(observer) }
     }
+    return enabled
 }
