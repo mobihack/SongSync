@@ -18,16 +18,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults.Indicator
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -161,6 +161,7 @@ fun HomeScreen(
 /**
  * Composable function representing the loading screen.
  */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun LoadingScreen() {
     Column(
@@ -168,11 +169,15 @@ fun LoadingScreen() {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        CircularProgressIndicator()
+        LoadingIndicator()
     }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
+@OptIn(
+    ExperimentalSharedTransitionApi::class,
+    ExperimentalMaterial3Api::class,
+    androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class,
+)
 @Composable
 fun HomeScreenLoaded(
     selected: SnapshotStateList<String>,
@@ -207,7 +212,8 @@ fun HomeScreenLoaded(
             }
         },
         indicator = {
-            Indicator(
+            // Material 3 Expressive pull-to-refresh: a contained, shape-morphing loading indicator
+            PullToRefreshDefaults.LoadingIndicator(
                 state = refreshState,
                 isRefreshing = viewModel.isRefreshing,
                 modifier = Modifier

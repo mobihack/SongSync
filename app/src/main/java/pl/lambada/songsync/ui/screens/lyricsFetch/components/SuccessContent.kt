@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
+
 package pl.lambada.songsync.ui.screens.lyricsFetch.components
 
 import androidx.compose.animation.AnimatedVisibilityScope
@@ -12,7 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -118,7 +120,7 @@ fun SharedTransitionScope.SuccessContent(
 
                 is LyricsFetchState.Failed -> Text(stringResource(R.string.this_track_has_no_lyrics))
 
-                LyricsFetchState.Pending -> CircularProgressIndicator()
+                LyricsFetchState.Pending -> LoadingIndicator()
             }
         }
     }

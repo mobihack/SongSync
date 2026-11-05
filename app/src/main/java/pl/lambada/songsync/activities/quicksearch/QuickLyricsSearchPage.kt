@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
+
 package pl.lambada.songsync.activities.quicksearch
 
 import androidx.compose.animation.AnimatedContent
@@ -15,10 +17,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.Send
 import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.rounded.Subtitles
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -85,7 +87,7 @@ fun QuickLyricsSearchPage(
                                     horizontalAlignment = Alignment.CenterHorizontally,
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    CircularProgressIndicator()
+                                    LoadingIndicator()
                                     // Follows the fallback live: the provider being tried right now
                                     state.value.searchProgress?.let { progress ->
                                         AnimatedContent(targetState = progress, label = "provider") {

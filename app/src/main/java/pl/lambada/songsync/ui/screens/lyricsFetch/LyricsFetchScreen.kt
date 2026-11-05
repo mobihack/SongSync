@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
+
 package pl.lambada.songsync.ui.screens.lyricsFetch
 
 import androidx.compose.animation.AnimatedVisibilityScope
@@ -16,7 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -175,7 +177,7 @@ fun SharedTransitionScope.LyricsFetchScreen(
                             onExpandProvidersRequest = { expandedProviders = true }
                         )
                         Spacer(modifier = Modifier.height(16.dp))
-                        CircularProgressIndicator()
+                        LoadingIndicator()
                         if (progress != null && progress.total > 1) {
                             Spacer(modifier = Modifier.height(8.dp))
                             Text(
