@@ -3,6 +3,9 @@ package pl.lambada.songsync.ui.screens.home.components
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -57,8 +60,12 @@ fun SongItem(
     )
     val songName = song.title ?: stringResource(id = R.string.unknown)
     val artists = song.artist ?: stringResource(id = R.string.unknown)
-    val bgColor = if (selected) MaterialTheme.colorScheme.surfaceVariant
-    else MaterialTheme.colorScheme.surface
+    val bgColor by animateColorAsState(
+        targetValue = if (selected) MaterialTheme.colorScheme.surfaceVariant
+        else MaterialTheme.colorScheme.surface,
+        animationSpec = tween(durationMillis = 120),
+        label = "songItemBackground"
+    )
     Row(
         modifier = Modifier
             .fillMaxWidth()

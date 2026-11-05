@@ -1,6 +1,5 @@
 package pl.lambada.songsync.ui.screens.home.components
 
-import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -55,15 +54,11 @@ fun HomeAppBar(
         },
         title = {
             if (showing) {
-                Crossfade(
-                    targetState = cachedSize,
-                    label = ""
-                ) { size ->
-                    Text(
-                        modifier = Modifier.padding(start = 6.dp),
-                        text = stringResource(id = R.string.selected_count, size)
-                    )
-                }
+                // No animation: the count changes on every tap in multi-select.
+                Text(
+                    modifier = Modifier.padding(start = 6.dp),
+                    text = stringResource(id = R.string.selected_count, cachedSize)
+                )
             } else {
                 Text(
                     modifier = Modifier.padding(start = 6.dp),

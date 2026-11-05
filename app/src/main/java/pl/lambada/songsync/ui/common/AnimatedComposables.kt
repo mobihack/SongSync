@@ -80,15 +80,15 @@ inline fun <reified T : Any> NavGraphBuilder.animatedComposablePredictiveBack(
         },
         popEnterTransition = {
             scaleIn(
-                animationSpec = tween(durationMillis = 350, easing = EmphasizedDecelerate),
-                initialScale = 0.9f,
+                animationSpec = tween(durationMillis = 250, easing = EmphasizedDecelerate),
+                initialScale = 0.95f,
             ) + materialSharedAxisXIn(initialOffsetX = { -(it * InitialOffset).toInt() })
         },
         popExitTransition = {
             materialSharedAxisXOut(targetOffsetX = { (it * InitialOffset).toInt() }) +
                     scaleOut(
-                        targetScale = 0.9f,
-                        animationSpec = tween(durationMillis = 350, easing = EmphasizedAccelerate),
+                        targetScale = 0.95f,
+                        animationSpec = tween(durationMillis = 250, easing = EmphasizedDecelerate),
                     )
         },
         content = content,

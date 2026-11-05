@@ -1,7 +1,7 @@
 package pl.lambada.songsync.ui.screens.home.components
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
@@ -22,17 +22,12 @@ fun HomeSearchThing(
     AnimatedContent(
         targetState = showingSearch,
         transitionSpec = {
-            if (targetState) {
-                (slideInVertically { height -> height } + fadeIn()).togetherWith(
-                    slideOutVertically { height -> -height } + fadeOut()
+            // Small travel (a quarter of the bar) so the swap reads as a toggle, not a page move.
+            val direction = if (targetState) 1 else -1
+            (slideInVertically { height -> direction * height / 4 } + fadeIn(tween(150)))
+                .togetherWith(
+                    slideOutVertically { height -> -direction * height / 4 } + fadeOut(tween(100))
                 )
-            } else {
-                (slideInVertically { height -> -height } + fadeIn()).togetherWith(
-                    slideOutVertically { height -> height } + fadeOut()
-                )
-            }.using(
-                SizeTransform()
-            )
         },
         label = "",
         modifier = Modifier

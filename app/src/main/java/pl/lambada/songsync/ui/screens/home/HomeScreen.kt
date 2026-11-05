@@ -4,6 +4,8 @@ import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
@@ -43,7 +46,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import pl.lambada.songsync.R
 import pl.lambada.songsync.domain.model.Song
@@ -99,6 +101,7 @@ fun HomeScreen(
 
             Crossfade(
                 targetState = viewModel.selectedSongs.size > 0,
+                animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing),
                 label = ""
             ) { showing ->
                 HomeAppBar(
@@ -199,7 +202,7 @@ fun HomeScreenLoaded(
             scope.launch {
                 viewModel.cachedSongs = null
                 viewModel.updateAllSongs(context, viewModel.userSettingsController.sortBy, viewModel.userSettingsController.sortOrder)
-                delay(1000) // spinner
+                    .join()
                 viewModel.isRefreshing = false
             }
         },
@@ -318,9 +321,10 @@ fun HomeScreenLoaded(
                 }
             }
 
-            items(viewModel.displaySongs.size) { index ->
-                val song = viewModel.displaySongs[index]
-
+            items(
+                items = viewModel.displaySongs,
+                key = { song -> song.filePath ?: error("a song in the list of files did not have a file path") }
+            ) { song ->
                 SongItem(
                     filePath = song.filePath
                         ?: error("a song in the list of files did not have a file path"),
