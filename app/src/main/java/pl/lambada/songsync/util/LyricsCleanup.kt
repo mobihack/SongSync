@@ -10,7 +10,7 @@ object LyricsCleanup {
     private val wordStamps = Regex("""<\d{1,3}:\d{2}(?:[.:]\d{1,3})?>""")
 
     private val credit = Regex(
-        """^(作词|作詞|作曲|编曲|編曲|词|詞|曲|制作人|監製|监制|混音|录音|和声|原唱|""" +
+        """^(作词|作詞|作曲|编曲|編曲|词|詞|曲|制作人|監製|监制|混音|录音|和声|合声|合声编写|和声编写|编写|原唱|""" +
             """lyricist|lyrics|lyrics by|written by|writer|composer|composed by|music by|""" +
             """producer|produced by|arranger|arranged by|mixed by|mastered by)\s*[:：]""",
         RegexOption.IGNORE_CASE

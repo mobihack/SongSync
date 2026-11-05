@@ -30,6 +30,15 @@ class LyricsCleanupTest {
     }
 
     @Test
+    fun `removes backing vocal credits seen in KuGou word-by-word lyrics`() {
+        LyricsCleanup.clean(
+            "[00:11.250]<00:11.250>合<00:11.625>声<00:12.000>：<00:12.375>周杰伦<00:13.500>\n" +
+                "[00:13.500]<00:13.500>合声编写：周杰伦<00:15.750>\n" +
+                "[00:29.000]<00:29.000>故事的小黄花<00:31.500>"
+        ) shouldBe "[00:29.000]<00:29.000>故事的小黄花<00:31.500>"
+    }
+
+    @Test
     fun `removes English credit lines`() {
         LyricsCleanup.clean("Written by: Someone\nLyrics by：Someone Else\nProducer: X\nHello") shouldBe "Hello"
     }

@@ -4,6 +4,7 @@ import android.util.Log
 import pl.lambada.songsync.data.remote.lyrics_providers.apple.AppleAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.others.DeezerAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.others.GeniusAPI
+import pl.lambada.songsync.data.remote.lyrics_providers.others.KugouAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.others.LRCLibAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.others.LrcmuxAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.others.PetitLyricsAPI
@@ -58,6 +59,9 @@ class LyricsProviderService {
     // PetitLyrics and lrcmux return lyrics with the search result
     private var petitLyricsSongInfo: SongInfo? = null
     private var lrcmuxSongInfo: SongInfo? = null
+
+    // KuGou looks lyrics up by the song's hash
+    private var kugouSongInfo: SongInfo? = null
     // TODO: Use values from SongInfo object returned by search instead of storing them here
 
     /**
@@ -122,6 +126,10 @@ class LyricsProviderService {
                 Providers.LRCMUX -> LrcmuxAPI().getSongInfo(query, offset).also {
                     lrcmuxSongInfo = it
                 } ?: throw NoTrackFoundException()
+
+                Providers.KUGOU -> KugouAPI().getSongInfo(query, offset).also {
+                    kugouSongInfo = it
+                } ?: throw NoTrackFoundException()
             }
         } catch (e: Exception) {
             when (e) {
@@ -170,6 +178,7 @@ class LyricsProviderService {
             Providers.GENIUS -> GeniusAPI().getLyrics(geniusID)
             Providers.PETITLYRICS -> petitLyricsSongInfo?.unsyncedLyrics
             Providers.LRCMUX -> lrcmuxSongInfo?.let { it.syncedLyrics ?: it.unsyncedLyrics }
+            Providers.KUGOU -> kugouSongInfo?.kugouHash?.let { KugouAPI().getSyncedLyrics(it, kugouSongInfo?.durationMs) }
         })
     }
 

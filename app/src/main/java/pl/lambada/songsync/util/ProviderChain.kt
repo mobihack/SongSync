@@ -14,6 +14,7 @@ object ProviderChain {
         Providers.LRCLIB,
         Providers.NETEASE,
         Providers.LRCMUX,
+        Providers.KUGOU,
         Providers.MUSIXMATCH,
         Providers.QQMUSIC,
         Providers.APPLE,
