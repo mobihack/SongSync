@@ -12,6 +12,7 @@ import androidx.compose.ui.res.stringResource
 import pl.lambada.songsync.R
 import pl.lambada.songsync.util.EmptyQueryException
 import pl.lambada.songsync.util.NoTrackFoundException
+import pl.lambada.songsync.util.ProviderUnavailableException
 import java.io.FileNotFoundException
 
 /**
@@ -36,6 +37,7 @@ fun FailedDialogue(
                 when (exception) {
                     is NoTrackFoundException -> Text(stringResource(R.string.no_results))
                     is EmptyQueryException -> Text(stringResource(R.string.invalid_query))
+                    is ProviderUnavailableException -> Text(exception.message.orEmpty())
                     else -> Text(exception.toString())
                 }
             }

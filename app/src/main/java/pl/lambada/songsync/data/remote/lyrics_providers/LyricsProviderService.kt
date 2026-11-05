@@ -12,6 +12,7 @@ import pl.lambada.songsync.domain.model.SongInfo
 import pl.lambada.songsync.util.EmptyQueryException
 import pl.lambada.songsync.util.InternalErrorException
 import pl.lambada.songsync.util.NoTrackFoundException
+import pl.lambada.songsync.util.ProviderUnavailableException
 import pl.lambada.songsync.util.Providers
 import java.io.FileNotFoundException
 import java.net.UnknownHostException
@@ -94,7 +95,8 @@ class LyricsProviderService {
             }
         } catch (e: Exception) {
             when (e) {
-                is InternalErrorException, is NoTrackFoundException, is EmptyQueryException -> throw e
+                is InternalErrorException, is NoTrackFoundException, is EmptyQueryException,
+                is ProviderUnavailableException -> throw e
                 else -> throw InternalErrorException(Log.getStackTraceString(e))
             }
         }
