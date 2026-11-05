@@ -18,9 +18,10 @@ import pl.lambada.songsync.ui.screens.init.InitScreenViewModel
 import pl.lambada.songsync.ui.screens.lyricsFetch.LyricsFetchScreen
 import pl.lambada.songsync.ui.screens.lyricsFetch.LyricsFetchViewModel
 import pl.lambada.songsync.ui.screens.settings.SettingsScreen
+import pl.lambada.songsync.ui.screens.settings.SettingsSection
+import pl.lambada.songsync.ui.screens.settings.SettingsSectionScreen
 import pl.lambada.songsync.ui.screens.settings.SettingsViewModel
 import pl.lambada.songsync.ui.screens.settings.folders.MusicFoldersScreen
-import pl.lambada.songsync.ui.screens.settings.providers.MyProvidersScreen
 
 /**
  * Composable function for handling navigation within the app.
@@ -73,17 +74,18 @@ fun Navigator(
                     animatedVisibilityScope = this,
                 )
             }
-            animatedComposable<ScreenMyProviders> {
-                MyProvidersScreen(userSettingsController, navController)
-            }
             animatedComposable<ScreenMusicFolders> {
                 MusicFoldersScreen(userSettingsController, navController)
             }
             animatedComposable<ScreenSettings> {
-                SettingsScreen(
+                SettingsScreen(userSettingsController, navController = navController)
+            }
+            animatedComposable<ScreenSettingsSection> {
+                SettingsSectionScreen(
+                    section = SettingsSection.valueOf(it.toRoute<ScreenSettingsSection>().section),
                     viewModel = viewModel { SettingsViewModel() },
-                    userSettingsController,
-                    navController = navController
+                    userSettingsController = userSettingsController,
+                    navController = navController,
                 )
             }
         }
@@ -121,8 +123,9 @@ data class LocalSong(
 @Serializable
 object ScreenSettings
 
+/** A category page of Settings; [section] is a [SettingsSection] name. */
 @Serializable
-object ScreenMyProviders
+data class ScreenSettingsSection(val section: String)
 
 @Serializable
 object ScreenMusicFolders

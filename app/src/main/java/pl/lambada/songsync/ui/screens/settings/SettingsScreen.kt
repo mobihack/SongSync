@@ -1,210 +1,159 @@
-@file:Suppress("SpellCheckingInspection")
-
 package pl.lambada.songsync.ui.screens.settings
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.LibraryMusic
+import androidx.compose.material.icons.outlined.Lyrics
+import androidx.compose.material.icons.outlined.Palette
+import androidx.compose.material.icons.outlined.Route
+import androidx.compose.material.icons.outlined.Speaker
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.navigation.NavController
 import pl.lambada.songsync.R
-import pl.lambada.songsync.data.remote.UpdateState
 import pl.lambada.songsync.data.UserSettingsController
-import pl.lambada.songsync.ui.components.SettingsHeadLabel
-import pl.lambada.songsync.ui.components.SwitchItem
-import pl.lambada.songsync.ui.screens.settings.components.OffsetModeSwitch
-import pl.lambada.songsync.ui.screens.settings.components.SettingsScreenTopBar
-import pl.lambada.songsync.ui.screens.settings.components.AppInfoSection
-import pl.lambada.songsync.ui.screens.settings.components.ContributorsSection
-import pl.lambada.songsync.ui.screens.settings.components.CreditsSection
-import pl.lambada.songsync.ui.screens.settings.components.ExternalLinkSection
-import pl.lambada.songsync.ui.screens.settings.components.MarqueeSwitch
+import pl.lambada.songsync.services.PowerampPlugin
 import pl.lambada.songsync.ui.ScreenMusicFolders
-import pl.lambada.songsync.ui.ScreenMyProviders
-import pl.lambada.songsync.ui.components.NavigationItem
-import pl.lambada.songsync.ui.screens.settings.components.ProviderModeSection
+import pl.lambada.songsync.ui.ScreenSettingsSection
+import pl.lambada.songsync.ui.screens.settings.components.SettingsHubRow
+import pl.lambada.songsync.ui.screens.settings.components.SettingsScreenTopBar
 import pl.lambada.songsync.ui.screens.settings.folders.folderModeSummary
-import pl.lambada.songsync.ui.screens.settings.components.MultiPersonSwitch
-import pl.lambada.songsync.ui.screens.settings.components.PureBlackThemeSwitch
-import pl.lambada.songsync.ui.screens.settings.components.RomanizationSwitch
-import pl.lambada.songsync.ui.screens.settings.components.SdCardPathSetting
-import pl.lambada.songsync.ui.screens.settings.components.ShowPathSwitch
-import pl.lambada.songsync.ui.screens.settings.components.SupportSection
-import pl.lambada.songsync.ui.screens.settings.components.SyncedLyricsSwitch
-import pl.lambada.songsync.ui.screens.settings.components.TranslationSection
-import pl.lambada.songsync.ui.screens.settings.components.TranslationSwitch
-import pl.lambada.songsync.ui.screens.settings.components.UpdateAvailableDialog
+import pl.lambada.songsync.util.ProviderChain
+import pl.lambada.songsync.util.ProviderMode
 import pl.lambada.songsync.util.ext.getVersion
 
 /**
- * Composable function for AboutScreen component.
+ * Settings home: one row per category, each summarising its current values. A row opens the
+ * category's page ([SettingsSectionScreen]); Library goes straight to Music folders.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    viewModel: SettingsViewModel,
     userSettingsController: UserSettingsController,
-    navController: NavController
+    navController: NavController,
 ) {
     val context = LocalContext.current
-    val uriHandler = LocalUriHandler.current
-    val version = context.getVersion()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    fun open(section: SettingsSection) = navController.navigate(ScreenSettingsSection(section.name))
+
+    // The plugin switch lives on another page; re-read it when coming back
+    var pluginOn by remember { mutableStateOf(PowerampPlugin.isEnabled(context)) }
+    LifecycleResumeEffect(Unit) {
+        pluginOn = PowerampPlugin.isEnabled(context)
+        onPauseOrDispose { }
+    }
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            SettingsScreenTopBar(
-                navController = navController,
-                scrollBehavior = scrollBehavior
-            )
-        }
-    ) { paddingValues ->
+        topBar = { SettingsScreenTopBar(navController = navController, scrollBehavior = scrollBehavior) },
+    ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxWidth(),
-            contentPadding = paddingValues
+            contentPadding = PaddingValues(
+                top = padding.calculateTopPadding() + 8.dp,
+                bottom = padding.calculateBottomPadding() + 16.dp,
+            ),
         ) {
-            item { SettingsHeadLabel(label = stringResource(id = R.string.theme)) }
             item {
-                if (isSystemInDarkTheme()) PureBlackThemeSwitch(
-                    selected = userSettingsController.pureBlack,
-                    onToggle = { userSettingsController.updatePureBlack(it) }
-                )
+                SettingsHubRow(
+                    Icons.Outlined.Palette,
+                    stringResource(R.string.settings_appearance),
+                    appearanceSummary(userSettingsController),
+                ) { open(SettingsSection.APPEARANCE) }
             }
             item {
-                MarqueeSwitch(
-                    selected = userSettingsController.disableMarquee,
-                    onToggle = { userSettingsController.updateDisableMarquee(it) }
-                )
-            }
-            item {
-                ShowPathSwitch(
-                    selected = userSettingsController.showPath,
-                    onToggle = { userSettingsController.updateShowPath(it) }
-                )
-            }
-
-            item { SettingsHeadLabel(label = stringResource(R.string.library)) }
-            item {
-                NavigationItem(
-                    label = stringResource(R.string.music_folders),
-                    description = folderModeSummary(userSettingsController),
-                    onClick = { navController.navigate(ScreenMusicFolders) },
-                )
-            }
-
-            item { SettingsHeadLabel(label = stringResource(id = R.string.provider)) }
-            item {
-                ProviderModeSection(
-                    userSettingsController = userSettingsController,
-                    onEditMyList = { navController.navigate(ScreenMyProviders) },
-                )
-            }
-            item {
-                TranslationSwitch(
-                    selected = userSettingsController.includeTranslation,
-                    onToggle = { userSettingsController.updateIncludeTranslation(it) }
-                )
-            }
-            item {
-                RomanizationSwitch(
-                    selected = userSettingsController.includeRomanization,
-                    onToggle = { userSettingsController.updateIncludeRomanization(it) }
-                )
-            }
-            item {
-                MultiPersonSwitch(
-                    selected = userSettingsController.multiPersonWordByWord,
-                    onToggle = { userSettingsController.updateMultiPersonWordByWord(it) }
-                )
-            }
-            item {
-                SyncedLyricsSwitch(
-                    selected = userSettingsController.unsyncedFallbackMusixmatch,
-                    onToggle = { userSettingsController.updateUnsyncedFallbackMusixmatch(it) }
-                )
-            }
-            item {
-                OffsetModeSwitch(
-                    selected = userSettingsController.directlyModifyTimestamps,
-                    onToggle = { userSettingsController.updateDirectlyModifyTimestamps(it) }
-                )
-            }
-
-            item { SettingsHeadLabel(label = stringResource(R.string.poweramp)) }
-            item {
-                SwitchItem(
-                    label = stringResource(R.string.poweramp_rescan_after_save),
-                    description = stringResource(R.string.poweramp_rescan_after_save_description),
-                    selected = userSettingsController.powerampRescanAfterSave,
-                    onClick = {
-                        userSettingsController.updatePowerampRescanAfterSave(!userSettingsController.powerampRescanAfterSave)
-                    },
-                )
-            }
-
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
-                item { SettingsHeadLabel(label = stringResource(R.string.sd_card)) }
-                item {
-                    SdCardPathSetting(
-                        sdPath = userSettingsController.sdCardPath,
-                        onClearPath = { userSettingsController.updateSdCardPath("") },
-                        onUpdatePath = { newPath ->
-                            userSettingsController.updateSdCardPath(
-                                newPath
-                            )
-                        }
-                    )
+                SettingsHubRow(
+                    Icons.Outlined.LibraryMusic,
+                    stringResource(R.string.library),
+                    folderModeSummary(userSettingsController),
+                ) {
+                    // Before Android 11 the SD card setting shares the page; otherwise skip it
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) open(SettingsSection.LIBRARY)
+                    else navController.navigate(ScreenMusicFolders)
                 }
             }
-
-            item { SettingsHeadLabel(label = stringResource(R.string.about_songsync)) }
             item {
-                AppInfoSection(
-                    version = version,
-                    onCheckForUpdates = { viewModel.checkForUpdates(context) }
-                )
+                SettingsHubRow(
+                    Icons.Outlined.Route,
+                    stringResource(R.string.settings_lyrics_search),
+                    searchSummary(userSettingsController),
+                ) { open(SettingsSection.SEARCH) }
             }
-
-            item { SettingsHeadLabel(label = stringResource(R.string.source_code)) }
             item {
-                ExternalLinkSection(
-                    url = "https://github.com/Lambada10/SongSync",
-                    uriHandler = uriHandler
-                )
+                SettingsHubRow(
+                    Icons.Outlined.Lyrics,
+                    stringResource(R.string.settings_lyrics_content),
+                    contentSummary(userSettingsController),
+                ) { open(SettingsSection.CONTENT) }
             }
-
-            item { SettingsHeadLabel(stringResource(R.string.support)) }
-            item { SupportSection(uriHandler = uriHandler) }
-
-            item { SettingsHeadLabel(label = stringResource(id = R.string.translation)) }
-            item { TranslationSection(uriHandler = uriHandler) }
-
-            item { SettingsHeadLabel(stringResource(R.string.contributors)) }
-            item { ContributorsSection(uriHandler = uriHandler) }
-
-            item { SettingsHeadLabel(label = stringResource(id = R.string.thanks_to)) }
-            item { CreditsSection(uriHandler = uriHandler) }
+            item {
+                SettingsHubRow(
+                    Icons.Outlined.Speaker,
+                    stringResource(R.string.poweramp),
+                    stringResource(
+                        when {
+                            !pluginOn -> R.string.poweramp_plugin_off
+                            userSettingsController.powerampRescanAfterSave -> R.string.poweramp_plugin_on_rescan
+                            else -> R.string.poweramp_plugin_on
+                        }
+                    ),
+                ) { open(SettingsSection.POWERAMP) }
+            }
+            item {
+                SettingsHubRow(
+                    Icons.Outlined.Info,
+                    stringResource(R.string.about_songsync),
+                    stringResource(R.string.app_version, context.getVersion()),
+                ) { open(SettingsSection.ABOUT) }
+            }
         }
     }
+}
 
-    val updateState = viewModel.updateState
-    if (updateState is UpdateState.UpdateAvailable) {
-        UpdateAvailableDialog(
-            onDismiss = viewModel::dismissUpdate,
-            onDownloadRequest = { uriHandler.openUri(updateState.release.htmlURL) },
-            latestVersion = updateState.release.tagName,
-            currentVersion = version,
-            changelog = updateState.release.changelog ?: ""
+@Composable
+private fun appearanceSummary(settings: UserSettingsController): String = listOfNotNull(
+    stringResource(R.string.settings_appearance_pure_black).takeIf { settings.pureBlack && isSystemInDarkTheme() },
+    stringResource(R.string.settings_appearance_paths).takeIf { settings.showPath },
+    stringResource(R.string.settings_appearance_no_marquee).takeIf { settings.disableMarquee },
+).joinToString(" · ").ifEmpty { stringResource(R.string.settings_appearance_default) }
+
+@Composable
+private fun searchSummary(settings: UserSettingsController): String {
+    val selected = settings.selectedProvider.displayName
+    return when (settings.providerMode) {
+        ProviderMode.AUTO -> stringResource(
+            R.string.settings_lyrics_search_auto, selected,
+            ProviderChain.order(settings.selectedProvider, fallback = true).size - 1,
         )
+        ProviderMode.MY_LIST -> stringResource(
+            R.string.settings_lyrics_search_my_list,
+            settings.myProviders.joinToString(" → ") { it.displayName },
+        )
+        ProviderMode.SELECTED -> stringResource(R.string.settings_lyrics_search_selected, selected)
     }
 }
+
+@Composable
+private fun contentSummary(settings: UserSettingsController): String = listOfNotNull(
+    stringResource(R.string.settings_lyrics_content_translation).takeIf { settings.includeTranslation },
+    stringResource(R.string.settings_lyrics_content_romanization).takeIf { settings.includeRomanization },
+    stringResource(R.string.settings_lyrics_content_multi_person).takeIf { settings.multiPersonWordByWord },
+    stringResource(R.string.settings_lyrics_content_unsynced).takeIf { settings.unsyncedFallbackMusixmatch },
+).joinToString(", ").ifEmpty { stringResource(R.string.settings_lyrics_content_none) }
