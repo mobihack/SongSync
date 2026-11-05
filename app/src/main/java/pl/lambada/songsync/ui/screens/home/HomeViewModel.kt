@@ -5,12 +5,17 @@ import android.content.ContentUris
 import android.content.Context
 import android.graphics.Bitmap
 import android.media.MediaMetadata
+import android.media.session.MediaController
 import android.media.session.MediaSessionManager
+import android.media.session.PlaybackState
 import android.net.Uri
+import android.os.Handler
+import android.os.Looper
 import android.provider.MediaStore
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -24,7 +29,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import pl.lambada.songsync.R
 import pl.lambada.songsync.data.UserSettingsController
 import pl.lambada.songsync.data.remote.lyrics_providers.LyricsProviderService
@@ -290,35 +298,152 @@ class HomeViewModel(
         )
     }
 
-    fun updatePlayingSongInfo(context: Context) = runCatching {
-        val msm = context.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager
-        val controllers = msm.getActiveSessions(ComponentName(context, NotificationListener::class.java))
-        val metadata = controllers[0].metadata
-        playingSongTitle = metadata!!.getString(MediaMetadata.METADATA_KEY_TITLE) ?: context.getString(R.string.unknown)
-        playingSongArtist = metadata.getString(MediaMetadata.METADATA_KEY_ARTIST) ?: context.getString(R.string.unknown)
-        playingSongFilePath =  try {
-            allSongs!!.filter {
-                (it.title == playingSongTitle || (it.title == null && playingSongTitle == context.getString(R.string.unknown)))
-                &&
-                (it.artist == playingSongArtist || (it.artist == null && playingSongArtist == context.getString(R.string.unknown)))
-            }[0].filePath!! + ".nowplaying" // shared transition uses path as key, add to avoid breaking stuff
-        } catch (e: IndexOutOfBoundsException) {
-            ""
-        }
-        playingSongAlbumArt = try {
-            metadata.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)!!.let {
-                // not same name of files because img won't update, cache dir cleared at app start
-                val file = File(context.cacheDir, "${UUID.randomUUID()}.jpg")
-                it.compress(Bitmap.CompressFormat.JPEG, 100, file.outputStream())
-                Uri.parse(file.absolutePath)
+    // Live now-playing tracking: every active media session is watched, so pausing, skipping or
+    // another player starting updates the card while the screen is open.
+    private var appContext: Context? = null
+    private var sessionManager: MediaSessionManager? = null
+    private var sessionsListener: MediaSessionManager.OnActiveSessionsChangedListener? = null
+    private var watchedControllers: List<MediaController> = emptyList()
+    private val mainHandler = Handler(Looper.getMainLooper())
+    private val controllerCallback = object : MediaController.Callback() {
+        override fun onPlaybackStateChanged(state: PlaybackState?) = pickAndRead()
+        override fun onMetadataChanged(metadata: MediaMetadata?) = pickAndRead()
+        override fun onSessionDestroyed() = pickAndRead()
+    }
+    /** Title, artist and player of the song whose album art is cached, so art isn't rewritten on every pause. */
+    private var artKey: String? = null
+    private var artClearJob: Job? = null
+
+    /** Whether the now-playing song is playing right now, rather than paused (shown as "Last played"). */
+    var playingSongIsPlaying by mutableStateOf(false)
+
+    /** Which way the last song change went: 1 for next, -1 for previous. Drives the card's slide. */
+    var playingSongDirection by mutableIntStateOf(1)
+    private var currentTrackKey: String? = null
+    private var previousTrackKey: String? = null
+    /** Set when a player reports it is skipping, for the song change that follows. */
+    private var pendingSkip = 0
+
+    fun updatePlayingSongInfo(context: Context) {
+        val app = context.applicationContext
+        appContext = app
+        runCatching {
+            val msm = sessionManager
+                ?: (app.getSystemService(Context.MEDIA_SESSION_SERVICE) as MediaSessionManager).also { sessionManager = it }
+            val component = ComponentName(app, NotificationListener::class.java)
+            if (sessionsListener == null) {
+                val listener = MediaSessionManager.OnActiveSessionsChangedListener { watch(it.orEmpty()) }
+                msm.addOnActiveSessionsChangedListener(listener, component, mainHandler)
+                sessionsListener = listener
             }
-        } catch (e: NullPointerException) {
-            null
+            watch(msm.getActiveSessions(component))
+        }.onFailure { clearPlayingSong() } // no notification access, usually
+    }
+
+    private fun watch(controllers: List<MediaController>) {
+        watchedControllers.forEach { it.unregisterCallback(controllerCallback) }
+        watchedControllers = controllers
+        controllers.forEach { it.registerCallback(controllerCallback, mainHandler) }
+        pickAndRead()
+    }
+
+    /** Prefers a player that is playing; otherwise the most recent session, which is paused. */
+    private fun pickAndRead() {
+        val context = appContext ?: return
+        val controller = watchedControllers.firstOrNull { it.playbackState.isPlaying() }
+            ?: watchedControllers.firstOrNull()
+        val metadata = controller?.metadata ?: return clearPlayingSong()
+        val unknown = context.getString(R.string.unknown)
+        val title = metadata.getString(MediaMetadata.METADATA_KEY_TITLE) ?: unknown
+        val artist = metadata.getString(MediaMetadata.METADATA_KEY_ARTIST) ?: unknown
+
+        when (controller.playbackState?.state) {
+            PlaybackState.STATE_SKIPPING_TO_NEXT -> pendingSkip = 1
+            PlaybackState.STATE_SKIPPING_TO_PREVIOUS -> pendingSkip = -1
         }
-    }.onFailure {
+        val trackKey = "$title\u0000$artist"
+        if (trackKey != currentTrackKey) {
+            // Players rarely report which way they skipped; going back to the song shown before
+            // this one is the usual sign of "previous"
+            playingSongDirection = when {
+                pendingSkip != 0 -> pendingSkip
+                currentTrackKey != null && trackKey == previousTrackKey -> -1
+                else -> 1
+            }
+            pendingSkip = 0
+            previousTrackKey = currentTrackKey
+            currentTrackKey = trackKey
+        }
+
+        playingSongIsPlaying = controller.playbackState.isPlaying()
+        playingSongTitle = title
+        playingSongArtist = artist
+        playingSongFilePath = allSongs?.firstOrNull {
+            (it.title == title || (it.title == null && title == unknown)) &&
+                (it.artist == artist || (it.artist == null && artist == unknown))
+        }?.filePath?.let { "$it.nowplaying" } // shared transition uses path as key, add to avoid breaking stuff
+            ?: ""
+
+        val key = "$title\u0000$artist\u0000${controller.packageName}"
+        if (key == artKey) return
+        val bitmap = metadata.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)
+            ?: metadata.getBitmap(MediaMetadata.METADATA_KEY_ART)
+        if (bitmap == null) {
+            // Players often send a new song's details first and its art a moment later, so keep
+            // the old art briefly instead of flashing the placeholder. artKey stays unset, so the
+            // art is picked up when it arrives.
+            artClearJob?.cancel()
+            artClearJob = viewModelScope.launch {
+                delay(ART_GRACE_MS)
+                if (artKey != key) playingSongAlbumArt = null
+            }
+            return
+        }
+        artClearJob?.cancel()
+        artKey = key
+        viewModelScope.launch(Dispatchers.IO) {
+            // not same name of files because img won't update, cache dir cleared at app start
+            val uri = runCatching {
+                val file = File(context.cacheDir, "${UUID.randomUUID()}.jpg")
+                file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.JPEG, 100, it) }
+                Uri.parse(file.absolutePath)
+            }.getOrNull()
+            withContext(Dispatchers.Main) {
+                if (artKey == key) playingSongAlbumArt = uri // skip if the song changed meanwhile
+            }
+        }
+    }
+
+    private fun PlaybackState?.isPlaying() = when (this?.state) {
+        PlaybackState.STATE_PLAYING,
+        PlaybackState.STATE_BUFFERING,
+        PlaybackState.STATE_FAST_FORWARDING,
+        PlaybackState.STATE_REWINDING,
+        PlaybackState.STATE_SKIPPING_TO_NEXT,
+        PlaybackState.STATE_SKIPPING_TO_PREVIOUS,
+        PlaybackState.STATE_SKIPPING_TO_QUEUE_ITEM -> true
+        else -> false
+    }
+
+    private fun clearPlayingSong() {
+        artClearJob?.cancel()
         playingSongTitle = ""
         playingSongArtist = ""
         playingSongFilePath = ""
         playingSongAlbumArt = null
+        playingSongIsPlaying = false
+        artKey = null
+        currentTrackKey = null
+        previousTrackKey = null
+    }
+
+    override fun onCleared() {
+        watchedControllers.forEach { it.unregisterCallback(controllerCallback) }
+        watchedControllers = emptyList()
+        sessionsListener?.let { sessionManager?.removeOnActiveSessionsChangedListener(it) }
+        sessionsListener = null
     }
 }
+
+/** How long a song change may go without art before the placeholder shows. */
+private const val ART_GRACE_MS = 800L
