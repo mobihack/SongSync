@@ -12,26 +12,22 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import pl.lambada.songsync.R
-import pl.lambada.songsync.ui.components.SettingsHeadLabel
 
 
+/** Bug reports and suggestions go to the project's GitHub issues. */
 @Composable
 fun SupportSection(uriHandler: UriHandler) {
     Column(
         modifier = Modifier
-            .clickable { uriHandler.openUri("https://t.me/LambadaOT") }
+            .clickable { uriHandler.openUri("https://github.com/Lambada10/SongSync/issues") }
             .padding(horizontal = 22.dp, vertical = 16.dp)
     ) {
-        Text(stringResource(R.string.bugs_or_suggestions_contact_us))
+        Text(stringResource(R.string.support_issues))
         Text(
-            text = stringResource(R.string.telegram_group),
+            text = stringResource(R.string.support_issues_summary),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontSize = 12.sp,
             lineHeight = 16.sp,
         )
     }
-    Text(
-        stringResource(R.string.create_issue),
-        modifier = Modifier.padding(horizontal = 22.dp)
-    )
 }

@@ -229,7 +229,10 @@
     <string name="settings_appearance_no_marquee">No scrolling titles</string>
     <string name="settings_lyrics_search">Lyrics provider</string>
     <string name="settings_lyrics_search_auto">Auto · all %1$d providers</string>
-    <string name="settings_lyrics_search_my_list">Custom order · %1$s</string>
+    <plurals name="settings_lyrics_search_custom">
+        <item quantity="one">Custom order · %d provider</item>
+        <item quantity="other">Custom order · %d providers</item>
+    </plurals>
     <string name="settings_lyrics_search_selected">Only %1$s</string>
     <string name="settings_selected_provider">Provider</string>
     <string name="settings_lyrics_content">Lyrics content</string>
@@ -243,4 +246,6 @@
     <string name="poweramp_plugin_off">Lyrics plugin off</string>
     <string name="poweramp_plugin_on">Lyrics plugin on</string>
     <string name="poweramp_plugin_on_rescan">Lyrics plugin on · refreshes Poweramp after saving</string>
+    <string name="support_issues">Found a bug or have a suggestion?</string>
+    <string name="support_issues_summary">Open an issue on GitHub</string>
 </resources>

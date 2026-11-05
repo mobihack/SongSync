@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -139,10 +140,9 @@ private fun searchSummary(settings: UserSettingsController): String {
     val selected = settings.selectedProvider.displayName
     return when (settings.providerMode) {
         ProviderMode.AUTO -> stringResource(R.string.settings_lyrics_search_auto, ProviderChain.defaultOrder.size)
-        ProviderMode.MY_LIST -> stringResource(
-            R.string.settings_lyrics_search_my_list,
-            settings.myProviders.joinToString(" → ") { it.displayName },
-        )
+        ProviderMode.MY_LIST -> settings.myProviders.size.let {
+            pluralStringResource(R.plurals.settings_lyrics_search_custom, it, it)
+        }
         ProviderMode.SELECTED -> stringResource(R.string.settings_lyrics_search_selected, selected)
     }
 }
