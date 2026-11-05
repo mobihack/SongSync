@@ -96,6 +96,25 @@ class DeezerAPITest {
     }
 
     @Test
+    fun `an HTML Access Denied page is reported as blocked`() = runTest {
+        val page = "<HTML><HEAD>\n<TITLE>Access Denied</TITLE>\n</HEAD><BODY>Access Denied</BODY></HTML>"
+        val http = FakeHttp { request ->
+            when (request.url.host) {
+                "auth.deezer.com" -> respondJson("""{"jwt":"anon-jwt"}""")
+                else -> respondJson(page, HttpStatusCode.Forbidden)
+            }
+        }
+        val error = shouldThrow<ProviderUnavailableException> { DeezerAPI(http.client).getSongInfo(query) }
+        error.message shouldContain "blocking"
+    }
+
+    @Test
+    fun `a blocked login is reported as blocked`() = runTest {
+        val http = FakeHttp { respondJson("<HTML><TITLE>Access Denied</TITLE></HTML>", HttpStatusCode.Forbidden) }
+        shouldThrow<ProviderUnavailableException> { DeezerAPI(http.client).getSongInfo(query) }
+    }
+
+    @Test
     fun `null tracks in an open region just mean no results`() = runTest {
         val http = backend(search("null"), infoOpen = true)
         DeezerAPI(http.client).getSongInfo(query).shouldBeNull()

@@ -5,6 +5,7 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
@@ -125,13 +126,25 @@ class DeezerAPI(private val client: HttpClient = Ktor.clientFor(Providers.DEEZER
             return graphql(query, variables, retry = false)
         }
 
-        return json.parseToJsonElement(response.bodyAsText(Charsets.UTF_8)).jsonObject
+        return response.jsonObject()
+    }
+
+    /**
+     * The body of a successful JSON response. Deezer's edge answers blocked networks (some regions,
+     * VPNs, datacenter IPs) with an HTML "Access Denied" page, which would otherwise fail to parse.
+     */
+    private suspend fun HttpResponse.jsonObject(): JsonObject {
+        val body = bodyAsText(Charsets.UTF_8)
+        if (status.value !in 200..299 || !body.trimStart().startsWith("{"))
+            throw ProviderUnavailableException(
+                "Deezer is blocking requests from your network right now. Try again later or use a proxy."
+            )
+        return json.parseToJsonElement(body).jsonObject
     }
 
     private suspend fun getAuthToken(): String {
         authToken?.let { return it }
-        val response = client.get(authURL).bodyAsText(Charsets.UTF_8)
-        return json.parseToJsonElement(response).jsonObject.string("jwt")
+        return client.get(authURL).jsonObject().string("jwt")
             ?.also { authToken = it }
             ?: throw ProviderUnavailableException("Couldn't start a Deezer session.")
     }
