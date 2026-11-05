@@ -239,6 +239,7 @@ fun SharedTransitionScope.LyricsFetchScreen(
                         // Show the provider that actually answered (may be a fallback)
                         selectedProvider = viewModel.activeProvider,
                         onExpandProvidersRequest = { expandedProviders = true },
+                        songPath = viewModel.source?.filePath?.replace(".nowplaying", ""),
                     )
 
                     is QueryStatus.Failed -> FailedDialogue(

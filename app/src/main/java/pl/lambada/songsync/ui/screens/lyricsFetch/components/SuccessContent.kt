@@ -2,6 +2,13 @@
 
 package pl.lambada.songsync.ui.screens.lyricsFetch.components
 
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.outlined.AudioFile
+import androidx.compose.material.icons.Icons
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -50,6 +57,8 @@ fun SharedTransitionScope.SuccessContent(
     allowTryingAgain: Boolean,
     selectedProvider: Providers,
     onExpandProvidersRequest: () -> Unit,
+    /** Path of the local song file, shown under the lyrics; null for online-only searches. */
+    songPath: String? = null,
 ) = Column(horizontalAlignment = Alignment.CenterHorizontally) {
     Spacer(modifier = Modifier.height(10.dp))
     CloudProviderTitle(
@@ -121,6 +130,29 @@ fun SharedTransitionScope.SuccessContent(
                 is LyricsFetchState.Failed -> Text(stringResource(R.string.this_track_has_no_lyrics))
 
                 LyricsFetchState.Pending -> LoadingIndicator()
+            }
+        }
+    }
+
+    if (!songPath.isNullOrEmpty()) {
+        Spacer(modifier = Modifier.height(4.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector = Icons.Outlined.AudioFile,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(16.dp),
+            )
+            Spacer(modifier = Modifier.width(6.dp))
+            SelectionContainer {
+                Text(
+                    text = songPath,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
     }
