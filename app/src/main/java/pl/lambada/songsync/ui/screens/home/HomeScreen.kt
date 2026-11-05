@@ -1,5 +1,6 @@
 package pl.lambada.songsync.ui.screens.home
 
+import pl.lambada.songsync.ui.screens.home.components.HomeOverflowMenu
 import pl.lambada.songsync.ui.screens.home.components.LibraryHeader
 import pl.lambada.songsync.ui.screens.home.components.HomeLibraryToolbar
 import androidx.compose.material3.IconButtonDefaults
@@ -144,10 +145,6 @@ fun HomeScreen(
                     showing = showing,
                     scrolled = listScrolled,
                     onSelectedClearAction = viewModel.selectedSongs::clear,
-                    onNavigateToSettingsSectionRequest = { navController.navigate(ScreenSettings) },
-                    onProviderChoice = viewModel.userSettingsController::choose,
-                    onBatchDownloadRequest = { isBatchDownload = true },
-                    providerChoice = viewModel.userSettingsController.providerChoice,
                     searchLyricsAction = {
                         // Lyrics search for any song; grows into the Search screen
                         with(sharedTransitionScope) {
@@ -217,6 +214,14 @@ fun HomeScreen(
                 onInvertSelection = viewModel::invertSongSelection,
                 onBatchDownload = { isBatchDownload = true },
             ) else HomeLibraryToolbar(
+                overflowMenu = {
+                    HomeOverflowMenu(
+                        onNavigateToSettingsSectionRequest = { navController.navigate(ScreenSettings) },
+                        providerChoice = viewModel.userSettingsController.providerChoice,
+                        onProviderChoice = viewModel.userSettingsController::choose,
+                        onBatchDownloadRequest = { isBatchDownload = true },
+                    )
+                },
                 onSort = { viewModel.showSort = true },
                 onFilter = { viewModel.showFilters = true },
                 filterActive = viewModel.userSettingsController.hideLyrics,

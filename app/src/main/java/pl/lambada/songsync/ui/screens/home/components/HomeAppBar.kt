@@ -28,7 +28,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import pl.lambada.songsync.R
-import pl.lambada.songsync.util.ProviderChoice
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -36,11 +35,7 @@ fun HomeAppBar(
     showing: Boolean,
     /** Whether the list is scrolled away from the top; tints the bar. */
     scrolled: Boolean,
-    providerChoice: ProviderChoice,
     onSelectedClearAction: () -> Unit,
-    onNavigateToSettingsSectionRequest: () -> Unit,
-    onProviderChoice: (ProviderChoice) -> Unit,
-    onBatchDownloadRequest: () -> Unit,
     cachedSize: Int,
     /** Lyrics search for any song, shown when nothing is selected. */
     searchLyricsAction: @Composable () -> Unit = {},
@@ -85,13 +80,8 @@ fun HomeAppBar(
         actions = {
             // Selection actions live in the floating toolbar at the bottom (HomeSelectionToolbar)
             if (!showing) {
+                // The ⋮ menu lives in the floating toolbar at the bottom (HomeOverflowMenu)
                 searchLyricsAction()
-                HomeTopAppBarDropDown(
-                    onNavigateToSettingsSectionRequest = onNavigateToSettingsSectionRequest,
-                    providerChoice = providerChoice,
-                    onProviderChoice = onProviderChoice,
-                    onBatchDownloadRequest = onBatchDownloadRequest,
-                )
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
