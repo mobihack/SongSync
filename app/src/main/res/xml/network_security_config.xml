@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Plain http is blocked by default; allow it only where a provider has no working https -->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- KuGou's song search: its https certificate doesn't match the host -->
+        <domain includeSubdomains="false">mobilecdn.kugou.com</domain>
+    </domain-config>
+</network-security-config>
