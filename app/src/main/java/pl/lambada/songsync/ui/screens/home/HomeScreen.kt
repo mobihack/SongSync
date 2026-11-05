@@ -46,6 +46,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import pl.lambada.songsync.R
 import pl.lambada.songsync.domain.model.Song
@@ -205,9 +206,13 @@ fun HomeScreenLoaded(
         onRefresh = {
             viewModel.isRefreshing = true
             scope.launch {
+                val startedAt = System.currentTimeMillis()
                 viewModel.cachedSongs = null
                 viewModel.updateAllSongs(context, viewModel.userSettingsController.sortBy, viewModel.userSettingsController.sortOrder)
                     .join()
+                // A rescan can finish in a few ms; keep the indicator up long enough to be seen,
+                // otherwise it snaps away as if the pull didn't register
+                delay((MIN_REFRESH_INDICATOR_MS - (System.currentTimeMillis() - startedAt)).coerceAtLeast(0))
                 viewModel.isRefreshing = false
             }
         },
@@ -362,3 +367,6 @@ fun HomeScreenLoaded(
         }
     }
 }
+
+/** Shortest time the pull-to-refresh indicator stays visible. */
+private const val MIN_REFRESH_INDICATOR_MS = 700L
