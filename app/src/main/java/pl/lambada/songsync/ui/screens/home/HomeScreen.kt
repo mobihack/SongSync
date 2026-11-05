@@ -59,6 +59,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -111,7 +112,7 @@ fun HomeScreen(
     val listScrolled by remember {
         derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0 }
     }
-    var isBatchDownload by remember { mutableStateOf(false) }
+    var isBatchDownload by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
     val selecting = viewModel.selectedSongs.isNotEmpty()
     val scope = rememberCoroutineScope()

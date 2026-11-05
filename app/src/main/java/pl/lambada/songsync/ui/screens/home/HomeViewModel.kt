@@ -45,6 +45,8 @@ import pl.lambada.songsync.services.NotificationListener
 import pl.lambada.songsync.util.FolderMode
 import pl.lambada.songsync.util.MusicFolders
 import pl.lambada.songsync.util.downloadLyrics
+import pl.lambada.songsync.ui.screens.home.components.BatchCounts
+import pl.lambada.songsync.ui.screens.home.components.UiState
 import pl.lambada.songsync.util.saveBatchLyrics
 import pl.lambada.songsync.util.ext.toLrcFile
 import java.io.File
@@ -264,16 +266,21 @@ class HomeViewModel(
 
     private var batchJob: Job? = null
 
+    /**
+     * The batch download dialog's step and counts. Kept here rather than in the dialog so they
+     * survive rotation, while the download itself runs on in [viewModelScope].
+     */
+    var batchUiState by mutableStateOf(UiState.Warning)
+    var batchCounts by mutableStateOf(BatchCounts())
+        private set
+
     /** Starts a batch download of [songsToBatchDownload], replacing any one still running. */
-    fun batchDownloadLyrics(
-        context: Context,
-        onProgressUpdate: (successCount: Int, noLyricsCount: Int, failedCount: Int) -> Unit,
-        onDownloadComplete: () -> Unit,
-        onRateLimitReached: () -> Unit
-    ) {
+    fun batchDownloadLyrics(context: Context) {
         batchJob?.cancel()
         val appContext = context.applicationContext
         val settings = userSettingsController
+        batchCounts = BatchCounts()
+        batchUiState = UiState.Pending
         batchJob = viewModelScope.launch {
             downloadLyrics(
                 songs = songsToBatchDownload,
@@ -290,17 +297,21 @@ class HomeViewModel(
                         )
                     }
                 },
-                onProgressUpdate = onProgressUpdate,
-                onDownloadComplete = onDownloadComplete,
-                onRateLimitReached = onRateLimitReached,
+                onProgressUpdate = { success, noLyrics, failed ->
+                    batchCounts = BatchCounts(success, noLyrics, failed)
+                },
+                onDownloadComplete = { batchUiState = UiState.Done },
+                onRateLimitReached = { batchUiState = UiState.RateLimited },
             )
         }
     }
 
-    /** Stops the running batch download, if any; songs already saved stay saved. */
-    fun cancelBatchDownload() {
+    /** Stops the running batch download, if any, and resets the dialog for next time. */
+    fun closeBatchDownload() {
         batchJob?.cancel()
         batchJob = null
+        batchUiState = UiState.Warning
+        batchCounts = BatchCounts()
     }
 
     // Live now-playing tracking: every active media session is watched, so pausing, skipping or
