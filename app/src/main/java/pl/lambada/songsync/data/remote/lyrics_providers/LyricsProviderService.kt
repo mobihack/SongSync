@@ -5,6 +5,7 @@ import pl.lambada.songsync.data.remote.lyrics_providers.apple.AppleAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.others.DeezerAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.others.GeniusAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.others.LRCLibAPI
+import pl.lambada.songsync.data.remote.lyrics_providers.others.LrcmuxAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.others.PetitLyricsAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.others.MusixmatchAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.others.NeteaseAPI
@@ -54,8 +55,9 @@ class LyricsProviderService {
     private var deezerID = 0L
     private var geniusID = 0L
 
-    // PetitLyrics returns lyrics with the search result
+    // PetitLyrics and lrcmux return lyrics with the search result
     private var petitLyricsSongInfo: SongInfo? = null
+    private var lrcmuxSongInfo: SongInfo? = null
     // TODO: Use values from SongInfo object returned by search instead of storing them here
 
     /**
@@ -116,6 +118,10 @@ class LyricsProviderService {
                 Providers.PETITLYRICS -> PetitLyricsAPI().getSongInfo(query, offset).also {
                     petitLyricsSongInfo = it
                 } ?: throw NoTrackFoundException()
+
+                Providers.LRCMUX -> LrcmuxAPI().getSongInfo(query, offset).also {
+                    lrcmuxSongInfo = it
+                } ?: throw NoTrackFoundException()
             }
         } catch (e: Exception) {
             when (e) {
@@ -163,6 +169,7 @@ class LyricsProviderService {
             Providers.DEEZER -> DeezerAPI().getSyncedLyrics(deezerID)
             Providers.GENIUS -> GeniusAPI().getLyrics(geniusID)
             Providers.PETITLYRICS -> petitLyricsSongInfo?.unsyncedLyrics
+            Providers.LRCMUX -> lrcmuxSongInfo?.let { it.syncedLyrics ?: it.unsyncedLyrics }
         })
     }
 

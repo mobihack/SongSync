@@ -188,6 +188,7 @@ enum class Providers(
     QQMUSIC("QQ Music", true),
     NETEASE("Netease", true) { val inf = 0 },
     DEEZER("Deezer", false),
+    LRCMUX("lrcmux", true),
     // Plain-text only; hidden unless a credential is set in local.properties
     GENIUS("Genius", false, enabled = BuildConfig.GENIUS_TOKEN.isNotBlank()),
     PETITLYRICS("PetitLyrics", false, enabled = BuildConfig.PETITLYRICS_CLIENT_ID.isNotBlank()),

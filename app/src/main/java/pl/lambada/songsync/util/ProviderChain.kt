@@ -13,6 +13,7 @@ object ProviderChain {
     private val fallbackOrder = listOf(
         Providers.LRCLIB,
         Providers.NETEASE,
+        Providers.LRCMUX,
         Providers.MUSIXMATCH,
         Providers.QQMUSIC,
         Providers.APPLE,
