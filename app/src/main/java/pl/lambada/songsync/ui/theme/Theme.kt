@@ -2,6 +2,8 @@
 
 package pl.lambada.songsync.ui.theme
 
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.material3.ColorScheme
 import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -70,6 +72,10 @@ fun SongSyncTheme(
 
         darkTheme -> darkColorScheme
         else -> lightColorScheme
+    }.let { scheme ->
+        // Pure black stays black; otherwise lean the background and containers slightly
+        // toward the primary colour so the app isn't flat grey
+        if (scheme.surface == Color.Black) scheme else scheme.tinted(if (darkTheme) 0.05f else 0.04f)
     }
     val view = LocalView.current
     if (!view.isInEditMode) {
@@ -92,5 +98,19 @@ fun SongSyncTheme(
         shapes = Shapes(),
         typography = Typography,
         content = content,
+    )
+}
+
+/** Mixes [amount] of primary into the background, surface and surface container roles. */
+private fun ColorScheme.tinted(amount: Float): ColorScheme {
+    fun Color.tint() = lerp(this, primary, amount)
+    return copy(
+        background = background.tint(),
+        surface = surface.tint(),
+        surfaceContainerLowest = surfaceContainerLowest.tint(),
+        surfaceContainerLow = surfaceContainerLow.tint(),
+        surfaceContainer = surfaceContainer.tint(),
+        surfaceContainerHigh = surfaceContainerHigh.tint(),
+        surfaceContainerHighest = surfaceContainerHighest.tint(),
     )
 }
