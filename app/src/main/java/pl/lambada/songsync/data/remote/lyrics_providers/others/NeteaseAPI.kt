@@ -1,5 +1,6 @@
 package pl.lambada.songsync.data.remote.lyrics_providers.others
 
+import io.ktor.client.HttpClient
 import android.util.Log
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -11,10 +12,10 @@ import pl.lambada.songsync.domain.model.lyrics_providers.others.NeteaseLyricsRes
 import pl.lambada.songsync.domain.model.lyrics_providers.others.NeteaseResponse
 import pl.lambada.songsync.util.EmptyQueryException
 import pl.lambada.songsync.util.InternalErrorException
-import pl.lambada.songsync.util.networking.Ktor.client
+import pl.lambada.songsync.util.networking.Ktor
 import pl.lambada.songsync.util.networking.Ktor.json
 
-class NeteaseAPI {
+class NeteaseAPI(private val client: HttpClient = Ktor.client) {
     private val baseURL = "https://music.163.com/api/"
 
     // stolen from github https://github.com/0x7d4/syncedlyrics/blob/ab744c9ebb96d310861364142ef95706c36a6b1a/syncedlyrics/providers/netease.py#L19C19-L19C19

@@ -73,6 +73,8 @@ android {
     }
     testOptions {
         unitTests.all { it.testLogging { events("passed", "skipped", "failed") } }
+        // android.util.Log etc. become no-ops instead of throwing in JVM unit tests
+        unitTests.isReturnDefaultValues = true
     }
     packaging {
         resources {

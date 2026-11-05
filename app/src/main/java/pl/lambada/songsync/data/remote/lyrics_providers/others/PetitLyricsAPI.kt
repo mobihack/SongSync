@@ -1,5 +1,6 @@
 package pl.lambada.songsync.data.remote.lyrics_providers.others
 
+import io.ktor.client.HttpClient
 import android.util.Base64
 import io.ktor.client.request.forms.submitForm
 import io.ktor.client.statement.bodyAsText
@@ -10,7 +11,7 @@ import pl.lambada.songsync.domain.model.SongInfo
 import pl.lambada.songsync.util.EmptyQueryException
 import pl.lambada.songsync.util.ProviderUnavailableException
 import pl.lambada.songsync.util.SearchMatching
-import pl.lambada.songsync.util.networking.Ktor.client
+import pl.lambada.songsync.util.networking.Ktor
 import javax.xml.parsers.DocumentBuilderFactory
 
 /**
@@ -18,9 +19,11 @@ import javax.xml.parsers.DocumentBuilderFactory
  * Needs a client app ID, set as `petitlyrics.clientId` in local.properties.
  * Search results already contain the lyrics, so no second request is needed.
  */
-class PetitLyricsAPI {
+class PetitLyricsAPI(
+    private val client: HttpClient = Ktor.client,
+    private val clientId: String = BuildConfig.PETITLYRICS_CLIENT_ID,
+) {
     private val apiURL = "https://on.petitlyrics.com/api/GetPetitLyricsData.php"
-    private val clientId = BuildConfig.PETITLYRICS_CLIENT_ID
 
     suspend fun getSongInfo(query: SongInfo, offset: Int = 0): SongInfo? {
         val title = SearchMatching.cleanTitle(query.songName)

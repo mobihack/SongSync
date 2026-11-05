@@ -1,5 +1,6 @@
 package pl.lambada.songsync.data.remote.lyrics_providers.apple
 
+import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.statement.bodyAsText
@@ -9,14 +10,14 @@ import pl.lambada.songsync.data.remote.PaxMusicHelper
 import pl.lambada.songsync.domain.model.SongInfo
 import pl.lambada.songsync.domain.model.lyrics_providers.others.AppleMusicSearchResponse
 import pl.lambada.songsync.util.EmptyQueryException
-import pl.lambada.songsync.util.networking.Ktor.client
+import pl.lambada.songsync.util.networking.Ktor
 import pl.lambada.songsync.util.networking.Ktor.json
 import java.net.URLEncoder
 
-class AppleAPI {
+class AppleAPI(private val client: HttpClient = Ktor.client) {
     private val lyricsBaseURL = "https://lyrics.paxsenix.org/"
     private val apiBaseURL = "https://amp-api.music.apple.com/v1/catalog/us"
-    private val tokenManager = AppleTokenManager()
+    private val tokenManager = AppleTokenManager(client)
 
     /**
      * Searches for song information using the song name and artist name.

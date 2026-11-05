@@ -1,5 +1,6 @@
 package pl.lambada.songsync.data.remote.lyrics_providers.others
 
+import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
@@ -11,10 +12,10 @@ import pl.lambada.songsync.domain.model.SongInfo
 import pl.lambada.songsync.domain.model.lyrics_providers.others.PaxQQPayload
 import pl.lambada.songsync.domain.model.lyrics_providers.others.QQMusicSearchResponse
 import pl.lambada.songsync.util.EmptyQueryException
-import pl.lambada.songsync.util.networking.Ktor.client
+import pl.lambada.songsync.util.networking.Ktor
 import pl.lambada.songsync.util.networking.Ktor.json
 
-class QQMusicAPI {
+class QQMusicAPI(private val client: HttpClient = Ktor.client) {
     private val baseURL = "https://c.y.qq.com/soso/fcgi-bin/client_search_cp"
     private val lyricsURL = "https://paxsenix.alwaysdata.net/getQQLyrics.php"
 

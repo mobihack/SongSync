@@ -1,12 +1,13 @@
 package pl.lambada.songsync.data.remote.lyrics_providers.apple
 
+import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import pl.lambada.songsync.util.networking.Ktor.client
+import pl.lambada.songsync.util.networking.Ktor
 
-class AppleTokenManager {
+class AppleTokenManager(private val client: HttpClient = Ktor.client) {
     private var cachedToken: String? = null
     private val mutex = Mutex()
 

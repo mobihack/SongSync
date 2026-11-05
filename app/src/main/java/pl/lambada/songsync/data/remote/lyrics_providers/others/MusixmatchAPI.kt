@@ -1,5 +1,6 @@
 package pl.lambada.songsync.data.remote.lyrics_providers.others
 
+import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
@@ -14,7 +15,7 @@ import kotlinx.serialization.json.jsonObject
 import pl.lambada.songsync.domain.model.SongInfo
 import pl.lambada.songsync.util.EmptyQueryException
 import pl.lambada.songsync.util.ProviderUnavailableException
-import pl.lambada.songsync.util.networking.Ktor.client
+import pl.lambada.songsync.util.networking.Ktor
 import pl.lambada.songsync.util.networking.Ktor.json
 import java.util.Locale
 import java.util.UUID
@@ -22,7 +23,7 @@ import java.util.UUID
 /**
  * Musixmatch provider, talking to Musixmatch's mobile API directly with an anonymous token.
  */
-class MusixmatchAPI {
+class MusixmatchAPI(private val client: HttpClient = Ktor.client) {
     private val baseURL = "https://apic-appmobile.musixmatch.com/ws/1.1/"
     private val appId = "mac-ios-v2.0"
     private val appVersion = "10.1.1"
@@ -265,6 +266,11 @@ class MusixmatchAPI {
 
         @Volatile
         private var userToken: String? = null
+
+        /** Forgets the cached anonymous token (for tests). */
+        internal fun clearSession() {
+            userToken = null
+        }
 
         // Random per-install identifier, like the official app sends
         private val guid: String = UUID.randomUUID().toString()

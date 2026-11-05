@@ -1,5 +1,6 @@
 package pl.lambada.songsync.data.remote.lyrics_providers.others
 
+import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
@@ -21,13 +22,13 @@ import pl.lambada.songsync.domain.model.SongInfo
 import pl.lambada.songsync.util.EmptyQueryException
 import pl.lambada.songsync.util.ProviderUnavailableException
 import pl.lambada.songsync.util.SearchMatching
-import pl.lambada.songsync.util.networking.Ktor.client
+import pl.lambada.songsync.util.networking.Ktor
 import pl.lambada.songsync.util.networking.Ktor.json
 
 /**
  * Deezer lyrics provider, using an anonymous session and Deezer's GraphQL API.
  */
-class DeezerAPI {
+class DeezerAPI(private val client: HttpClient = Ktor.client) {
     private val authURL = "https://auth.deezer.com/login/anonymous?jo=p"
     private val graphqlURL = "https://pipe.deezer.com/api"
     private val infoURL = "https://api.deezer.com/infos"
@@ -145,6 +146,11 @@ class DeezerAPI {
     companion object {
         @Volatile
         private var authToken: String? = null
+
+        /** Forgets the cached anonymous session (for tests). */
+        internal fun clearSession() {
+            authToken = null
+        }
 
         private val SEARCH_QUERY = """
             query Search(${'$'}query: String, ${'$'}pictureRequest: PictureRequest!) {

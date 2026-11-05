@@ -1,5 +1,6 @@
 package pl.lambada.songsync.data.remote.lyrics_providers.others
 
+import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
@@ -15,7 +16,7 @@ import pl.lambada.songsync.domain.model.SongInfo
 import pl.lambada.songsync.util.EmptyQueryException
 import pl.lambada.songsync.util.ProviderUnavailableException
 import pl.lambada.songsync.util.SearchMatching
-import pl.lambada.songsync.util.networking.Ktor.client
+import pl.lambada.songsync.util.networking.Ktor
 import pl.lambada.songsync.util.networking.Ktor.json
 
 /**
@@ -23,9 +24,11 @@ import pl.lambada.songsync.util.networking.Ktor.json
  * Needs a Client Access Token from https://genius.com/api-clients, set as
  * `genius.token` in local.properties.
  */
-class GeniusAPI {
+class GeniusAPI(
+    private val client: HttpClient = Ktor.client,
+    private val token: String = BuildConfig.GENIUS_TOKEN,
+) {
     private val baseURL = "https://api.genius.com/"
-    private val token = BuildConfig.GENIUS_TOKEN
 
     suspend fun getSongInfo(query: SongInfo, offset: Int = 0): SongInfo? {
         val search = "${SearchMatching.cleanTitle(query.songName)} ${query.artistName.orEmpty()}".trim()
