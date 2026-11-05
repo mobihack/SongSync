@@ -57,7 +57,7 @@ fun ProvidersDropdownMenuContent(
     selectedProvider: Providers,
     onProviderSelectRequest: (Providers) -> Unit,
 ) = Column {
-    val providers = Providers.entries.toTypedArray()
+    val providers = Providers.entries.filter { it.enabled }
     val dataStore = LocalContext.current.dataStore
     val scope = rememberCoroutineScope()
     Text(

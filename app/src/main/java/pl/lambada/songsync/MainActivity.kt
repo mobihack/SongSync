@@ -31,6 +31,7 @@ import pl.lambada.songsync.data.remote.lyrics_providers.LyricsProviderService
 import pl.lambada.songsync.ui.Navigator
 import pl.lambada.songsync.ui.components.dialogs.NoInternetDialog
 import pl.lambada.songsync.ui.theme.SongSyncTheme
+import pl.lambada.songsync.util.Providers
 import pl.lambada.songsync.util.dataStore
 import java.io.File
 
@@ -63,7 +64,7 @@ class MainActivity : ComponentActivity() {
 
             LaunchedEffect(Unit) {
                 context.cacheDir.deleteRecursively()
-                if (networkError == null) lyricsProviderService
+                if (networkError == null && Providers.SPOTIFY.enabled) lyricsProviderService
                     .refreshSpotifyToken()
                     .onFailure { networkError = true }
             }

@@ -174,10 +174,15 @@ fun handleSecurityException(
 /**
  * Defines possible provider choices
  */
-enum class Providers(val displayName: String, val hasWordByWord: Boolean) {
+enum class Providers(
+    val displayName: String,
+    val hasWordByWord: Boolean,
+    val enabled: Boolean = true,
+) {
     APPLE("Apple Music", true),
     LRCLIB("LRCLib", false),
-    SPOTIFY("Spotify", false),
+    // Disabled: the TOTP secrets source (xyloflake/spot-secrets-go) was taken down.
+    SPOTIFY("Spotify", false, enabled = false),
     MUSIXMATCH("Musixmatch", false),
     QQMUSIC("QQ Music", true),
     NETEASE("Netease", false) { val inf = 0 },
