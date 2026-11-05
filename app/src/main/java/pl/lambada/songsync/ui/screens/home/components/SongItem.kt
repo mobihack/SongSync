@@ -1,5 +1,21 @@
 package pl.lambada.songsync.ui.screens.home.components
 
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.Alignment
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.Icons
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
@@ -42,6 +58,11 @@ import pl.lambada.songsync.domain.model.Song
 import pl.lambada.songsync.ui.components.AnimatedText
 
 private val CoverShape = RoundedCornerShape(20f)
+/** [CoverShape]'s corner as a percentage of the cover, the start of the morph to a circle. */
+private const val CoverCornerPercent = 12
+/** Side inset of the selected row's pill. */
+private val SelectedPillInset = 8.dp
+private val checkScrim = Color.Black.copy(alpha = 0.45f)
 private val CoverSize = 56.dp
 
 /**
@@ -49,7 +70,7 @@ private val CoverSize = 56.dp
  * the lyrics screen. Only the row being opened (or returned to) should pass true: each
  * sharedBounds modifier costs work on every frame, which adds up across a long list.
  */
-@OptIn(ExperimentalFoundationApi::class, ExperimentalSharedTransitionApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalSharedTransitionApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SongItem(
     filePath: String,
@@ -76,22 +97,35 @@ fun SongItem(
     val songName = song.title ?: stringResource(id = R.string.unknown)
     val artists = song.artist ?: stringResource(id = R.string.unknown)
 
-    val targetBg = if (selected) MaterialTheme.colorScheme.surfaceVariant
-    else MaterialTheme.colorScheme.surface
-    // Resolve against the target colour: mid-fade colours don't match a scheme colour, so
-    // contentColorFor would fall back to the ambient content colour for the duration of the fade.
-    val contentColor = MaterialTheme.colorScheme.contentColorFor(targetBg)
-    val bgColor by animateColorAsState(
-        targetValue = targetBg,
-        animationSpec = tween(durationMillis = 120),
-        label = "songItemBackground"
+    // Selected rows become a rounded secondaryContainer pill and their cover a circle with a
+    // check. Drawn behind the row (no layout change), so unselected rows cost nothing extra.
+    val selectedBg = MaterialTheme.colorScheme.secondaryContainer
+    val contentColor = if (selected) MaterialTheme.colorScheme.onSecondaryContainer
+    else MaterialTheme.colorScheme.onSurface
+    val selection by animateFloatAsState(
+        targetValue = if (selected) 1f else 0f,
+        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
+        label = "songItemSelection",
     )
+    val coverShape = if (selection == 0f) CoverShape
+    else RoundedCornerShape(percent = (CoverCornerPercent + (50 - CoverCornerPercent) * selection).toInt().coerceIn(0, 50))
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(if (showPath) 100.dp else 80.dp)
-            .background(bgColor)
+            .drawBehind {
+                if (selection > 0f) {
+                    val inset = SelectedPillInset.toPx()
+                    drawRoundRect(
+                        color = selectedBg,
+                        alpha = selection.coerceIn(0f, 1f),
+                        topLeft = Offset(inset, 2.dp.toPx()),
+                        size = Size(size.width - inset * 2, size.height - 4.dp.toPx()),
+                        cornerRadius = CornerRadius(size.height / 2 * selection.coerceIn(0f, 1f)),
+                    )
+                }
+            }
             .combinedClickable(
                 onClick = {
                     if (quickSelect)
@@ -107,25 +141,49 @@ fun SongItem(
             Row(
                 modifier = Modifier.fillMaxHeight(if (showPath) 0.7f else 1f),
             ) {
-                AsyncImage(
-                    model = coverRequest,
-                    imageLoader = context.imageLoader,
-                    contentDescription = stringResource(id = R.string.album_cover),
-                    placeholder = painterResource(R.drawable.ic_song),
-                    error = painterResource(R.drawable.ic_song),
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .sharedBoundsIf(
-                            enabled = sharedElementsEnabled,
-                            key = "cover$filePath",
-                            sharedTransitionScope = sharedTransitionScope,
-                            animatedVisibilityScope = animatedVisibilityScope,
-                            overlayClip = CoverShape,
+                Box(
+                    modifier = Modifier.fillMaxHeight().aspectRatio(1f),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    AsyncImage(
+                        model = coverRequest,
+                        imageLoader = context.imageLoader,
+                        contentDescription = stringResource(id = R.string.album_cover),
+                        placeholder = painterResource(R.drawable.ic_song),
+                        error = painterResource(R.drawable.ic_song),
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .sharedBoundsIf(
+                                enabled = sharedElementsEnabled,
+                                key = "cover$filePath",
+                                sharedTransitionScope = sharedTransitionScope,
+                                animatedVisibilityScope = animatedVisibilityScope,
+                                overlayClip = CoverShape,
+                            )
+                            .fillMaxSize()
+                            .clip(coverShape)
+                            .drawWithContent {
+                                drawContent()
+                                if (selection > 0f) {
+                                    drawRect(checkScrim, alpha = selection.coerceIn(0f, 1f))
+                                }
+                            }
+                    )
+                    if (selection > 0f) {
+                        Icon(
+                            imageVector = Icons.Filled.Check,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier
+                                .size(24.dp)
+                                .graphicsLayer {
+                                    alpha = selection.coerceIn(0f, 1f)
+                                    scaleX = selection
+                                    scaleY = selection
+                                },
                         )
-                        .fillMaxHeight()
-                        .aspectRatio(1f)
-                        .clip(CoverShape)
-                )
+                    }
+                }
                 Spacer(modifier = Modifier.width(12.dp))
                 Column(
                     modifier = Modifier.fillMaxHeight(),

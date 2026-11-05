@@ -1,5 +1,16 @@
 package pl.lambada.songsync.ui.screens.home
 
+import pl.lambada.songsync.ui.screens.home.components.HomeSelectionToolbar
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Box
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -19,7 +30,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.material3.MediumFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LoadingIndicator
@@ -76,7 +88,7 @@ import pl.lambada.songsync.ui.screens.settings.folders.folderModeSummary
  *
  * @param viewModel The [HomeViewModel] instance.
  */
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class, androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun HomeScreen(
     navController: NavHostController,
@@ -90,6 +102,7 @@ fun HomeScreen(
     }
     var isBatchDownload by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    val selecting = viewModel.selectedSongs.isNotEmpty()
 
     // Re-filter whenever a filter setting changes, here or in Settings > Music folders
     val settings = viewModel.userSettingsController
@@ -128,15 +141,21 @@ fun HomeScreen(
                     onProviderChoice = viewModel.userSettingsController::choose,
                     onBatchDownloadRequest = { isBatchDownload = true },
                     providerChoice = viewModel.userSettingsController.providerChoice,
-                    onSelectAllSongsRequest = viewModel::selectAllDisplayingSongs,
-                    onInvertSongSelectionRequest = viewModel::invertSongSelection,
                     cachedSize = cachedSize
                 )
             }
         },
         floatingActionButton = {
+            // The selection toolbar takes the FAB's place while songs are selected
+            AnimatedVisibility(
+                visible = !selecting,
+                enter = fadeIn(MaterialTheme.motionScheme.defaultEffectsSpec()) +
+                    scaleIn(MaterialTheme.motionScheme.defaultSpatialSpec()),
+                exit = fadeOut(MaterialTheme.motionScheme.fastEffectsSpec()) +
+                    scaleOut(MaterialTheme.motionScheme.fastSpatialSpec()),
+            ) {
             with(sharedTransitionScope) {
-                FloatingActionButton(
+                MediumFloatingActionButton(
                     modifier = Modifier
                         .skipToLookaheadSize()
                         .sharedBounds(
@@ -149,13 +168,16 @@ fun HomeScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Search,
-                        contentDescription = "Search lyrics"
+                        contentDescription = "Search lyrics",
+                        modifier = Modifier.size(FloatingActionButtonDefaults.MediumIconSize),
                     )
                 }
+            }
             }
         },
         bottomBar = { Spacer(Modifier.navigationBarsPadding()) } // fixing broken edge to edge here
     ) { paddingValues ->
+        Box(Modifier.fillMaxSize()) {
         Crossfade(viewModel.allSongs == null, label = "") { loading ->
             if (loading)
                 LoadingScreen()
@@ -171,6 +193,26 @@ fun HomeScreen(
                     animatedVisibilityScope = animatedVisibilityScope,
                     listState = listState,
                 )
+        }
+        AnimatedVisibility(
+            visible = selecting,
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = paddingValues.calculateBottomPadding() + 16.dp),
+            enter = fadeIn(MaterialTheme.motionScheme.defaultEffectsSpec()) +
+                slideInVertically(MaterialTheme.motionScheme.defaultSpatialSpec()) { it / 2 },
+            exit = fadeOut(MaterialTheme.motionScheme.fastEffectsSpec()) +
+                slideOutVertically(MaterialTheme.motionScheme.fastSpatialSpec()) { it / 2 },
+        ) {
+            HomeSelectionToolbar(
+                onSelectAll = {
+                    viewModel.selectedSongs.clear()
+                    viewModel.selectAllDisplayingSongs()
+                },
+                onInvertSelection = viewModel::invertSongSelection,
+                onBatchDownload = { isBatchDownload = true },
+            )
+        }
         }
     }
 }
@@ -294,7 +336,8 @@ fun HomeScreenLoaded(
                                 onSearchClick = {
                                     viewModel.showSearch = true
                                     viewModel.showingSearch = true
-                                }
+                                },
+                                filterActive = viewModel.userSettingsController.hideLyrics,
                             )
                         }
                     )

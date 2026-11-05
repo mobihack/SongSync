@@ -1,5 +1,6 @@
 package pl.lambada.songsync.ui.screens.home.components
 
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -29,7 +30,7 @@ import androidx.compose.ui.unit.dp
 import pl.lambada.songsync.R
 import pl.lambada.songsync.util.ProviderChoice
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun HomeAppBar(
     showing: Boolean,
@@ -40,8 +41,6 @@ fun HomeAppBar(
     onNavigateToSettingsSectionRequest: () -> Unit,
     onProviderChoice: (ProviderChoice) -> Unit,
     onBatchDownloadRequest: () -> Unit,
-    onSelectAllSongsRequest: () -> Unit,
-    onInvertSongSelectionRequest: () -> Unit,
     cachedSize: Int,
 ) {
     // Single-line bar that never collapses or expands, so pulling down at the top of the list
@@ -53,7 +52,7 @@ fun HomeAppBar(
             scrolled -> MaterialTheme.colorScheme.surfaceContainer
             else -> MaterialTheme.colorScheme.surface
         },
-        animationSpec = tween(durationMillis = 200),
+        animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
         label = "appBarContainer"
     )
     TopAppBar(
@@ -82,52 +81,8 @@ fun HomeAppBar(
             }
         },
         actions = {
-            if (showing) {
-                IconButton(
-                    onClick = {
-                        onSelectedClearAction()
-                        onSelectAllSongsRequest()
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.SelectAll,
-                        contentDescription = stringResource(R.string.select_all)
-                    )
-                }
-                IconButton(onClick = onInvertSongSelectionRequest) {
-                    Icon(
-                        imageVector = Icons.Filled.Deselect,
-                        contentDescription = stringResource(
-                            id = R.string.invert_selection
-                        )
-                    )
-                }
-                var expanded by remember { mutableStateOf(false) }
-                IconButton(onClick = { expanded = !expanded }) {
-                    Icon(
-                        imageVector = Icons.Default.MoreVert,
-                        contentDescription = "More"
-                    )
-                }
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false },
-                    shape = RoundedCornerShape(16.dp),
-                ) {
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                text = stringResource(R.string.batch_download_lyrics),
-                                modifier = Modifier.padding(horizontal = 6.dp),
-                            )
-                        },
-                        onClick = {
-                            onBatchDownloadRequest()
-                            expanded = false
-                        }
-                    )
-                }
-            } else {
+            // Selection actions live in the floating toolbar at the bottom (HomeSelectionToolbar)
+            if (!showing) {
                 HomeTopAppBarDropDown(
                     onNavigateToSettingsSectionRequest = onNavigateToSettingsSectionRequest,
                     providerChoice = providerChoice,
