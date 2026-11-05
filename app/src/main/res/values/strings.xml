@@ -200,6 +200,8 @@
     <string name="folder_mode_only_summary">Just the folders you tick, including their subfolders</string>
     <string name="folders_to_ignore">Folders to ignore</string>
     <string name="folders_to_show">Folders to show</string>
+    <string name="ticked_folders_ignore">Ignored folders</string>
+    <string name="ticked_folders_only">Scanning only these folders</string>
     <string name="no_music_folders">No folders with music found</string>
     <plurals name="folder_song_count">
         <item quantity="one">%d song</item>

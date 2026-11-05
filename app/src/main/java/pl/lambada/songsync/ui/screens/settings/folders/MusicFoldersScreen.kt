@@ -1,5 +1,9 @@
 package pl.lambada.songsync.ui.screens.settings.folders
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VisibilityThreshold
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
@@ -33,6 +38,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import kotlinx.coroutines.Dispatchers
@@ -46,6 +52,19 @@ import pl.lambada.songsync.util.FolderMode
 import pl.lambada.songsync.util.MusicFolders
 
 private const val InternalStorage = "/storage/emulated/0/"
+
+private val ItemPlacementSpec = spring(
+    stiffness = Spring.StiffnessMediumLow,
+    visibilityThreshold = IntOffset.VisibilityThreshold,
+)
+
+/** Fades rows in and out and slides them into place, like the My list editor. */
+private fun LazyItemScope.animated(): Modifier =
+    Modifier.animateItem(
+        fadeInSpec = tween(150),
+        placementSpec = ItemPlacementSpec,
+        fadeOutSpec = tween(100),
+    )
 
 /**
  * Chooses which folders the song list shows: all music, all except ignored folders, or only the
@@ -87,7 +106,7 @@ fun MusicFoldersScreen(
         }
     ) { padding ->
         LazyColumn(contentPadding = padding, modifier = Modifier.fillMaxSize()) {
-            item {
+            item(key = "modes") {
                 RadioItem(
                     label = stringResource(R.string.folder_mode_all),
                     description = stringResource(R.string.folder_mode_all_summary),
@@ -109,35 +128,69 @@ fun MusicFoldersScreen(
             }
 
             if (mode != FolderMode.ALL) {
-                item {
-                    SettingsHeadLabel(
-                        stringResource(
-                            if (mode == FolderMode.IGNORE) R.string.folders_to_ignore
-                            else R.string.folders_to_show
-                        )
-                    )
-                }
                 val loaded = folders
+                val counts = loaded?.toMap().orEmpty()
+
+                // Copies of the ticked folders, in the same order as the full list
+                val tickedRows = ticked.sortedBy { it.lowercase() }
+                if (tickedRows.isNotEmpty()) {
+                    item(key = "tickedHeader") {
+                        Box(animated()) {
+                            SettingsHeadLabel(
+                                stringResource(
+                                    if (mode == FolderMode.IGNORE) R.string.ticked_folders_ignore
+                                    else R.string.ticked_folders_only
+                                )
+                            )
+                        }
+                    }
+                    items(tickedRows, key = { "ticked:$it" }) { folder ->
+                        Box(animated()) {
+                            FolderRow(
+                                folder = folder,
+                                songCount = counts[folder] ?: 0,
+                                checked = true,
+                                onCheckedChange = { toggle(folder, it) },
+                            )
+                        }
+                    }
+                }
+
+                item(key = "allHeader") {
+                    Box(animated()) {
+                        SettingsHeadLabel(
+                            stringResource(
+                                if (mode == FolderMode.IGNORE) R.string.folders_to_ignore
+                                else R.string.folders_to_show
+                            )
+                        )
+                    }
+                }
                 when {
-                    loaded == null -> item {
-                        Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                    loaded == null -> item(key = "loading") {
+                        Box(
+                            animated().fillMaxWidth().padding(32.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
                             CircularProgressIndicator()
                         }
                     }
-                    loaded.isEmpty() -> item {
+                    loaded.isEmpty() -> item(key = "empty") {
                         Text(
                             text = stringResource(R.string.no_music_folders),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(22.dp),
+                            modifier = animated().padding(22.dp),
                         )
                     }
-                    else -> items(loaded, key = { it.first }) { (folder, count) ->
-                        FolderRow(
-                            folder = folder,
-                            songCount = count,
-                            checked = folder in ticked,
-                            onCheckedChange = { toggle(folder, it) },
-                        )
+                    else -> items(loaded, key = { "all:${it.first}" }) { (folder, count) ->
+                        Box(animated()) {
+                            FolderRow(
+                                folder = folder,
+                                songCount = count,
+                                checked = folder in ticked,
+                                onCheckedChange = { toggle(folder, it) },
+                            )
+                        }
                     }
                 }
             }
