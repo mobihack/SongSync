@@ -22,6 +22,7 @@ taglib = "1.0.0-alpha18"
 kotlin-onetimepassword = "2.4.1"
 junit = "4.13.2"
 kotest = "5.9.1"
+robolectric = "4.14.1"
 mockk = "1.13.12"
 turbine = "1.1.0"
 
@@ -53,6 +54,9 @@ kotlin-onetimepassword = { group = "dev.turingcomplete", name = "kotlin-onetimep
 # Testing
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 kotest-assertions-core = { group = "io.kotest", name = "kotest-assertions-core", version.ref = "kotest" }
+robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinx-coroutines-android" }

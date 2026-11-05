@@ -87,6 +87,8 @@ android {
         unitTests.all { it.testLogging { events("passed", "skipped", "failed") } }
         // android.util.Log etc. become no-ops instead of throwing in JVM unit tests
         unitTests.isReturnDefaultValues = true
+        // Robolectric Compose UI tests read the app's strings and theme
+        unitTests.isIncludeAndroidResources = true
     }
     packaging {
         resources {
@@ -127,4 +129,9 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.4")
 
     testImplementation(libs.bundles.unit.test)
+    // Compose UI tests on the JVM (Robolectric), no device needed
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.compose.ui.test.junit4)
+    testImplementation(libs.robolectric)
+    debugImplementation(libs.compose.ui.test.manifest)
 }
