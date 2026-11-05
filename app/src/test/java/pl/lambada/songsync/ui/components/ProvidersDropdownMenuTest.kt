@@ -11,6 +11,9 @@ import androidx.compose.ui.test.performClick
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
 import org.junit.Test
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.test.performSemanticsAction
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -26,6 +29,12 @@ class ProvidersDropdownMenuTest {
 
     private var chosen: ProviderChoice? = null
     private var dismissed = false
+
+    /**
+     * Robolectric's injected touches don't reach M3 1.5's Expressive menu items (they do on a
+     * device), so tap through the item's click action, which runs the same onClick.
+     */
+    private fun SemanticsNodeInteraction.click() = performSemanticsAction(SemanticsActions.OnClick)
 
     private fun show(selected: ProviderChoice = ProviderChoice.Auto) = compose.setContent {
         MaterialTheme {
@@ -58,7 +67,7 @@ class ProvidersDropdownMenuTest {
     fun `tapping a provider chooses it, then closes the menu`() {
         show()
         compose.mainClock.autoAdvance = false
-        compose.onNodeWithText("LRCLib").performClick()
+        compose.onNodeWithText("LRCLib").click()
 
         chosen shouldBe ProviderChoice.Only(Providers.LRCLIB)
         dismissed shouldBe false // the radio gets a moment to show the change
@@ -70,7 +79,7 @@ class ProvidersDropdownMenuTest {
     @Test
     fun `tapping a mode chooses the mode`() {
         show()
-        compose.onNodeWithText("Custom order").performClick()
+        compose.onNodeWithText("Custom order").click()
         chosen shouldBe ProviderChoice.CustomOrder
     }
 }
