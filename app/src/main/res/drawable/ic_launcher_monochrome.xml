@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Three lyric lines beside a music note. The top line lines up with the top of the stem, the
+     bottom line runs through the note head. Source: 108x108 adaptive canvas. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:pathData="M40.625,44.1875H57.125"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="5.25"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M40.625,54.6875H57.125"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="5.25"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M40.625,65.1875H50.375"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="5.25"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M65.375,65.1875V43.4375L72.125,45.6875"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3.75"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:pathData="M56.75,65.1875a5.25,5.25 0,1 0,10.5,0a5.25,5.25 0,1 0,-10.5,0Z"
+        android:fillColor="#FFFFFF" />
+</vector>
