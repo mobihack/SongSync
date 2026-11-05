@@ -14,3 +14,12 @@
 .cxx
 local.properties
 .kotlin
+
+# Signing secrets (kept local; pushed to GitHub with `gh secret set -f .env`)
+.env
+*.keystore
+*.jks
+
+# Local working notes and helper scripts
+/plans/
+/scripts/
