@@ -42,6 +42,8 @@ fun HomeAppBar(
     onProviderChoice: (ProviderChoice) -> Unit,
     onBatchDownloadRequest: () -> Unit,
     cachedSize: Int,
+    /** Lyrics search for any song, shown when nothing is selected. */
+    searchLyricsAction: @Composable () -> Unit = {},
 ) {
     // Single-line bar that never collapses or expands, so pulling down at the top of the list
     // only drives pull-to-refresh. Tint follows the list position (not nested scroll), so it
@@ -83,6 +85,7 @@ fun HomeAppBar(
         actions = {
             // Selection actions live in the floating toolbar at the bottom (HomeSelectionToolbar)
             if (!showing) {
+                searchLyricsAction()
                 HomeTopAppBarDropDown(
                     onNavigateToSettingsSectionRequest = onNavigateToSettingsSectionRequest,
                     providerChoice = providerChoice,

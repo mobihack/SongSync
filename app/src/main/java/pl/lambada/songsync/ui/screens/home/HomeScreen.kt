@@ -1,5 +1,14 @@
 package pl.lambada.songsync.ui.screens.home
 
+import pl.lambada.songsync.ui.screens.home.components.LibraryHeader
+import pl.lambada.songsync.ui.screens.home.components.HomeLibraryToolbar
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.automirrored.filled.ManageSearch
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.AnimatedContent
 import pl.lambada.songsync.ui.screens.home.components.HomeSelectionToolbar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.layout.size
@@ -30,8 +39,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButtonDefaults
-import androidx.compose.material3.MediumFloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LoadingIndicator
@@ -63,11 +70,9 @@ import pl.lambada.songsync.domain.model.Song
 import pl.lambada.songsync.ui.LyricsFetchScreen
 import pl.lambada.songsync.ui.ScreenSettings
 import pl.lambada.songsync.ui.screens.home.components.BatchDownloadLyrics
-import pl.lambada.songsync.ui.screens.home.components.FilterAndSongCount
 import pl.lambada.songsync.ui.screens.home.components.FiltersDialog
 import pl.lambada.songsync.ui.screens.home.components.HomeAppBar
 import pl.lambada.songsync.ui.screens.home.components.HomeSearchBar
-import pl.lambada.songsync.ui.screens.home.components.HomeSearchThing
 import pl.lambada.songsync.ui.screens.home.components.SongItem
 import pl.lambada.songsync.ui.screens.home.components.SortDialog
 import pl.lambada.songsync.util.ext.BackPressHandler
@@ -103,6 +108,8 @@ fun HomeScreen(
     var isBatchDownload by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val selecting = viewModel.selectedSongs.isNotEmpty()
+    val scope = rememberCoroutineScope()
+    val motionScheme = MaterialTheme.motionScheme
 
     // Re-filter whenever a filter setting changes, here or in Settings > Music folders
     val settings = viewModel.userSettingsController
@@ -141,38 +148,30 @@ fun HomeScreen(
                     onProviderChoice = viewModel.userSettingsController::choose,
                     onBatchDownloadRequest = { isBatchDownload = true },
                     providerChoice = viewModel.userSettingsController.providerChoice,
+                    searchLyricsAction = {
+                        // Lyrics search for any song; grows into the Search screen
+                        with(sharedTransitionScope) {
+                            IconButton(
+                                onClick = { navController.navigate(LyricsFetchScreen()) },
+                                shapes = IconButtonDefaults.shapes(),
+                                modifier = Modifier
+                                    .skipToLookaheadSize()
+                                    .sharedBounds(
+                                        sharedContentState = rememberSharedContentState(key = "fab"),
+                                        animatedVisibilityScope = animatedVisibilityScope,
+                                        boundsTransform = SearchFABBoundsTransform,
+                                        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                                    ),
+                            ) {
+                                Icon(
+                                    imageVector = Icons.AutoMirrored.Filled.ManageSearch,
+                                    contentDescription = stringResource(R.string.search_lyrics),
+                                )
+                            }
+                        }
+                    },
                     cachedSize = cachedSize
                 )
-            }
-        },
-        floatingActionButton = {
-            // The selection toolbar takes the FAB's place while songs are selected
-            AnimatedVisibility(
-                visible = !selecting,
-                enter = fadeIn(MaterialTheme.motionScheme.defaultEffectsSpec()) +
-                    scaleIn(MaterialTheme.motionScheme.defaultSpatialSpec()),
-                exit = fadeOut(MaterialTheme.motionScheme.fastEffectsSpec()) +
-                    scaleOut(MaterialTheme.motionScheme.fastSpatialSpec()),
-            ) {
-            with(sharedTransitionScope) {
-                MediumFloatingActionButton(
-                    modifier = Modifier
-                        .skipToLookaheadSize()
-                        .sharedBounds(
-                            sharedContentState = rememberSharedContentState(key = "fab"),
-                            animatedVisibilityScope = animatedVisibilityScope,
-                            boundsTransform = SearchFABBoundsTransform,
-                            resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-                        ),
-                    onClick = { navController.navigate(LyricsFetchScreen()) }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "Search lyrics",
-                        modifier = Modifier.size(FloatingActionButtonDefaults.MediumIconSize),
-                    )
-                }
-            }
             }
         },
         bottomBar = { Spacer(Modifier.navigationBarsPadding()) } // fixing broken edge to edge here
@@ -194,23 +193,36 @@ fun HomeScreen(
                     listState = listState,
                 )
         }
-        AnimatedVisibility(
-            visible = selecting,
+        // Library tools (sort, filter, search) normally; selection actions while songs are selected
+        if (viewModel.allSongs != null) AnimatedContent(
+            targetState = selecting,
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .padding(bottom = paddingValues.calculateBottomPadding() + 16.dp),
-            enter = fadeIn(MaterialTheme.motionScheme.defaultEffectsSpec()) +
-                slideInVertically(MaterialTheme.motionScheme.defaultSpatialSpec()) { it / 2 },
-            exit = fadeOut(MaterialTheme.motionScheme.fastEffectsSpec()) +
-                slideOutVertically(MaterialTheme.motionScheme.fastSpatialSpec()) { it / 2 },
-        ) {
-            HomeSelectionToolbar(
+            transitionSpec = {
+                (fadeIn(motionScheme.defaultEffectsSpec()) +
+                    slideInVertically(motionScheme.defaultSpatialSpec()) { it / 2 }) togetherWith
+                    (fadeOut(motionScheme.fastEffectsSpec()) +
+                        slideOutVertically(motionScheme.fastSpatialSpec()) { it / 2 })
+            },
+            label = "homeToolbar",
+        ) { selectionMode ->
+            if (selectionMode) HomeSelectionToolbar(
                 onSelectAll = {
                     viewModel.selectedSongs.clear()
                     viewModel.selectAllDisplayingSongs()
                 },
                 onInvertSelection = viewModel::invertSongSelection,
                 onBatchDownload = { isBatchDownload = true },
+            ) else HomeLibraryToolbar(
+                onSort = { viewModel.showSort = true },
+                onFilter = { viewModel.showFilters = true },
+                filterActive = viewModel.userSettingsController.hideLyrics,
+                onSearch = {
+                    viewModel.showSearch = true
+                    viewModel.showingSearch = true
+                    scope.launch { listState.animateScrollToItem(0) }
+                },
             )
         }
         }
@@ -305,42 +317,29 @@ fun HomeScreenLoaded(
         ) {
             item {
                 Column(
-                    modifier = Modifier.padding(
-                        top = 5.dp,
-                        bottom = 5.dp,
-                        start = 22.dp,
-                        end = 4.dp
-                    ),
+                    modifier = Modifier.padding(start = 22.dp, end = 4.dp),
                 ) {
-                    HomeSearchThing(
-                        showingSearch = viewModel.showingSearch,
-                        searchBar = {
-                            HomeSearchBar(
-                                query = viewModel.searchQuery,
-                                onQueryChange = { newQuery ->
-                                    viewModel.searchQuery = newQuery
-                                    viewModel.updateSearchResults(newQuery.lowercaseWithLocale())
-                                    viewModel.showingSearch = true
-                                },
-                                showSearch = viewModel.showSearch,
-                                onShowSearchChange = { viewModel.showSearch = it },
-                                showingSearch = viewModel.showingSearch,
-                                onShowingSearchChange = { viewModel.showingSearch = it }
-                            )
-                        },
-                        filterBar = {
-                            FilterAndSongCount(
-                                displaySongsCount = viewModel.displaySongs.size,
-                                onFilterClick = { viewModel.showFilters = true },
-                                onSortClick = { viewModel.showSort = true },
-                                onSearchClick = {
-                                    viewModel.showSearch = true
-                                    viewModel.showingSearch = true
-                                },
-                                filterActive = viewModel.userSettingsController.hideLyrics,
-                            )
-                        }
-                    )
+                    // Library search, opened from the search button in the bottom toolbar
+                    AnimatedVisibility(
+                        visible = viewModel.showingSearch,
+                        enter = fadeIn(MaterialTheme.motionScheme.defaultEffectsSpec()) +
+                            expandVertically(MaterialTheme.motionScheme.defaultSpatialSpec()),
+                        exit = fadeOut(MaterialTheme.motionScheme.fastEffectsSpec()) +
+                            shrinkVertically(MaterialTheme.motionScheme.fastSpatialSpec()),
+                    ) {
+                        HomeSearchBar(
+                            query = viewModel.searchQuery,
+                            onQueryChange = { newQuery ->
+                                viewModel.searchQuery = newQuery
+                                viewModel.updateSearchResults(newQuery.lowercaseWithLocale())
+                                viewModel.showingSearch = true
+                            },
+                            showSearch = viewModel.showSearch,
+                            onShowSearchChange = { viewModel.showSearch = it },
+                            showingSearch = viewModel.showingSearch,
+                            onShowingSearchChange = { viewModel.showingSearch = it }
+                        )
+                    }
 
                     if (viewModel.showSort) {
                         SortDialog(
@@ -403,7 +402,13 @@ fun HomeScreenLoaded(
                         showPath = viewModel.userSettingsController.showPath
                     )
                     Spacer(modifier = Modifier.height(4.dp))
-                    HorizontalDivider()
+                }
+            }
+
+            item(key = "libraryHeader") {
+                Column {
+                    if (viewModel.playingSongTitle.isNotEmpty()) HorizontalDivider()
+                    LibraryHeader(songCount = viewModel.displaySongs.size)
                 }
             }
 
@@ -441,13 +446,14 @@ fun HomeScreenLoaded(
                 )
             }
 
-            item { Spacer(modifier = Modifier.height(4.dp)) }
+            // Room for the floating toolbar, so the last song can scroll above it
+            item { Spacer(modifier = Modifier.height(96.dp)) }
         }
 
         FastScroller(
             listState = listState,
             itemCount = viewModel.displaySongs.size,
-            firstItemIndex = 2, // search/filter header + now-playing item
+            firstItemIndex = 3, // search header + now-playing item + library header
             contentPadding = scaffoldPadding,
             sectionLabel = when (viewModel.userSettingsController.sortBy) {
                 SortValues.TITLE -> { index -> sectionLetter(viewModel.displaySongs.getOrNull(index)?.title) }
