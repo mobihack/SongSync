@@ -1,5 +1,7 @@
 package pl.lambada.songsync.ui.screens.settings
 
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
@@ -54,6 +56,7 @@ import pl.lambada.songsync.util.ext.getVersion
 enum class SettingsSection { APPEARANCE, LIBRARY, SEARCH, CONTENT, POWERAMP, ABOUT }
 
 /** One category's settings on its own page. */
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsSectionScreen(
     section: SettingsSection,
@@ -75,7 +78,13 @@ fun SettingsSectionScreen(
     val editor = if (section == SettingsSection.SEARCH)
         rememberMyProvidersEditor(userSettingsController, listState, itemsBefore = 1) else null
 
-    Scaffold(topBar = { SubScreenTopBar(title = title, onBack = { navController.popBackStack() }) }) { padding ->
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            SubScreenTopBar(title = title, scrollBehavior = scrollBehavior, onBack = { navController.popBackStack() })
+        },
+    ) { padding ->
         LazyColumn(state = listState, modifier = Modifier.fillMaxWidth(), contentPadding = padding) {
             when (section) {
                 SettingsSection.APPEARANCE -> appearance(userSettingsController)

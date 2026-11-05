@@ -1,5 +1,7 @@
 package pl.lambada.songsync.ui.screens.settings.folders
 
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.spring
@@ -97,10 +99,13 @@ fun MusicFoldersScreen(
         }
     }
 
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             SubScreenTopBar(
                 title = stringResource(R.string.music_folders),
+                scrollBehavior = scrollBehavior,
                 onBack = { navController.popBackStack() },
             )
         }

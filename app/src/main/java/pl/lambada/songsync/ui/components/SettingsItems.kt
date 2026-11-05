@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
+
 package pl.lambada.songsync.ui.components
 
 import androidx.compose.foundation.clickable
@@ -11,9 +13,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItemShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.SegmentedListItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -24,14 +29,31 @@ import androidx.compose.ui.unit.sp
 
 private val ItemPadding = PaddingValues(horizontal = 22.dp, vertical = 16.dp)
 
-/** One option of a single-choice group, styled like [SwitchItem]. */
+/**
+ * One option of a single-choice group, styled like [SwitchItem]. Pass [shapes] to draw it as a
+ * row of a rounded group.
+ */
 @Composable
 fun RadioItem(
     label: String,
     selected: Boolean,
     description: String = "",
+    shapes: ListItemShapes? = null,
     onClick: () -> Unit,
 ) {
+    if (shapes != null) {
+        SegmentedListItem(
+            selected = selected,
+            onClick = onClick,
+            shapes = shapes,
+            leadingContent = { RadioButton(selected = selected, onClick = null) },
+            supportingContent = description.takeIf { it.isNotEmpty() }?.let { { Text(it) } },
+        ) {
+            Text(label)
+        }
+        return
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -45,14 +67,28 @@ fun RadioItem(
     }
 }
 
-/** A row that opens another screen. */
+/** A row that opens another screen. Pass [shapes] to draw it as a row of a rounded group. */
 @Composable
 fun NavigationItem(
     label: String,
     description: String = "",
     modifier: Modifier = Modifier,
+    shapes: ListItemShapes? = null,
     onClick: () -> Unit,
 ) {
+    if (shapes != null) {
+        SegmentedListItem(
+            onClick = onClick,
+            shapes = shapes,
+            modifier = modifier,
+            supportingContent = description.takeIf { it.isNotEmpty() }?.let { { Text(it) } },
+            trailingContent = { Chevron() },
+        ) {
+            Text(label)
+        }
+        return
+    }
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -62,13 +98,16 @@ fun NavigationItem(
     ) {
         ItemTexts(label, description, Modifier.weight(1f))
         Spacer(modifier = Modifier.width(12.dp))
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        Chevron()
     }
 }
+
+@Composable
+private fun Chevron() = Icon(
+    imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+    contentDescription = null,
+    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+)
 
 @Composable
 private fun ItemTexts(label: String, description: String, modifier: Modifier) {
