@@ -1,9 +1,6 @@
-@file:OptIn(ExperimentalHazeMaterialsApi::class)
-
 package pl.lambada.songsync.ui.components
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -12,13 +9,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.HazeStyle
+import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
-import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
-import dev.chrisbanes.haze.materials.HazeMaterials
 
 /**
- * Frosted glass for floating controls: blurs whatever [state] marks as its source (the song
- * list), tinted with [tint], with a hairline edge so it reads on busy covers. Android 12+ blurs;
+ * A near-solid surface for floating controls: [tint] over a soft blur of whatever [state] marks
+ * as its source (the song list). Android 12+ blurs;
  * older versions get the tint alone (Haze's fallback). Without a [state] it's a solid fill.
  */
 @Composable
@@ -26,18 +23,24 @@ fun Modifier.frosted(
     state: HazeState?,
     shape: Shape,
     tint: Color = MaterialTheme.colorScheme.surfaceContainer,
-    /** Thicker glass shows more of [tint]: for coloured primary actions. */
-    thick: Boolean = false,
 ): Modifier {
-    val edge = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
     return this
         .clip(shape)
         .then(
-            if (state != null) Modifier.hazeEffect(
-                state,
-                if (thick) HazeMaterials.thick(containerColor = tint) else HazeMaterials.thin(containerColor = tint),
-            )
+            // A firm tint over a soft blur: the list shows through as colour, not as glass
+            if (state != null) Modifier.hazeEffect(state, frostedStyle(tint.copy(alpha = FrostedTintAlpha)))
             else Modifier.background(tint)
         )
-        .border(1.dp, edge, shape)
 }
+
+/** How much of a frosted surface is its tint; the rest is the blurred content behind it. */
+const val FrostedTintAlpha = 0.78f
+
+/** The frosted look as a Haze style: [tint], alpha included, over a soft blur. */
+@Composable
+fun frostedStyle(tint: Color) = HazeStyle(
+    backgroundColor = MaterialTheme.colorScheme.surface,
+    tint = HazeTint(tint),
+    blurRadius = 24.dp,
+    noiseFactor = 0f,
+)

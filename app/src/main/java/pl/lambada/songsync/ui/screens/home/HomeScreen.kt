@@ -147,6 +147,7 @@ fun HomeScreen(
                 HomeAppBar(
                     showing = showing,
                     scrolled = listScrolled,
+                    hazeState = hazeState,
                     onSelectedClearAction = viewModel.selectedSongs::clear,
                     searchLyricsAction = {
                         // Lyrics search for any song; grows into the Search screen

@@ -25,27 +25,36 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeEffect
 import pl.lambada.songsync.R
+import pl.lambada.songsync.ui.components.FrostedTintAlpha
+import pl.lambada.songsync.ui.components.frostedStyle
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun HomeAppBar(
     showing: Boolean,
-    /** Whether the list is scrolled away from the top; tints the bar. */
+    /** Whether the list is scrolled away from the top; frosts the bar. */
     scrolled: Boolean,
+    /** The song list, blurred behind the bar once it's scrolled. Without it the bar stays solid. */
+    hazeState: HazeState?,
     onSelectedClearAction: () -> Unit,
     cachedSize: Int,
     /** Lyrics search for any song, shown when nothing is selected. */
     searchLyricsAction: @Composable () -> Unit = {},
 ) {
     // Single-line bar that never collapses or expands, so pulling down at the top of the list
-    // only drives pull-to-refresh. Tint follows the list position (not nested scroll), so it
-    // also updates when jumping with the fast scroller.
+    // only drives pull-to-refresh. Its look follows the list position (not nested scroll), so it
+    // also updates when jumping with the fast scroller: solid at the top, frosted once the list
+    // slides under it (the fill turns see-through and the blur shows), solid again for selection.
     val containerColor by animateColorAsState(
         targetValue = when {
             showing -> MaterialTheme.colorScheme.surfaceVariant
+            scrolled && hazeState != null -> MaterialTheme.colorScheme.surfaceContainer.copy(alpha = FrostedTintAlpha)
             scrolled -> MaterialTheme.colorScheme.surfaceContainer
             else -> MaterialTheme.colorScheme.surface
         },
@@ -53,6 +62,7 @@ fun HomeAppBar(
         label = "appBarContainer"
     )
     TopAppBar(
+        modifier = if (hazeState != null) Modifier.hazeEffect(hazeState, frostedStyle(containerColor)) else Modifier,
         navigationIcon = {
             if (showing) {
                 IconButton(onClick = onSelectedClearAction) {
@@ -84,9 +94,11 @@ fun HomeAppBar(
                 searchLyricsAction()
             }
         },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = containerColor,
-            scrolledContainerColor = containerColor,
-        ),
+        colors = if (hazeState != null) {
+            // The haze effect draws the fill
+            TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent, scrolledContainerColor = Color.Transparent)
+        } else {
+            TopAppBarDefaults.topAppBarColors(containerColor = containerColor, scrolledContainerColor = containerColor)
+        },
     )
 }

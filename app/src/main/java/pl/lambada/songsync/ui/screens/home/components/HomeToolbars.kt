@@ -70,7 +70,7 @@ fun FrostedFab(
     contentColor: Color,
     shape: androidx.compose.ui.graphics.Shape = RoundedCornerShape(20.dp),
     content: @Composable () -> Unit,
-) = Box(Modifier.size(FloatingControlSize).frosted(hazeState, shape, tint, thick = true), contentAlignment = Alignment.Center) {
+) = Box(Modifier.size(FloatingControlSize).frosted(hazeState, shape, tint), contentAlignment = Alignment.Center) {
     CompositionLocalProvider(LocalContentColor provides contentColor) {
         IconButton(onClick = onClick, modifier = Modifier.size(FloatingControlSize), shapes = IconButtonDefaults.shapes()) {
             content()
