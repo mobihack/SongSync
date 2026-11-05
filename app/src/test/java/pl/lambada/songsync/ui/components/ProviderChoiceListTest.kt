@@ -7,10 +7,12 @@ import androidx.compose.ui.test.isSelected
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import io.kotest.matchers.shouldBe
 import org.junit.Rule
 import org.junit.Test
+import androidx.compose.ui.test.SemanticsNodeInteraction
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.performSemanticsAction
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -26,6 +28,13 @@ class ProviderChoiceListTest {
 
     private var chosen: ProviderChoice? = null
     private var dismissed = false
+
+    /**
+     * Robolectric's injected touches reach SegmentedListItem rows only intermittently (some rows,
+     * some runs); on a device they work. Tap through the row's click action, which runs the same
+     * onClick, so these tests check the wiring rather than the touch pipeline.
+     */
+    private fun SemanticsNodeInteraction.tap() = performSemanticsAction(SemanticsActions.OnClick)
 
     private fun show(selected: ProviderChoice = ProviderChoice.Auto) = compose.setContent {
         MaterialTheme {
@@ -55,10 +64,10 @@ class ProviderChoiceListTest {
     }
 
     @Test
-    fun `tapping a provider chooses it, then closes the menu`() {
+    fun `tapping a provider chooses it, then closes the sheet`() {
         show()
         compose.mainClock.autoAdvance = false
-        compose.onNodeWithText("LRCLib").performClick()
+        compose.onNodeWithText("LRCLib").tap()
 
         chosen shouldBe ProviderChoice.Only(Providers.LRCLIB)
         dismissed shouldBe false // the radio gets a moment to show the change
@@ -70,7 +79,8 @@ class ProviderChoiceListTest {
     @Test
     fun `tapping a mode chooses the mode`() {
         show()
-        compose.onNodeWithText("Custom order").performClick()
+        compose.onNodeWithText("Custom order").tap()
         chosen shouldBe ProviderChoice.CustomOrder
     }
+
 }

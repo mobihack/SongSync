@@ -45,7 +45,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import pl.lambada.songsync.R
-import pl.lambada.songsync.ui.components.ProvidersDialog
+import pl.lambada.songsync.ui.components.ProvidersSheet
 import pl.lambada.songsync.ui.screens.lyricsFetch.components.CloudProviderTitle
 import pl.lambada.songsync.ui.screens.lyricsFetch.components.FailedDialogue
 import pl.lambada.songsync.ui.screens.lyricsFetch.components.LocalSongContent
@@ -79,10 +79,10 @@ fun SharedTransitionScope.LyricsFetchScreen(
         if (viewModel.source != null) viewModel.loadSongInfo(context)
     }
 
-    // The provider dialog, opened from the Get lyrics split button or from the provider name
+    // The provider sheet, opened from the Get lyrics split button or from the provider name
     // above a search in progress or a result
     val providerMenu: @Composable () -> Unit = {
-        if (expandedProviders) ProvidersDialog(
+        if (expandedProviders) ProvidersSheet(
             selected = viewModel.userSettingsController.providerChoice,
             onDismissRequest = { expandedProviders = false },
             onChoose = {

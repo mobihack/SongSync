@@ -71,11 +71,11 @@ import pl.lambada.songsync.domain.model.Song
 import pl.lambada.songsync.ui.LyricsFetchScreen
 import pl.lambada.songsync.ui.ScreenSettings
 import pl.lambada.songsync.ui.screens.home.components.BatchDownloadLyrics
-import pl.lambada.songsync.ui.screens.home.components.FiltersDialog
+import pl.lambada.songsync.ui.screens.home.components.FiltersSheet
 import pl.lambada.songsync.ui.screens.home.components.HomeAppBar
 import pl.lambada.songsync.ui.screens.home.components.HomeSearchBar
 import pl.lambada.songsync.ui.screens.home.components.SongItem
-import pl.lambada.songsync.ui.screens.home.components.SortDialog
+import pl.lambada.songsync.ui.screens.home.components.SortSheet
 import pl.lambada.songsync.util.ext.BackPressHandler
 import pl.lambada.songsync.util.ext.lowercaseWithLocale
 import pl.lambada.songsync.util.ui.SearchFABBoundsTransform
@@ -290,6 +290,33 @@ fun HomeScreenLoaded(
         }
     }
 
+    // Outside the list, so they open however far it's scrolled
+    if (viewModel.showSort) {
+        SortSheet(
+            userSettingsController = viewModel.userSettingsController,
+            onDismiss = { viewModel.showSort = false },
+            onSortOrderChange = {
+                viewModel.userSettingsController.updateSortOrder(
+                    it
+                )
+            },
+            onSortByChange = { viewModel.userSettingsController.updateSortBy(it) }
+        )
+    }
+
+    if (viewModel.showFilters) {
+        FiltersSheet(
+            hideLyrics = viewModel.userSettingsController.hideLyrics,
+            folderSummary = folderModeSummary(viewModel.userSettingsController),
+            onDismiss = { viewModel.showFilters = false },
+            onHideLyricsChange = viewModel::onHideLyricsChange,
+            onOpenMusicFolders = {
+                viewModel.showFilters = false
+                navController.navigate(ScreenMusicFolders)
+            },
+        )
+    }
+
     if (isBatchDownload) {
         BatchDownloadLyrics(
             viewModel = viewModel,
@@ -356,31 +383,6 @@ fun HomeScreenLoaded(
                         )
                     }
 
-                    if (viewModel.showSort) {
-                        SortDialog(
-                            userSettingsController = viewModel.userSettingsController,
-                            onDismiss = { viewModel.showSort = false },
-                            onSortOrderChange = {
-                                viewModel.userSettingsController.updateSortOrder(
-                                    it
-                                )
-                            },
-                            onSortByChange = { viewModel.userSettingsController.updateSortBy(it) }
-                        )
-                    }
-
-                    if (viewModel.showFilters) {
-                        FiltersDialog(
-                            hideLyrics = viewModel.userSettingsController.hideLyrics,
-                            folderSummary = folderModeSummary(viewModel.userSettingsController),
-                            onDismiss = { viewModel.showFilters = false },
-                            onHideLyricsChange = viewModel::onHideLyricsChange,
-                            onOpenMusicFolders = {
-                                viewModel.showFilters = false
-                                navController.navigate(ScreenMusicFolders)
-                            },
-                        )
-                    }
                 }
             }
 
