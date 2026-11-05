@@ -13,6 +13,8 @@ import pl.lambada.songsync.data.UserSettingsController
 
 class InitScreenViewModel(
     val userSettingsController: UserSettingsController,
+    /** Whether the app has the storage access setup requires; replaceable in tests. */
+    private val hasStorageAccess: (Context) -> Boolean = ::hasRequiredStorageAccess,
 ): ViewModel() {
     var allFilesClicked by mutableStateOf(false)
     var notificationAccessClicked by mutableStateOf(false)
@@ -21,18 +23,7 @@ class InitScreenViewModel(
     var notificationAccessPermissionGranted by mutableStateOf(false)
 
     fun onLoad(context: Context) {
-        if (usesAllFilesAccess()) {
-            allFilesPermissionGranted = Environment.isExternalStorageManager()
-        } else {
-            allFilesPermissionGranted = ContextCompat.checkSelfPermission(
-                context,
-                android.Manifest.permission.WRITE_EXTERNAL_STORAGE
-            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-                    && ContextCompat.checkSelfPermission(
-                context,
-                android.Manifest.permission.READ_EXTERNAL_STORAGE
-            ) == android.content.pm.PackageManager.PERMISSION_GRANTED
-        }
+        allFilesPermissionGranted = hasStorageAccess(context)
         notificationAccessPermissionGranted = NotificationManagerCompat
             .getEnabledListenerPackages(context).contains(context.packageName)
     }
@@ -41,3 +32,9 @@ class InitScreenViewModel(
         userSettingsController.updatePassedInit(true)
     }
 }
+
+/** All-files access from Android 11 on, the read and write storage permissions before. */
+fun hasRequiredStorageAccess(context: Context): Boolean =
+    if (usesAllFilesAccess()) Environment.isExternalStorageManager()
+    else listOf(android.Manifest.permission.READ_EXTERNAL_STORAGE, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        .all { ContextCompat.checkSelfPermission(context, it) == android.content.pm.PackageManager.PERMISSION_GRANTED }

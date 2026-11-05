@@ -109,4 +109,26 @@ class LyricsFetchViewModelTest {
 
         vm.lyricsFetchState shouldBe LyricsFetchState.Success("[00:01.00]Hola")
     }
+
+    @Test
+    fun `being offline shows No connection instead of an error`() = test {
+        coEvery { service.findLyrics(any(), any(), any(), any()) } throws java.net.UnknownHostException("lrclib.net")
+        val vm = viewModel()
+
+        vm.loadSongInfo(context)
+        advanceUntilIdle()
+
+        vm.queryState shouldBe QueryStatus.NoConnection
+    }
+
+    @Test
+    fun `nothing found anywhere is reported as no results`() = test {
+        coEvery { service.findLyrics(any(), any(), any(), any()) } returns null
+        val vm = viewModel()
+
+        vm.loadSongInfo(context)
+        advanceUntilIdle()
+
+        (vm.queryState as QueryStatus.Failed).exception::class shouldBe pl.lambada.songsync.util.NoTrackFoundException::class
+    }
 }
