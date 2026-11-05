@@ -85,7 +85,7 @@ fun SharedTransitionScope.LyricsFetchScreen(
     var expandedProviders by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
-        if (viewModel.source != null) viewModel.loadSongInfo(context)
+        viewModel.loadInitialSongInfo(context)
     }
 
     // The provider sheet, opened from the Get lyrics split button or from the provider name

@@ -7,7 +7,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import pl.lambada.songsync.R
@@ -30,8 +34,28 @@ import java.net.UnknownHostException
 class LyricsFetchViewModel(
     val source: LocalSong?,
     val userSettingsController: UserSettingsController,
-    private val lyricsProviderService: LyricsProviderService
+    private val lyricsProviderService: LyricsProviderService,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : ViewModel() {
+    /** The search or lyrics fetch running now; a new one replaces it, so an old result can't win. */
+    private var fetchJob: Job? = null
+    private var startedInitialSearch = false
+
+    private fun launchFetch(block: suspend CoroutineScope.() -> Unit) {
+        fetchJob?.cancel()
+        fetchJob = viewModelScope.launch(ioDispatcher, block = block)
+    }
+
+    /**
+     * Searches for the local song the screen opened with, once: not again when the screen is
+     * recreated (rotation), which would throw away the result or the query being edited.
+     */
+    fun loadInitialSongInfo(context: Context) {
+        if (startedInitialSearch || source == null) return
+        startedInitialSearch = true
+        loadSongInfo(context)
+    }
+
     var querySongName by mutableStateOf(source?.songName ?: "")
     var queryArtistName by mutableStateOf(source?.artists ?: "")
 
@@ -65,7 +89,7 @@ class LyricsFetchViewModel(
     )
 
     fun loadSongInfo(context: Context, tryingAgain: Boolean = false) {
-        viewModelScope.launch(Dispatchers.IO) {
+        launchFetch {
             try {
                 queryState = QueryStatus.Pending
                 lyricsFetchState = LyricsFetchState.NotSubmitted
@@ -96,6 +120,8 @@ class LyricsFetchViewModel(
                     queryState = QueryStatus.Success(found.value.songInfo)
                     lyricsFetchState = LyricsFetchState.Success(found.value.lyrics)
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 searchProgress = null
                 queryState = when (e) {
@@ -126,21 +152,22 @@ class LyricsFetchViewModel(
         }
     }
 
-    private fun loadLyrics(match: SongInfo) {
-        viewModelScope.launch {
-            lyricsFetchState = LyricsFetchState.Pending
+    /** Runs inside the search that found [match], so replacing that search stops this too. */
+    private suspend fun loadLyrics(match: SongInfo) {
+        lyricsFetchState = LyricsFetchState.Pending
 
-            try {
-                val lyrics = lyricsProviderService.getSyncedLyrics(
-                    match,
-                    activeProvider,
-                    userSettingsController.lyricsOptions,
-                ) ?: throw NullPointerException("Lyrics result is null")
+        try {
+            val lyrics = lyricsProviderService.getSyncedLyrics(
+                match,
+                activeProvider,
+                userSettingsController.lyricsOptions,
+            ) ?: throw NullPointerException("Lyrics result is null")
 
-                lyricsFetchState = LyricsFetchState.Success(lyrics)
-            } catch (e: Exception) {
-                lyricsFetchState = LyricsFetchState.Failed(e)
-            }
+            lyricsFetchState = LyricsFetchState.Success(lyrics)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            lyricsFetchState = LyricsFetchState.Failed(e)
         }
     }
 
@@ -171,7 +198,7 @@ class LyricsFetchViewModel(
     fun fetchLyricsInLanguage(songId: Long?, language: String) {
         if (songId == null) return
         
-        viewModelScope.launch(Dispatchers.IO) {
+        launchFetch {
             lyricsFetchState = LyricsFetchState.Pending
             
             try {
@@ -189,6 +216,8 @@ class LyricsFetchViewModel(
                 } else {
                     lyricsFetchState = LyricsFetchState.Failed(Exception("No lyrics found for this language"))
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 lyricsFetchState = LyricsFetchState.Failed(e)
             }
