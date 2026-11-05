@@ -48,6 +48,9 @@ jobs:
       RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEYSTORE_ALIAS }}
       RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
       KEYSTORE_BASE_64: ${{ secrets.KEYSTORE_BASE_64 }}
+      # Provider credentials; without them Genius and PetitLyrics are hidden in the app
+      PROVIDER_GENIUS_TOKEN: ${{ secrets.PROVIDER_GENIUS_TOKEN }}
+      PROVIDER_PETITLYRICS_CLIENT_ID: ${{ secrets.PROVIDER_PETITLYRICS_CLIENT_ID }}
 
     permissions:
       # Write is needed to create the tag and GitHub Release

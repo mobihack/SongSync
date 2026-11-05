@@ -24,13 +24,15 @@ android {
             useSupportLibrary = true
         }
 
-        // Optional provider credentials, read from local.properties (not committed).
-        // Providers whose credential is blank are hidden in the app.
+        // Optional provider credentials, read from local.properties (not committed), or from
+        // environment variables in CI. Providers whose credential is blank are hidden in the app.
         val localProps = Properties().apply {
             rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
         }
-        buildConfigField("String", "GENIUS_TOKEN", "\"${localProps.getProperty("genius.token", "")}\"")
-        buildConfigField("String", "PETITLYRICS_CLIENT_ID", "\"${localProps.getProperty("petitlyrics.clientId", "")}\"")
+        fun credential(property: String, env: String) =
+            localProps.getProperty(property)?.takeIf { it.isNotBlank() } ?: System.getenv(env).orEmpty()
+        buildConfigField("String", "GENIUS_TOKEN", "\"${credential("genius.token", "PROVIDER_GENIUS_TOKEN")}\"")
+        buildConfigField("String", "PETITLYRICS_CLIENT_ID", "\"${credential("petitlyrics.clientId", "PROVIDER_PETITLYRICS_CLIENT_ID")}\"")
     }
     androidResources {
         generateLocaleConfig = true
