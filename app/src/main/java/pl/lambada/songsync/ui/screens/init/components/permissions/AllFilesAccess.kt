@@ -1,8 +1,8 @@
 package pl.lambada.songsync.ui.screens.init.components.permissions
 
+import pl.lambada.songsync.util.usesAllFilesAccess
 import android.app.ActivityManager
 import android.content.Intent
-import android.os.Build
 import android.os.Environment
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -23,7 +23,7 @@ fun AllFilesAccess(
 ) {
     val context = LocalContext.current
     var storageManager: ActivityResultLauncher<Intent>? = null
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+    if (usesAllFilesAccess()) {
         storageManager =
             rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
                 if (Environment.isExternalStorageManager()) {
@@ -48,7 +48,7 @@ fun AllFilesAccess(
         }
     )
     LaunchedEffect(Unit) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        if (usesAllFilesAccess()) {
             val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
             intent.addCategory("android.intent.category.DEFAULT")
             intent.data = android.net.Uri.parse(

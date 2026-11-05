@@ -1,5 +1,6 @@
 package pl.lambada.songsync.ui.screens.init
 
+import pl.lambada.songsync.util.usesAllFilesAccess
 import android.content.Context
 import android.os.Build
 import android.os.Environment
@@ -23,7 +24,7 @@ class InitScreenViewModel(
     var notificationAccessPermissionGranted by mutableStateOf(false)
 
     fun onLoad(context: Context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        if (usesAllFilesAccess()) {
             allFilesPermissionGranted = Environment.isExternalStorageManager()
         } else {
             allFilesPermissionGranted = ContextCompat.checkSelfPermission(

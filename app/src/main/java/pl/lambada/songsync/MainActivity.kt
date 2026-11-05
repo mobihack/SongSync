@@ -1,5 +1,6 @@
 package pl.lambada.songsync
 
+import pl.lambada.songsync.util.usesAllFilesAccess
 import android.Manifest
 import coil.Coil
 import coil.ImageLoader
@@ -108,7 +109,7 @@ class MainActivity : ComponentActivity() {
 private fun MainActivity.CheckForPermissions(
     userSettingsController: UserSettingsController
 ) {
-    if (Build.VERSION.SDK_INT > Build.VERSION_CODES.R) {
+    if (usesAllFilesAccess()) {
         if (!Environment.isExternalStorageManager()) {
             userSettingsController.updatePassedInit(false)
         }
