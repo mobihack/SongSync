@@ -331,21 +331,29 @@ fun applyOffsetToLyrics(lyrics: String, offset: Int): String {
     }
 }
 
+/**
+ * Splits LRC [lyrics] into (timestamp, text) pairs for display, in time order. Timestamps come out
+ * as "mm:ss.mmm". A line with several timestamps gives one pair for each; word-by-word tags and
+ * "v1:"/"v2:" speaker marks are left out of the text. Lines without a timestamp are skipped.
+ */
 fun parseLyrics(lyrics: String): List<Pair<String, String>> {
-    val timestampRegex = Regex("""[\[<](\d+):(\d+)\.(\d+)[]>]""")
-    val lines = lyrics.lines()
+    val leadingTags = Regex("""^((?:\[\d+:\d+(?:[.:]\d+)?])+)(.*)$""")
+    val tag = Regex("""\[(\d+):(\d+)(?:[.:](\d+))?]""")
+    val wordTag = Regex("""<\d+:\d+(?:[.:]\d+)?>""")
+    val speaker = Regex("""^v\d+:""")
 
-    return lines.mapNotNull { line ->
-        val match = timestampRegex.find(line) ?: return@mapNotNull null
-        val (minute, second, millisecond) = match.destructured
+    return lyrics.lines().flatMap { rawLine ->
+        val match = leadingTags.find(rawLine.trim()) ?: return@flatMap emptyList()
+        val (tags, rest) = match.destructured
+        val text = rest.replace(wordTag, "").replace(speaker, "").trim()
 
-        val startChar = line[0]
-        val endChar = if (startChar == '[') ']' else '>'
-
-        val timestamp = "${minute}:${second}.${millisecond.padStart(3, '0')}"
-        val text = line.substringAfter(endChar).trim()
-
-        timestamp to text
-    }
+        tag.findAll(tags).map { t ->
+            val (minute, second, fraction) = t.destructured
+            // ".34" is hundredths, ".345" milliseconds
+            val millis = fraction.padEnd(3, '0').take(3)
+            val time = minute.toInt() * 60_000L + second.toInt() * 1000L + millis.toInt()
+            time to ("${minute.padStart(2, '0')}:${second.padStart(2, '0')}.$millis" to text)
+        }.toList()
+    }.sortedBy { it.first }.map { it.second }
 }
 
