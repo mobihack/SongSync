@@ -2,6 +2,11 @@
 
 package pl.lambada.songsync.ui.screens.home.components
 
+import androidx.compose.ui.Modifier
+import androidx.compose.material3.FloatingToolbarDefaults
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
@@ -10,8 +15,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.DropdownMenuPopup
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MenuAnchorPosition
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Text
@@ -26,8 +29,8 @@ import pl.lambada.songsync.ui.components.ProvidersDialog
 import pl.lambada.songsync.util.ProviderChoice
 
 /**
- * The ⋮ button of Home's floating toolbar. Its menu opens upward (the toolbar sits at the
- * bottom); Lyrics provider opens [ProvidersDialog].
+ * Home's ⋮ button, round in the bottom-start corner. Its menu opens upward; Lyrics provider
+ * opens [ProvidersDialog].
  */
 @Composable
 fun HomeOverflowMenu(
@@ -40,7 +43,14 @@ fun HomeOverflowMenu(
     var providersDialog by remember { mutableStateOf(false) }
 
     Box {
-        IconButton(onClick = { expanded = true }, shapes = IconButtonDefaults.shapes()) {
+        // A round button matching the floating toolbar on the other side
+        FloatingActionButton(
+            onClick = { expanded = true },
+            shape = CircleShape,
+            containerColor = FloatingToolbarDefaults.standardFloatingToolbarColors().toolbarContainerColor,
+            contentColor = FloatingToolbarDefaults.standardFloatingToolbarColors().toolbarContentColor,
+            modifier = Modifier.size(FloatingToolbarDefaults.ContainerSize),
+        ) {
             Icon(imageVector = Icons.Default.MoreVert, contentDescription = stringResource(R.string.more))
         }
         DropdownMenuPopup(

@@ -190,6 +190,22 @@ fun HomeScreen(
                     listState = listState,
                 )
         }
+        // ⋮ menu in the bottom-start corner; the selection toolbar replaces it while selecting
+        AnimatedVisibility(
+            visible = viewModel.allSongs != null && !selecting,
+            modifier = Modifier
+                .align(Alignment.BottomStart)
+                .padding(start = 16.dp, bottom = paddingValues.calculateBottomPadding() + 16.dp),
+            enter = fadeIn(motionScheme.defaultEffectsSpec()) + scaleIn(motionScheme.defaultSpatialSpec()),
+            exit = fadeOut(motionScheme.fastEffectsSpec()) + scaleOut(motionScheme.fastSpatialSpec()),
+        ) {
+            HomeOverflowMenu(
+                onNavigateToSettingsSectionRequest = { navController.navigate(ScreenSettings) },
+                providerChoice = viewModel.userSettingsController.providerChoice,
+                onProviderChoice = viewModel.userSettingsController::choose,
+                onBatchDownloadRequest = { isBatchDownload = true },
+            )
+        }
         // Library tools (sort, filter, search) normally; selection actions while songs are selected
         if (viewModel.allSongs != null) AnimatedContent(
             targetState = selecting,
@@ -214,14 +230,6 @@ fun HomeScreen(
                 onInvertSelection = viewModel::invertSongSelection,
                 onBatchDownload = { isBatchDownload = true },
             ) else HomeLibraryToolbar(
-                overflowMenu = {
-                    HomeOverflowMenu(
-                        onNavigateToSettingsSectionRequest = { navController.navigate(ScreenSettings) },
-                        providerChoice = viewModel.userSettingsController.providerChoice,
-                        onProviderChoice = viewModel.userSettingsController::choose,
-                        onBatchDownloadRequest = { isBatchDownload = true },
-                    )
-                },
                 onSort = { viewModel.showSort = true },
                 onFilter = { viewModel.showFilters = true },
                 filterActive = viewModel.userSettingsController.hideLyrics,

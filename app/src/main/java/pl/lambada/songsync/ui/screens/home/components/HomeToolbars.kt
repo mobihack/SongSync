@@ -63,11 +63,9 @@ fun HomeSelectionToolbar(
     }
 }
 
-/** Library tools on Home: the ⋮ menu, sort and filter in the toolbar, search as its primary action. */
+/** Library tools on Home: sort and filter in the toolbar, search as its primary action. */
 @Composable
 fun HomeLibraryToolbar(
-    /** The ⋮ menu, first in the toolbar. */
-    overflowMenu: @Composable () -> Unit,
     onSort: () -> Unit,
     onFilter: () -> Unit,
     /** A filter is hiding songs; the filter button shows as toggled on. */
@@ -84,7 +82,6 @@ fun HomeLibraryToolbar(
             }
         },
     ) {
-        overflowMenu()
         IconButton(onClick = onSort, shapes = IconButtonDefaults.shapes()) {
             Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = stringResource(R.string.sort))
         }
