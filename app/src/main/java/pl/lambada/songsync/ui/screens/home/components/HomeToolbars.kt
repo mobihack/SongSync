@@ -162,6 +162,7 @@ fun LibraryHeader(songCount: Int, modifier: Modifier = Modifier) {
         Text(
             text = stringResource(R.string.library),
             style = MaterialTheme.typography.titleMediumEmphasized,
+            color = MaterialTheme.colorScheme.primary,
         )
         Spacer(Modifier.weight(1f))
         Text(
