@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640">
+  <!-- SongSync+ banner / GitHub social preview (1280x640).
+       Render: rsvg-convert -w 1280 -h 640 docs/banner.svg -o banner.png -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5B3FA0"/>
+      <stop offset="1" stop-color="#3A2178"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.74" cy="0.5" r="0.45">
+      <stop offset="0" stop-color="#8B6FD0" stop-opacity="0.45"/>
+      <stop offset="1" stop-color="#8B6FD0" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Lyric column fades out at the top and bottom -->
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+      <stop offset="0.3" stop-color="#fff" stop-opacity="1"/>
+      <stop offset="0.7" stop-color="#fff" stop-opacity="1"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <mask id="fadeMask">
+      <rect x="700" y="90" width="520" height="460" fill="url(#fade)"/>
+    </mask>
+  </defs>
+
+  <rect width="1280" height="640" fill="url(#bg)"/>
+  <rect width="1280" height="640" fill="url(#glow)"/>
+
+  <!-- Logo tile: the launcher icon, same geometry as ic_launcher_foreground -->
+  <rect x="96" y="150" width="128" height="128" rx="34" fill="#EADDFF"/>
+  <svg x="96" y="150" width="128" height="128" viewBox="18 18 72 72">
+    <g fill="none" stroke="#21005D" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M40.625,44.1875H57.125M40.625,54.6875H57.125M40.625,65.1875H50.375" stroke-width="5.25"/>
+      <path d="M65.375,65.1875V43.4375L72.125,45.6875" stroke-width="3.75"/>
+    </g>
+    <path d="M56.75,65.1875a5.25,5.25 0,1 0,10.5,0a5.25,5.25 0,1 0,-10.5,0Z" fill="#21005D"/>
+  </svg>
+
+  <text x="256" y="244" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="84" font-weight="700" fill="#F5EEFF" letter-spacing="-1.5">SongSync<tspan fill="#D0BCFF">+</tspan></text>
+
+  <text font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="36" fill="#E8DEF8">
+    <tspan x="96" y="372">Synced lyrics for the music</tspan>
+    <tspan x="96" y="418">already on your phone.</tspan>
+  </text>
+
+  <text x="96" y="496" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="22" fill="#D3C7F0" letter-spacing="0.3">lrc files  ·  word-by-word  ·  open source</text>
+
+  <!-- Lyric lines, LRC style, with the current line highlighted -->
+  <g mask="url(#fadeMask)" font-size="24">
+    <g font-family="Menlo, Monaco, monospace" fill="#C3B3EA">
+      <text x="740" y="150" opacity="0.5">[00:41.20]</text>
+      <text x="740" y="206" opacity="0.6">[00:45.85]</text>
+      <text x="740" y="262" opacity="0.75">[00:49.10]</text>
+      <text x="740" y="374" opacity="0.75">[00:58.02]</text>
+      <text x="740" y="430" opacity="0.6">[01:02.47]</text>
+      <text x="740" y="486" opacity="0.5">[01:06.90]</text>
+    </g>
+    <g font-family="Helvetica Neue, Helvetica, Arial, sans-serif" fill="#E6DCFA">
+      <text x="896" y="150" opacity="0.5">Static on the radio</text>
+      <text x="896" y="206" opacity="0.6">Streetlights counting time</text>
+      <text x="896" y="262" opacity="0.75">Every word I meant to say</text>
+      <text x="896" y="374" opacity="0.75">Turning slowly into rhyme</text>
+      <text x="896" y="430" opacity="0.6">Hold on to the line</text>
+      <text x="896" y="486" opacity="0.5">Till the morning comes</text>
+    </g>
+  </g>
+
+  <!-- Current line -->
+  <rect x="716" y="282" width="468" height="66" rx="20" fill="#EADDFF" fill-opacity="0.12"/>
+  <text x="740" y="326" font-family="Menlo, Monaco, monospace" font-size="24" fill="#D0BCFF">[00:53.64]</text>
+  <text x="896" y="327" font-family="Helvetica Neue, Helvetica, Arial, sans-serif" font-size="30" font-weight="700" fill="#FFFFFF">Sing it back to me</text>
+</svg>

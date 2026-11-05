@@ -1,4 +1,4 @@
-# SongSync+
+![SongSync+: synced lyrics for the music already on your phone](docs/banner.svg)
 
 An Android app that finds synced lyrics (.lrc files) for the music already on your phone and saves them next to your songs.
 
