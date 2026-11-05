@@ -1,5 +1,8 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
+
 package pl.lambada.songsync.activities.quicksearch.components
 
+import androidx.compose.material3.Card
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
@@ -46,21 +49,24 @@ fun ExpandableOutlinedCard(
 ) {
     var expanded by rememberSaveable { mutableStateOf(isExpanded) }
 
-    val animatedDegree =
-        animateFloatAsState(targetValue = if (expanded) 0f else -180f, label = "Button Rotation")
+    val animatedDegree = animateFloatAsState(
+        targetValue = if (expanded) 0f else -180f,
+        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
+        label = "Button Rotation",
+    )
 
-    OutlinedCard(
-        modifier = modifier.animateContentSize(),
+    Card(
+        modifier = modifier.animateContentSize(MaterialTheme.motionScheme.defaultSpatialSpec()),
         onClick = { expanded = !expanded },
-        colors = CardDefaults.outlinedCardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         ),
-        shape = MaterialTheme.shapes.small
+        shape = MaterialTheme.shapes.large
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
+                .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
@@ -82,21 +88,17 @@ fun ExpandableOutlinedCard(
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.62f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = FontWeight.Normal
                 )
             }
             FilledTonalIconButton(
-                modifier = Modifier.size(24.dp),
                 onClick = { expanded = !expanded },
-                colors = IconButtonDefaults.filledTonalIconButtonColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceColorAtElevation(4.dp),
-                )
+                shapes = IconButtonDefaults.shapes(),
             ) {
                 Icon(
                     imageVector = Icons.Outlined.ExpandLess,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
                     modifier = Modifier.rotate(animatedDegree.value)
                 )
             }

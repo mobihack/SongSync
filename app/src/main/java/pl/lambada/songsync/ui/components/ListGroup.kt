@@ -21,6 +21,7 @@ import androidx.compose.foundation.background
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 /** Side margin of a grouped list, so its rounded corners don't touch the screen edge. */
@@ -79,12 +80,17 @@ class ListGroupScope internal constructor() {
  * for lazy, keyed rows that animate.
  */
 @Composable
-fun ListGroup(modifier: Modifier = Modifier, content: ListGroupScope.() -> Unit) {
+fun ListGroup(
+    modifier: Modifier = Modifier,
+    /** Side margin; 0 when the parent already pads its content. */
+    margin: Dp = ListGroupMargin,
+    content: ListGroupScope.() -> Unit,
+) {
     val rows = ListGroupScope().apply(content).rows
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = ListGroupMargin),
+            .padding(horizontal = margin),
         verticalArrangement = Arrangement.spacedBy(ListItemDefaults.SegmentedGap),
     ) {
         rows.forEachIndexed { index, row ->

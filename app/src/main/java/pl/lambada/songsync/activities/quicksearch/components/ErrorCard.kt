@@ -1,5 +1,13 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
+
 package pl.lambada.songsync.activities.quicksearch.components
 
+import androidx.compose.material3.toShape
+import androidx.compose.material3.MaterialShapes
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background
+import androidx.compose.material3.Card
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,24 +40,33 @@ fun ErrorCard(
     stacktrace: String,
     modifier: Modifier = Modifier
 ) {
-    OutlinedCard(
+    Card(
         modifier = modifier,
-        colors = CardDefaults.outlinedCardColors(
+        colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.errorContainer,
         ),
-        shape = MaterialTheme.shapes.small
+        shape = MaterialTheme.shapes.large
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
+                .padding(12.dp),
+            verticalAlignment = Alignment.Top,
         ) {
-            Icon(
-                modifier = Modifier.weight(0.1f),
-                imageVector = Icons.Rounded.Error,
-                contentDescription = stringResource(R.string.error),
-            )
+            // Error icon in an Expressive shape: one of the few hero-shape spots in the app
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .background(MaterialTheme.colorScheme.error, MaterialShapes.Cookie9Sided.toShape()),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector = Icons.Rounded.Error,
+                    contentDescription = stringResource(R.string.error),
+                    tint = MaterialTheme.colorScheme.onError,
+                    modifier = Modifier.size(22.dp),
+                )
+            }
             Column(
                 modifier = Modifier
                     .fillMaxWidth()

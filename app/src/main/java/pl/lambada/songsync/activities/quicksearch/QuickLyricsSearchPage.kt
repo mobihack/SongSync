@@ -19,7 +19,7 @@ import androidx.compose.material.icons.filled.Cloud
 import androidx.compose.material.icons.rounded.Subtitles
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -149,7 +149,7 @@ fun QuickLyricsSearchPage(
                                                         modifier = Modifier.fillMaxWidth(),
                                                         contentAlignment = Alignment.Center
                                                     ) {
-                                                        LinearProgressIndicator(
+                                                        LinearWavyProgressIndicator(
                                                             modifier = Modifier.fillMaxWidth(
                                                                 0.8f
                                                             )
@@ -257,7 +257,6 @@ private fun Heading(
                     modifier = Modifier.weight(1f),
                     onClick = { onSendLyrics(this.data ?: "") },
                     enabled = this is ResourceState.Success<*>,
-                    shape = RoundedCornerShape(8.dp) //RoundedCornerShape(topStart = 8.dp, bottomStart = 8.dp)
                 )
 //                ButtonWithIconAndText(
 //                    icon = Icons.Filled.Settings,

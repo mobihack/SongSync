@@ -1,5 +1,13 @@
 package pl.lambada.songsync.ui.screens.home.components
 
+import pl.lambada.songsync.ui.components.ConnectedButtonRow
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.Role
+import androidx.compose.material3.ToggleButton
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.ButtonGroupDefaults
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -59,7 +67,7 @@ fun SortDialog(
                 HorizontalDivider(modifier = Modifier.padding(top = 6.dp))
                 Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
                     Spacer(modifier = Modifier.weight(1f))
-                    TextButton(onDismiss) {
+                    TextButton(onDismiss, shapes = ButtonDefaults.shapes()) {
                         Text(stringResource(R.string.close))
                     }
                 }
@@ -68,29 +76,32 @@ fun SortDialog(
     }
 }
 
+/** Ascending / Descending as a connected pair of toggle buttons. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun SortOrderRadioGroup(
     userSettingsController: UserSettingsController,
     onSortOrderChange: (SortOrders) -> Unit
 ) {
-    Column {
-        SortOrders.entries.forEach {
-            Row(
+    ConnectedButtonRow(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp, vertical = 8.dp)
+    ) {
+        SortOrders.entries.forEachIndexed { index, order ->
+            ToggleButton(
+                checked = userSettingsController.sortOrder == order,
+                onCheckedChange = { onSortOrderChange(order) },
+                shapes = when (index) {
+                    0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
+                    SortOrders.entries.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                    else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
+                },
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable(
-                        onClick = { onSortOrderChange(it) }
-                    )
-                    .padding(horizontal = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                    .weight(1f)
+                    .semantics { role = Role.RadioButton },
             ) {
-                RadioButton(
-                    selected = userSettingsController.sortOrder == it,
-                    onClick = {
-                        onSortOrderChange(it)
-                    }
-                )
-                Text(stringResource(it.displayName))
+                Text(stringResource(order.displayName))
             }
         }
     }

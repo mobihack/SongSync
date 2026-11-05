@@ -1,5 +1,13 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
+
 package pl.lambada.songsync.ui.screens.home.components.batchDownload
 
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.LinearWavyProgressIndicator
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedButton
@@ -36,6 +44,12 @@ fun DownloadProgressDialog(
                     )
                 )
                 Text(text = stringResource(R.string.progress, count, total, percentage))
+                LinearWavyProgressIndicator(
+                    progress = { if (total > 0) count.toFloat() / total else 0f },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                )
                 Text(
                     text = stringResource(
                         R.string.success_failed, successCount, noLyricsCount, failedCount
@@ -47,7 +61,7 @@ fun DownloadProgressDialog(
         onDismissRequest = { /* Prevent accidental dismiss */ },
         confirmButton = { /* Empty but required */ },
         dismissButton = {
-            OutlinedButton(onClick = onCancel) {
+            OutlinedButton(onClick = onCancel, shapes = ButtonDefaults.shapes()) {
                 Text(text = stringResource(R.string.cancel))
             }
         }

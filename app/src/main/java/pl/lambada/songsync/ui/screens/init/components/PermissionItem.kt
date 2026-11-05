@@ -1,5 +1,10 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
+
 package pl.lambada.songsync.ui.screens.init.components
 
+import pl.lambada.songsync.ui.components.listGroupColors
+import androidx.compose.material3.SegmentedListItem
+import androidx.compose.material3.ListItemShapes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -33,7 +38,21 @@ fun PermissionItem(
         horizontal = 8.dp,
         vertical = 16.dp
     ),
+    /** Draws it as a row of a [pl.lambada.songsync.ui.components.ListGroup]. */
+    shapes: ListItemShapes? = null,
 ) {
+    if (shapes != null) {
+        SegmentedListItem(
+            onClick = { if (!granted) onClick() },
+            shapes = shapes,
+            colors = listGroupColors(),
+            supportingContent = { Text(stringResource(id = description)) },
+            trailingContent = { PermissionStatusIcon(granted) },
+        ) {
+            Text(stringResource(id = title))
+        }
+        return
+    }
     Row(
         modifier = Modifier
             .clickable(!granted) { onClick() }
@@ -54,17 +73,22 @@ fun PermissionItem(
             )
         }
         Spacer(modifier = Modifier.width(12.dp))
-        if (granted) {
-            Icon(
-                imageVector = Icons.Default.CheckCircle,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.tertiary
-            )
-        } else {
-            Icon(
-                imageVector = Icons.AutoMirrored.Default.Launch,
-                contentDescription = null,
-            )
-        }
+        PermissionStatusIcon(granted)
+    }
+}
+
+@Composable
+private fun PermissionStatusIcon(granted: Boolean) {
+    if (granted) {
+        Icon(
+            imageVector = Icons.Default.CheckCircle,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.tertiary
+        )
+    } else {
+        Icon(
+            imageVector = Icons.AutoMirrored.Default.Launch,
+            contentDescription = null,
+        )
     }
 }

@@ -1,5 +1,10 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
+
 package pl.lambada.songsync.activities.poweramp
 
+import pl.lambada.songsync.ui.components.connectedButtonShapes
+import pl.lambada.songsync.ui.components.ConnectedButtonRow
+import androidx.compose.material3.FilledTonalButton
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
@@ -196,7 +201,7 @@ private fun PowerampLyricsSheet(
         }
 
         Surface(
-            shape = RoundedCornerShape(12.dp),
+            shape = MaterialTheme.shapes.large,
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
         ) {
             Text(
@@ -220,15 +225,17 @@ private fun PowerampLyricsSheet(
             )
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            OutlinedButton(
+        ConnectedButtonRow {
+            FilledTonalButton(
                 onClick = onEmbed,
                 enabled = !busy && entry.path != null,
+                shapes = connectedButtonShapes(0, 2),
                 modifier = Modifier.weight(1f),
             ) { Text(androidx.compose.ui.res.stringResource(R.string.embed_lyrics_in_file)) }
             Button(
                 onClick = onSave,
                 enabled = !busy,
+                shapes = connectedButtonShapes(1, 2),
                 modifier = Modifier.weight(1f),
             ) { Text(androidx.compose.ui.res.stringResource(R.string.save_lrc_file)) }
         }
