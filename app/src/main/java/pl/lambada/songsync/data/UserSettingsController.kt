@@ -137,14 +137,12 @@ class UserSettingsController(private val dataStore: DataStore<Preferences>) {
         private set
 
     var sortOrder by mutableStateOf(
-        SortOrders.entries
-            .find { it.queryName == dataStore.get(sortOrderKey, SortOrders.ASCENDING.queryName) }!!
+        SortOrders.fromQueryName(dataStore.get(sortOrderKey, SortOrders.ASCENDING.queryName))
     )
         private set
 
     var sortBy by mutableStateOf(
-        SortValues.entries
-            .find { it.name == dataStore.get(sortByKey, SortValues.TITLE.name) }!!
+        SortValues.fromName(dataStore.get(sortByKey, SortValues.TITLE.name))
     )
         private set
 

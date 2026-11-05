@@ -10,7 +10,12 @@ import pl.lambada.songsync.R
  */
 enum class SortOrders(val queryName: String, @StringRes val displayName: Int) {
     ASCENDING("ASC", R.string.ascending),
-    DESCENDING("DESC", R.string.descending),
+    DESCENDING("DESC", R.string.descending);
+
+    companion object {
+        /** The order saved as [queryName], or ascending for one no longer known. */
+        fun fromQueryName(queryName: String?) = entries.find { it.queryName == queryName } ?: ASCENDING
+    }
 }
 
 /**
@@ -24,5 +29,10 @@ enum class SortValues(@StringRes val displayName: Int) {
     YEAR(R.string.year),
     DURATION(R.string.duration),
     DATE_ADDED(R.string.date_added),
-    DATE_MODIFIED(R.string.date_modified),
+    DATE_MODIFIED(R.string.date_modified);
+
+    companion object {
+        /** The value saved as [name], or title for one no longer known. */
+        fun fromName(name: String?) = entries.find { it.name == name } ?: TITLE
+    }
 }
