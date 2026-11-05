@@ -26,12 +26,17 @@ fun Modifier.frosted(
     state: HazeState?,
     shape: Shape,
     tint: Color = MaterialTheme.colorScheme.surfaceContainer,
+    /** Thicker glass shows more of [tint]: for coloured primary actions. */
+    thick: Boolean = false,
 ): Modifier {
     val edge = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f)
     return this
         .clip(shape)
         .then(
-            if (state != null) Modifier.hazeEffect(state, HazeMaterials.thin(containerColor = tint))
+            if (state != null) Modifier.hazeEffect(
+                state,
+                if (thick) HazeMaterials.thick(containerColor = tint) else HazeMaterials.thin(containerColor = tint),
+            )
             else Modifier.background(tint)
         )
         .border(1.dp, edge, shape)

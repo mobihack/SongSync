@@ -70,7 +70,7 @@ fun FrostedFab(
     contentColor: Color,
     shape: androidx.compose.ui.graphics.Shape = RoundedCornerShape(20.dp),
     content: @Composable () -> Unit,
-) = Box(Modifier.size(FloatingControlSize).frosted(hazeState, shape, tint), contentAlignment = Alignment.Center) {
+) = Box(Modifier.size(FloatingControlSize).frosted(hazeState, shape, tint, thick = true), contentAlignment = Alignment.Center) {
     CompositionLocalProvider(LocalContentColor provides contentColor) {
         IconButton(onClick = onClick, modifier = Modifier.size(FloatingControlSize), shapes = IconButtonDefaults.shapes()) {
             content()
@@ -141,8 +141,9 @@ fun HomeLibraryToolbar(
     FrostedFab(
         hazeState,
         onClick = onSearch,
-        tint = MaterialTheme.colorScheme.primaryContainer,
-        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+        // The app's bright blue (same as the Get lyrics button)
+        tint = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
     ) {
         Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.search))
     }
