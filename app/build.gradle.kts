@@ -121,8 +121,10 @@ dependencies {
     implementation(libs.taglib)
     implementation(libs.kotlin.onetimepassword)
     implementation(libs.datastore.preferences)
-    implementation(libs.ui.tooling) //NOT RECOMMENDED
-    implementation(libs.ui.tooling.preview) //NOT RECOMMENDED
+    // Layout inspector and preview rendering: debug builds only
+    debugImplementation(libs.ui.tooling)
+    // @Preview annotations; tiny, and needed to compile the previews
+    implementation(libs.ui.tooling.preview)
 
     testImplementation(libs.bundles.unit.test)
     // Compose UI tests on the JVM (Robolectric), no device needed

@@ -16,4 +16,11 @@ class ReleaseConfigTest {
         listOf("v", "d", "i").forEach { rules shouldContain "public static int $it(...);" }
         rules shouldNotContain "public static int e(...);"
     }
+
+    @Test
+    fun `compose tooling ships in debug builds only`() {
+        val gradle = File("build.gradle.kts").readText()
+        gradle shouldContain "debugImplementation(libs.ui.tooling)"
+        gradle shouldNotContain "\n    implementation(libs.ui.tooling)\n"
+    }
 }
