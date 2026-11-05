@@ -94,6 +94,14 @@ fun ProvidersDropdownMenuContent(
     providers.forEach { Choice(ProviderChoice.Only(it), it.displayName, it.hasWordByWord) }
 }
 
+/** Short name of a provider choice, e.g. "Auto" or "LRCLib". */
+@Composable
+fun providerChoiceLabel(choice: ProviderChoice): String = when (choice) {
+    ProviderChoice.Auto -> stringResource(R.string.provider_mode_auto)
+    ProviderChoice.CustomOrder -> stringResource(R.string.provider_mode_my_list)
+    is ProviderChoice.Only -> choice.provider.displayName
+}
+
 /** Small "W" badge for providers with word-by-word lyrics. */
 @Composable
 fun WordByWordBadge() {

@@ -1,5 +1,6 @@
 package pl.lambada.songsync.ui.screens.lyricsFetch.components
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.tween
@@ -26,7 +27,10 @@ import pl.lambada.songsync.util.Providers
 fun CloudProviderTitle(
     selectedProvider: Providers,
     onExpandProvidersRequest: () -> Unit,
-) {
+    /** The provider menu, anchored to this title. */
+    menu: @Composable () -> Unit = {},
+) = Box {
+    menu()
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(4.dp))

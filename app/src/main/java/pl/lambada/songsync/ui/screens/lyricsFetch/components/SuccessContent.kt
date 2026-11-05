@@ -2,6 +2,9 @@
 
 package pl.lambada.songsync.ui.screens.lyricsFetch.components
 
+import pl.lambada.songsync.ui.components.connectedButtonShapes
+import pl.lambada.songsync.ui.components.ConnectedButtonRow
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Icon
 import androidx.compose.material.icons.outlined.AudioFile
@@ -57,6 +60,8 @@ fun SharedTransitionScope.SuccessContent(
     allowTryingAgain: Boolean,
     selectedProvider: Providers,
     onExpandProvidersRequest: () -> Unit,
+    /** The provider menu, anchored to the provider name. */
+    providerMenu: @Composable () -> Unit = {},
     /** Path of the local song file, shown under the lyrics; null for online-only searches. */
     songPath: String? = null,
 ) = Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -64,6 +69,7 @@ fun SharedTransitionScope.SuccessContent(
     CloudProviderTitle(
         selectedProvider = selectedProvider,
         onExpandProvidersRequest = onExpandProvidersRequest,
+        menu = providerMenu,
     )
     Spacer(modifier = Modifier.height(6.dp))
     SongCard(
@@ -78,19 +84,19 @@ fun SharedTransitionScope.SuccessContent(
 
     Spacer(modifier = Modifier.height(6.dp))
 
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        OutlinedButton(
+    ConnectedButtonRow(Modifier.fillMaxWidth()) {
+        FilledTonalButton(
             enabled = allowTryingAgain,
-            onClick = onTryAgain
+            onClick = onTryAgain,
+            shapes = connectedButtonShapes(0, 2),
+            modifier = Modifier.weight(1f),
         ) {
             Text(text = stringResource(id = R.string.try_again))
         }
-        OutlinedButton(
-            onClick = onEdit
+        FilledTonalButton(
+            onClick = onEdit,
+            shapes = connectedButtonShapes(1, 2),
+            modifier = Modifier.weight(1f),
         ) {
             Text(text = stringResource(id = R.string.edit))
         }

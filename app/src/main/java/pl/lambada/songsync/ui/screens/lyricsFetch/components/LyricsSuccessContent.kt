@@ -1,5 +1,14 @@
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
+
 package pl.lambada.songsync.ui.screens.lyricsFetch.components
 
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.FilledTonalIconButton
+import pl.lambada.songsync.ui.components.connectedButtonShapes
+import pl.lambada.songsync.ui.components.ConnectedButtonRow
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Card
 import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
@@ -92,11 +101,15 @@ fun LyricsSuccessContent(
                 modifier = Modifier.padding(start = 6.dp)
             )
             Spacer(modifier = Modifier.weight(1f))
-            IconButton(
+            val removeInteraction = remember { MutableInteractionSource() }
+            FilledTonalIconButton(
                 onClick = { /* handled by repeatingClickable */ },
+                shapes = IconButtonDefaults.shapes(),
+                // Shared with repeatingClickable so holding the button still morphs its shape
+                interactionSource = removeInteraction,
                 modifier = Modifier
                     .repeatingClickable(
-                        interactionSource = remember { MutableInteractionSource() },
+                        interactionSource = removeInteraction,
                         enabled = true,
                         maxDelayMillis = 500,
                         onClick = { onSetOffset(offset - 100) }
@@ -112,13 +125,19 @@ fun LyricsSuccessContent(
             Text(
                 text = (if (offset >= 0) "+" else "") +
                     "${offset / 1000.0}s",
+                // Tabular digits so the label doesn't jitter while stepping
+                style = MaterialTheme.typography.labelLargeEmphasized.copy(fontFeatureSettings = "tnum"),
             )
             Spacer(modifier = Modifier.width(10.dp))
-            IconButton(
+            val addInteraction = remember { MutableInteractionSource() }
+            FilledTonalIconButton(
                 onClick = { /* handled by repeatingClickable */ },
+                shapes = IconButtonDefaults.shapes(),
+                // Shared with repeatingClickable so holding the button still morphs its shape
+                interactionSource = addInteraction,
                 modifier = Modifier
                     .repeatingClickable(
-                        interactionSource = remember { MutableInteractionSource() },
+                        interactionSource = addInteraction,
                         enabled = true,
                         maxDelayMillis = 500,
                         onClick = { onSetOffset(offset + 100) }
@@ -134,16 +153,19 @@ fun LyricsSuccessContent(
 
         Spacer(modifier = Modifier.height(6.dp))
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Button(onClick = onSaveLyrics) {
+        ConnectedButtonRow(Modifier.fillMaxWidth()) {
+            Button(
+                onClick = onSaveLyrics,
+                shapes = connectedButtonShapes(0, 2),
+                modifier = Modifier.weight(1f),
+            ) {
                 Text(text = stringResource(R.string.save_lrc_file))
             }
-
-            Button(onClick = onEmbedLyrics) {
+            FilledTonalButton(
+                onClick = onEmbedLyrics,
+                shapes = connectedButtonShapes(1, 2),
+                modifier = Modifier.weight(1f),
+            ) {
                 Text(text = stringResource(R.string.embed_lyrics_in_file))
             }
         }
@@ -151,9 +173,10 @@ fun LyricsSuccessContent(
 
         Spacer(modifier = Modifier.height(6.dp))
 
-        OutlinedCard(
+        Card(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(10.dp)
+            shape = MaterialTheme.shapes.large,
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
         ) {
             Column {
                 Row(

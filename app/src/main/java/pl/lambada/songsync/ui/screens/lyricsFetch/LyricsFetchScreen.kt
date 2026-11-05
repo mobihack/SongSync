@@ -2,6 +2,7 @@
 
 package pl.lambada.songsync.ui.screens.lyricsFetch
 
+import pl.lambada.songsync.ui.components.providerChoiceLabel
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -23,7 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MediumTopAppBar
+import androidx.compose.material3.MediumFlexibleTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -78,6 +79,21 @@ fun SharedTransitionScope.LyricsFetchScreen(
         if (viewModel.source != null) viewModel.loadSongInfo(context)
     }
 
+    // One provider menu, anchored to whatever opened it: the Get lyrics split button, or the
+    // provider name above a search in progress or a result
+    val providerMenu: @Composable () -> Unit = {
+        ProvidersDropdownMenu(
+            expanded = expandedProviders,
+            selected = viewModel.userSettingsController.providerChoice,
+            onDismissRequest = { expandedProviders = false },
+            onChoose = {
+                viewModel.userSettingsController.choose(it)
+                if (viewModel.queryState != QueryStatus.NotSubmitted)
+                    viewModel.loadSongInfo(context)
+            },
+        )
+    }
+
     Scaffold(
         modifier = Modifier
             .sharedBounds(
@@ -88,7 +104,7 @@ fun SharedTransitionScope.LyricsFetchScreen(
             )
             .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            MediumTopAppBar(
+            MediumFlexibleTopAppBar(
                 navigationIcon = {
                     IconButton(
                         onClick = {
@@ -105,28 +121,7 @@ fun SharedTransitionScope.LyricsFetchScreen(
                     }
                 },
                 title = {
-                    Text(
-                        text = stringResource(id = R.string.search),
-                        modifier = Modifier.padding(start = 6.dp),
-                    )
-                },
-                actions = {
-                    IconButton(onClick = { expandedProviders = !expandedProviders }) {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = "More"
-                        )
-                    }
-                    ProvidersDropdownMenu(
-                        expanded = expandedProviders,
-                        selected = viewModel.userSettingsController.providerChoice,
-                        onDismissRequest = { expandedProviders = false },
-                        onChoose = {
-                            viewModel.userSettingsController.choose(it)
-                            if (viewModel.queryState != QueryStatus.NotSubmitted)
-                                viewModel.loadSongInfo(context)
-                        },
-                    )
+                    Text(text = stringResource(id = R.string.search))
                 },
                 scrollBehavior = scrollBehavior
             )
@@ -161,7 +156,11 @@ fun SharedTransitionScope.LyricsFetchScreen(
                         onQuerySongChange = { viewModel.querySongName = it },
                         queryArtist = viewModel.queryArtistName,
                         onQueryArtistChange = { viewModel.queryArtistName = it },
-                        onGetLyricsRequest = { viewModel.loadSongInfo(context) }
+                        onGetLyricsRequest = { viewModel.loadSongInfo(context) },
+                        providerLabel = providerChoiceLabel(viewModel.userSettingsController.providerChoice),
+                        providerMenuExpanded = expandedProviders,
+                        onProviderMenuRequest = { expandedProviders = !expandedProviders },
+                        providerMenu = providerMenu,
                     )
 
                     QueryStatus.Pending -> Column(
@@ -174,7 +173,8 @@ fun SharedTransitionScope.LyricsFetchScreen(
                             // Follows the fallback live: shows the provider being tried right now
                             selectedProvider = progress?.provider
                                 ?: viewModel.lookupProviders().first(),
-                            onExpandProvidersRequest = { expandedProviders = true }
+                            onExpandProvidersRequest = { expandedProviders = true },
+                            menu = providerMenu,
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         LoadingIndicator()
@@ -237,6 +237,7 @@ fun SharedTransitionScope.LyricsFetchScreen(
                         // Show the provider that actually answered (may be a fallback)
                         selectedProvider = viewModel.activeProvider,
                         onExpandProvidersRequest = { expandedProviders = true },
+                        providerMenu = providerMenu,
                         songPath = viewModel.source?.filePath?.replace(".nowplaying", ""),
                     )
 
