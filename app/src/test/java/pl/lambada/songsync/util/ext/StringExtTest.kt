@@ -39,4 +39,19 @@ class StringExtTest {
     fun `toLrcFile of null is null`() {
         (null as String?).toLrcFile().shouldBeNull()
     }
+
+    @Test
+    fun `toLrcFile ignores a dot in a folder name`() {
+        "/music/Vol.2/track".toLrcFile() shouldBe File("/music/Vol.2/track.lrc")
+    }
+
+    @Test
+    fun `toLrcFile keeps a dotted folder when the file has an extension`() {
+        "/music/Vol.2/track.mp3".toLrcFile() shouldBe File("/music/Vol.2/track.lrc")
+    }
+
+    @Test
+    fun `toLrcFile of an empty path is null`() {
+        "".toLrcFile().shouldBeNull()
+    }
 }

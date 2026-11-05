@@ -18,11 +18,9 @@ import pl.lambada.songsync.ui.LocalSong
 import pl.lambada.songsync.util.embedLyricsInFile
 import pl.lambada.songsync.util.ext.getVersion
 import pl.lambada.songsync.util.generateLrcContent
-import pl.lambada.songsync.util.isLegacyFileAccessRequired
 import pl.lambada.songsync.util.NoTrackFoundException
 import pl.lambada.songsync.util.ProviderChain
-import pl.lambada.songsync.util.newLyricsFilePath
-import pl.lambada.songsync.util.saveToExternalPath
+import pl.lambada.songsync.util.saveLrcFile
 import pl.lambada.songsync.util.showToast
 import java.net.UnknownHostException
 
@@ -116,21 +114,16 @@ class LyricsFetchViewModel(
         generatedUsingString: String
     ) {
         val lrcContent = generateLrcContent(song, lyrics, generatedUsingString, lrcOffset, userSettingsController.directlyModifyTimestamps)
-        val file = newLyricsFilePath(filePath, song)
 
-        if (!isLegacyFileAccessRequired(filePath)) {
-            file.writeText(lrcContent)
-        } else {
-            saveToExternalPath(
-                context = context,
-                sourceFilePath = filePath,
-                lrc = lrcContent,
-                fileName = file.name,
-                newLyricsFilePath = userSettingsController.sdCardPath
-            )
+        viewModelScope.launch {
+            withContext(Dispatchers.IO) {
+                runCatching {
+                    saveLrcFile(context, filePath, song, lrcContent, userSettingsController.sdCardPath)
+                }
+            }
+                .onSuccess { showToast(context, R.string.file_saved_to, it.absolutePath) }
+                .onFailure { showToast(context, it.message ?: context.getString(R.string.error)) }
         }
-
-        showToast(context, R.string.file_saved_to, file.absolutePath)
     }
 
     private fun loadLyrics(match: SongInfo) {

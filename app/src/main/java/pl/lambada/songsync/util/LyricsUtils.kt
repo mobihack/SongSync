@@ -17,7 +17,6 @@ import pl.lambada.songsync.R
 import pl.lambada.songsync.domain.model.Song
 import pl.lambada.songsync.domain.model.SongInfo
 import pl.lambada.songsync.ui.screens.home.HomeViewModel
-import pl.lambada.songsync.util.ext.sanitize
 import pl.lambada.songsync.util.ext.toLrcFile
 import java.io.File
 import java.io.FileNotFoundException
@@ -40,66 +39,49 @@ fun generateLrcContent(
         lyrics
 }
 
+/**
+ * Where lyrics for [song] are saved: beside the song file at [filePath], or in
+ * Download/SongSync+ when there is no local file.
+ */
 fun newLyricsFilePath(filePath: String?, song: SongInfo): File {
-    return if (filePath == null || filePath.isEmpty()) {
-        File(
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-            "SongSync+/${song.songName} - ${song.artistName}.lrc"
-        ).sanitize()
-    } else {
-        filePath.toLrcFile()!!
-    }
-}
-
-fun writeLyricsToFile(
-    file: File?,
-    lrcContent: String,
-    context: Context,
-    song: Song,
-    sdCardPath: String?
-) {
-    try {
-        file?.writeText(lrcContent)
-    } catch (e: FileNotFoundException) {
-        handleFileNotFoundException(context, song, file, lrcContent, sdCardPath)
-    }
-}
-
-fun handleFileNotFoundException(
-    context: Context,
-    song: Song,
-    file: File?,
-    lrc: String,
-    sdCardPath: String?
-) {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R && !song.filePath!!.contains("/storage/emulated/0")) {
-        val sd = context.externalCacheDirs[1].absolutePath.substring(
-            0,
-            context.externalCacheDirs[1].absolutePath.indexOf("/Android/data")
+    return filePath?.toLrcFile()
+        ?: File(
+            File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "SongSync+"),
+            lrcFileName(song)
         )
-        val path = file?.absolutePath?.substringAfter(sd)?.split("/")?.dropLast(1)
-        var sdCardFiles = DocumentFile.fromTreeUri(context, Uri.parse(sdCardPath))
-        for (element in path!!) {
-            for (sdCardFile in sdCardFiles!!.listFiles()) {
-                if (sdCardFile.name == element) {
-                    sdCardFiles = sdCardFile
-                }
-            }
-        }
-        sdCardFiles?.listFiles()?.forEach {
-            if (it.name == file.name) {
-                it.delete()
-                return@forEach
-            }
-        }
-        sdCardFiles?.createFile("text/lrc", file.name)?.let {
-            val outputStream = context.contentResolver.openOutputStream(it.uri)
-            outputStream?.write(lrc.toByteArray())
-            outputStream?.close()
-        }
+}
+
+/**
+ * "Title - Artist.lrc", with characters a file name can't hold replaced, so a title or artist
+ * such as "AC/DC" or "../x" stays one file name instead of becoming a path.
+ */
+fun lrcFileName(song: SongInfo): String =
+    "${song.songName.orEmpty()} - ${song.artistName.orEmpty()}.lrc"
+        .replace(Regex("""[/\\:*?"<>|\t\n]"""), "_")
+        .let { if (it.startsWith(".")) "_$it" else it }
+
+/**
+ * Saves [lrcContent] as the lyrics file for the song at [filePath] (see [newLyricsFilePath]),
+ * through the SD card folder [sdCardPath] when direct access isn't allowed.
+ *
+ * @return the file written
+ * @throws Exception when it couldn't be saved; the message says why
+ */
+fun saveLrcFile(
+    context: Context,
+    filePath: String?,
+    song: SongInfo,
+    lrcContent: String,
+    sdCardPath: String?,
+): File {
+    val file = newLyricsFilePath(filePath, song)
+    if (isLegacyFileAccessRequired(filePath)) {
+        saveToExternalPath(context, filePath, lrcContent, file.name, sdCardPath)
     } else {
-        error("Unable to handle FileNotFoundException")
+        file.parentFile?.mkdirs()
+        file.writeText(lrcContent)
     }
+    return file
 }
 
 @SuppressLint("Range")
@@ -269,11 +251,11 @@ private suspend fun downloadLyricsForSong(
                             lrcContent
                         )
                     } else {
-                        writeLyricsToFile(
-                            song.filePath.toLrcFile(),
-                            lrcContent,
+                        saveLrcFile(
                             context,
-                            song,
+                            song.filePath ?: throw NullPointerException("File path is null"),
+                            SongInfo(song.title, song.artist),
+                            lrcContent,
                             viewModel.userSettingsController.sdCardPath
                         )
                     }
@@ -306,25 +288,30 @@ fun saveToExternalPath(
     fileName: String,
     newLyricsFilePath: String?
 ) {
-    val sd = context.externalCacheDirs[1].absolutePath.substringBefore("/Android/data")
-    val path = sourceFilePath
-        ?.toLrcFile()
-        ?.absolutePath
-        ?.substringAfter(sd)
-        ?.split("/")
-        ?.dropLast(1)
+    val sdRoot = context.externalCacheDirs.getOrNull(1)?.absolutePath?.substringBefore("/Android/data")
+        ?: error("No SD card found")
+    val lrcPath = sourceFilePath?.toLrcFile()?.absolutePath
         ?: error("path was null when trying to save to sd card")
-    var sdCardFiles = DocumentFile.fromTreeUri(context, Uri.parse(newLyricsFilePath))
-    path.forEach { element ->
-        sdCardFiles = sdCardFiles?.listFiles()?.firstOrNull { it.name == element }
+    if (newLyricsFilePath.isNullOrEmpty()) error("Choose the SD card folder in settings first")
+
+    var folder = DocumentFile.fromTreeUri(context, Uri.parse(newLyricsFilePath))
+        ?: error("Can't open the SD card folder")
+    for (name in sdCardFolders(lrcPath, sdRoot)) {
+        folder = folder.listFiles().firstOrNull { it.isDirectory && it.name == name }
+            ?: error("Folder $name not found on the SD card")
     }
-    sdCardFiles?.listFiles()?.firstOrNull { it.name == fileName }?.delete()
-    sdCardFiles?.createFile("text/lrc", fileName)?.let {
-        context.contentResolver.openOutputStream(it.uri)?.use { outputStream ->
-            outputStream.write(lrc.toByteArray())
-        }
-    }
+    folder.listFiles().firstOrNull { it.name == fileName }?.delete()
+    val created = folder.createFile("text/lrc", fileName) ?: error("Couldn't create $fileName")
+    context.contentResolver.openOutputStream(created.uri)?.use { it.write(lrc.toByteArray()) }
+        ?: error("Couldn't write $fileName")
 }
+
+/**
+ * The folders from the SD card root [sdRoot] down to the one holding [lrcPath], e.g.
+ * "/storage/1234-ABCD/Music/Album/a.lrc" under "/storage/1234-ABCD" gives ["Music", "Album"].
+ */
+fun sdCardFolders(lrcPath: String, sdRoot: String): List<String> =
+    lrcPath.removePrefix(sdRoot).split("/").filter { it.isNotEmpty() }.dropLast(1)
 
 /**
  * "Legacy" way to apply an offset to lyrics, modifies the lyrics string directly

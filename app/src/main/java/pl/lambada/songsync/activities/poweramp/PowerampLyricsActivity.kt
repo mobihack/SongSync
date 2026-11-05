@@ -48,9 +48,7 @@ import pl.lambada.songsync.services.PowerampTrackPath
 import pl.lambada.songsync.ui.theme.SongSyncTheme
 import pl.lambada.songsync.util.embedLyricsInFile
 import pl.lambada.songsync.util.generateLrcContent
-import pl.lambada.songsync.util.isLegacyFileAccessRequired
-import pl.lambada.songsync.util.newLyricsFilePath
-import pl.lambada.songsync.util.saveToExternalPath
+import pl.lambada.songsync.util.saveLrcFile
 import pl.lambada.songsync.util.showToast
 
 /**
@@ -126,16 +124,13 @@ class PowerampLyricsActivity : AppCompatActivity() {
     private suspend fun saveLrc(entry: PowerampLyricsStore.Entry, settings: UserSettingsController) {
         val result = withContext(Dispatchers.IO) {
             runCatching {
-                val file = newLyricsFilePath(entry.path, SongInfo(entry.title, entry.artist))
-                val content = lrcContent(entry, settings)
-                if (isLegacyFileAccessRequired(entry.path)) saveToExternalPath(
-                    context = this@PowerampLyricsActivity,
-                    sourceFilePath = entry.path,
-                    lrc = content,
-                    fileName = file.name,
-                    newLyricsFilePath = settings.sdCardPath,
-                ) else file.writeText(content)
-                file.absolutePath
+                saveLrcFile(
+                    this@PowerampLyricsActivity,
+                    entry.path,
+                    SongInfo(entry.title, entry.artist),
+                    lrcContent(entry, settings),
+                    settings.sdCardPath,
+                ).absolutePath
             }
         }
         result
