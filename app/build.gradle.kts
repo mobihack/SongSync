@@ -1,8 +1,8 @@
 import java.util.Properties
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.androidApplication)
-    alias(libs.plugins.kotlinAndroid)
     alias(libs.plugins.serialization)
     alias(libs.plugins.parcelize)
     alias(libs.plugins.compose.compiler)
@@ -10,11 +10,11 @@ plugins {
 
 android {
     namespace = "pl.lambada.songsync"
-    compileSdk = 35
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "pl.lambada.songsync"
-        minSdk = 21
+        minSdk = 24
         //noinspection OldTargetApi
         targetSdk = 35
         versionCode = 433
@@ -69,19 +69,9 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = "11"
-    }
     buildFeatures {
         compose = true
         buildConfig = true
-    }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.14"
-    }
-    composeCompiler {
-        // Default from Kotlin 2.0.20; lets composables with unstable params (e.g. Uri) skip.
-        enableStrongSkippingMode = true
     }
     testOptions {
         unitTests.all { it.testLogging { events("passed", "skipped", "failed") } }
@@ -98,8 +88,6 @@ android {
 }
 
 dependencies {
-    implementation("androidx.core:core-ktx:1.7.0")
-    implementation("androidx.compose.ui:ui:1.0.5")
     implementation(libs.core.ktx)
     implementation(libs.lifecycle.runtime.ktx)
     implementation(libs.activity.compose)
@@ -107,7 +95,6 @@ dependencies {
     implementation(libs.ui)
     implementation(libs.material3)
     implementation(libs.androidx.navigation.runtime.ktx)
-    implementation(libs.accompanist.systemuicontroller)
     implementation(libs.accompanist.permissions)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.compose.animation)
@@ -134,4 +121,10 @@ dependencies {
     testImplementation(libs.compose.ui.test.junit4)
     testImplementation(libs.robolectric)
     debugImplementation(libs.compose.ui.test.manifest)
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_11)
+    }
 }

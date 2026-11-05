@@ -2,7 +2,6 @@ package pl.lambada.songsync.util
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.widget.Toast
 import androidx.core.content.FileProvider
@@ -22,11 +21,7 @@ fun openFileFromPath(context: Context, filePath: String) {
         return
     }
 
-    val uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-        FileProvider.getUriForFile(context, context.packageName + ".provider", file)
-    } else {
-        Uri.fromFile(file)
-    }
+    val uri = FileProvider.getUriForFile(context, context.packageName + ".provider", file)
 
     val mime = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         Files.probeContentType(file.toPath())

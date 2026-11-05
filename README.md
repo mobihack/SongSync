@@ -24,6 +24,8 @@ A simple Android app to download lyrics (.lrc files) for songs in your music lib
 
 You can download the latest version of the app from the [releases page](https://github.com/Lambada10/SongSync/releases).
 
+Requires Android 7.0 (API 24) or newer. Version 4.3.3 is the last release for Android 5.0–6.0.
+
 ### Translation
 
 If you would like to help translating this app, you can do so [here](https://hosted.weblate.org/engage/songsync/).
