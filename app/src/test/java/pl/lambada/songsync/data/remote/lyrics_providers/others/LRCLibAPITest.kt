@@ -79,9 +79,25 @@ class LRCLibAPITest {
     }
 
     @Test
-    fun `lyrics without a synced version gives null`() = runTest {
+    fun `lyrics without a synced version fall back to the plain ones`() = runTest {
         val http = FakeHttp { respondJson(track(7, "Song", "Artist", synced = null)) }
+        LRCLibAPI(http.client).getSyncedLyrics(7) shouldBe "Hi"
+    }
+
+    @Test
+    fun `lyrics with neither version give null`() = runTest {
+        val http = FakeHttp { respondJson("""{"id":7,"plainLyrics":null,"syncedLyrics":null}""") }
         LRCLibAPI(http.client).getSyncedLyrics(7).shouldBeNull()
+    }
+
+    @Test
+    fun `a result missing its album and duration doesn't fail the whole search`() = runTest {
+        val sparse = """{"id":3,"trackName":"Bohemian Rhapsody","artistName":"Queen","albumName":null,"duration":null}"""
+        val http = FakeHttp { respondJson("[$sparse]") }
+
+        val song = LRCLibAPI(http.client).getSongInfo(query)!!
+        song.lrcLibID shouldBe 3
+        song.durationMs.shouldBeNull()
     }
 
     @Test

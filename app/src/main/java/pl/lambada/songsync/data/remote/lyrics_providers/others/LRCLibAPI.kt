@@ -47,7 +47,7 @@ class LRCLibAPI(private val client: HttpClient = Ktor.clientFor(Providers.LRCLIB
             candidateTitle = { it.trackName },
             candidateArtist = { it.artistName },
             durationMs = query.durationMs,
-            candidateDuration = { (it.duration * 1000).toLong() },
+            candidateDuration = { it.duration?.let { seconds -> (seconds * 1000).toLong() } },
             strict = false,
         ).getOrNull(offset) ?: return null
 
@@ -55,14 +55,14 @@ class LRCLibAPI(private val client: HttpClient = Ktor.clientFor(Providers.LRCLIB
             songName = song.trackName,
             artistName = song.artistName,
             lrcLibID = song.id,
-            durationMs = (song.duration * 1000).toLong()
+            durationMs = song.duration?.let { (it * 1000).toLong() }?.takeIf { it > 0 }
         )
     }
 
     /**
-     * Searches for synced lyrics using the song name and artist name.
+     * Gets the lyrics of a search result.
      * @param id The ID of the song from search results.
-     * @return The synced lyrics as a string.
+     * @return The synced lyrics, else the plain ones, else null.
      */
     suspend fun getSyncedLyrics(id: Int): String? {
         val response = client.get(
@@ -74,6 +74,7 @@ class LRCLibAPI(private val client: HttpClient = Ktor.clientFor(Providers.LRCLIB
             return null
 
         val json = json.decodeFromString<LRCLibResponse>(responseBody)
-        return json.syncedLyrics
+        // Plain lyrics when there are no synced ones: the provider chain keeps them as a last resort
+        return json.syncedLyrics?.takeIf { it.isNotBlank() } ?: json.plainLyrics?.takeIf { it.isNotBlank() }
     }
 }

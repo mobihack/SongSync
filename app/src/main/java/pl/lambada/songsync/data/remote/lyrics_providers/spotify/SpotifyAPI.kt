@@ -165,7 +165,7 @@ class SpotifyAPI {
     @Throws(UnknownHostException::class, FileNotFoundException::class, NoTrackFoundException::class)
     suspend fun getSongInfo(query: SongInfo, offset: Int? = 0): SongInfo {
         if (System.currentTimeMillis() - tokenTime > 1800000) // 30 minutes
-            refreshToken()
+            refreshToken(force = true)
 
         val searchTerm = withContext(Dispatchers.IO) {
             URLEncoder.encode(

@@ -15,7 +15,6 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
@@ -76,9 +75,12 @@ class DeezerAPI(private val client: HttpClient = Ktor.clientFor(Providers.DEEZER
     private fun toSongInfo(track: JsonObject): SongInfo? {
         val id = track.string("id")?.toLongOrNull() ?: return null
 
-        val artist = track.obj("contributors")?.get("edges")?.jsonArray
+        // "as? JsonArray": GraphQL may send null for either list, and .jsonArray would throw
+        val artist = (track.obj("contributors")?.get("edges") as? JsonArray)
             ?.mapNotNull { it as? JsonObject }
-            ?.firstOrNull { edge -> edge["roles"]?.jsonArray?.any { it.jsonPrimitive.contentOrNull == "MAIN" } == true }
+            ?.firstOrNull { edge ->
+                (edge["roles"] as? JsonArray)?.any { (it as? JsonPrimitive)?.contentOrNull == "MAIN" } == true
+            }
             ?.obj("node")?.string("name")
 
         val cover = track.obj("album")?.obj("cover")?.get("urls")

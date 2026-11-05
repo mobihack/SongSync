@@ -82,6 +82,16 @@ class DeezerAPITest {
     }
 
     @Test
+    fun `a result with null contributors doesn't fail the whole search`() = runTest {
+        val noContributors = """{"node":{"id":"9","title":"Other","duration":200,"contributors":{"edges":null}}}"""
+        val nullRoles = """{"node":{"id":"8","title":"Another","duration":200,
+            "contributors":{"edges":[{"node":{"name":"X"},"roles":null}]}}}"""
+        val http = backend(search(noContributors, nullRoles, node("1", "3005", "Childish Gambino")))
+
+        DeezerAPI(http.client).getSongInfo(query)!!.deezerID shouldBe 1
+    }
+
+    @Test
     fun `unrelated results give null`() = runTest {
         val http = backend(search(node("9", "Something Else", "Other")))
         DeezerAPI(http.client).getSongInfo(query).shouldBeNull()
