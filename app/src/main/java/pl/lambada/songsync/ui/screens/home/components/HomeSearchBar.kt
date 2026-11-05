@@ -3,6 +3,7 @@ package pl.lambada.songsync.ui.screens.home.components
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.imeAnimationTarget
 import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
@@ -27,6 +28,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -48,16 +50,21 @@ fun HomeSearchBar(
 
     @OptIn(ExperimentalLayoutApi::class)
     val showingIme = WindowInsets.isImeVisible
+    // Where the keyboard is heading: drops to 0 as soon as it starts closing, while
+    // isImeVisible stays true until it has finished sliding away
+    @OptIn(ExperimentalLayoutApi::class)
+    val imeHeading = WindowInsets.imeAnimationTarget.getBottom(LocalDensity.current) > 0
 
     if (!showingSearch && showSearch) {
         onShowingSearchChange(true)
     }
 
-    if (!showSearch && !willShowIme && showingSearch && !showingIme && query.isEmpty()) {
+    // Collapse alongside the closing keyboard, not after it
+    if (!showSearch && !willShowIme && showingSearch && !imeHeading && query.isEmpty()) {
         onShowingSearchChange(false)
     }
 
-    if (willShowIme && showingIme) {
+    if (willShowIme && imeHeading) {
         willShowIme = false
     }
     val focusManager = LocalFocusManager.current
