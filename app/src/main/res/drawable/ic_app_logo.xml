@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The launcher glyph (lyric lines beside a note) cropped to a square, for use inside the app.
+     Same geometry as ic_launcher_foreground at full scale; tint it with Icon(). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <group
+        android:translateX="-30"
+        android:translateY="-31.75">
+        <path
+            android:pathData="M33.5,40H55.5M33.5,54H55.5M33.5,68H46.5"
+            android:strokeColor="#FF000000"
+            android:strokeWidth="7"
+            android:strokeLineCap="round" />
+        <path
+            android:pathData="M66.5,68V39L75.5,42"
+            android:strokeColor="#FF000000"
+            android:strokeWidth="5"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round" />
+        <path
+            android:pathData="M55,68a7,7 0,1 0,14 0a7,7 0,1 0,-14 0Z"
+            android:fillColor="#FF000000" />
+    </group>
+</vector>

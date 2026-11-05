@@ -175,6 +175,16 @@
     <string name="last_played">Last played</string>
     <string name="notification_access">Notification access (Optional)</string>
     <string name="notification_access_description">This is used to retrieve the current song playing on your device. The app does not read any other notifications.</string>
+    <string name="setup_title">Set up %1$s</string>
+    <string name="setup_subtitle">One permission is needed. The rest are up to you.</string>
+    <string name="setup_required">Required</string>
+    <string name="setup_optional">Optional</string>
+    <string name="setup_notifications">Notifications</string>
+    <string name="setup_notification_access">Notification access</string>
+    <string name="setup_allow">Allow</string>
+    <string name="setup_allowed">Allowed</string>
+    <string name="setup_continue_needs_files">Allow file access to continue</string>
+    <string name="setup_change_later">You can change these any time in Android settings.</string>
     <string name="include_romanization">Include romanization</string>
     <string name="include_romanization_summary">Include romanized lyrics when getting song lyrics from Netease provider</string>
     <plurals name="songs_count">
