@@ -183,7 +183,7 @@ fun LyricsSuccessContent(
                     Modifier
                         .clickable(onClick = onCopyLyrics)
                         .fillMaxWidth()
-                        .padding(horizontal = 8.dp, vertical = 8.dp),
+                        .padding(horizontal = 12.dp, vertical = 14.dp),
                     horizontalArrangement = Arrangement.End
                 ) {
                     CopyToClipboardElement()
