@@ -23,6 +23,7 @@ object ProviderChain {
         Providers.QQMUSIC,
         Providers.APPLE,
         Providers.DEEZER,
+        Providers.GENIE,
         Providers.GENIUS,
         Providers.PETITLYRICS,
         Providers.LYRICSOVH,

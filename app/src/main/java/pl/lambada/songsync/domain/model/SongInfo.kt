@@ -38,6 +38,7 @@ data class SongInfo(
     var deezerID: Long? = null, // Deezer-only
     var geniusID: Long? = null, // Genius-only
     var kugouHash: String? = null, // KuGou-only
+    var genieID: String? = null, // Genie-only
     var durationMs: Long? = null, // Track length, used to pick the right search result
     var hasSyncedLyrics: Boolean? = null, // Musixmatch-only
     var hasUnsyncedLyrics: Boolean? = null, // Musixmatch-only
