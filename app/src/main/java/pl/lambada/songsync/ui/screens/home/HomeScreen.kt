@@ -1,5 +1,7 @@
 package pl.lambada.songsync.ui.screens.home
 
+import dev.chrisbanes.haze.rememberHazeState
+import dev.chrisbanes.haze.hazeSource
 import pl.lambada.songsync.ui.screens.home.components.HomeOverflowMenu
 import pl.lambada.songsync.ui.screens.home.components.LibraryHeader
 import pl.lambada.songsync.ui.screens.home.components.HomeLibraryToolbar
@@ -111,6 +113,7 @@ fun HomeScreen(
     val selecting = viewModel.selectedSongs.isNotEmpty()
     val scope = rememberCoroutineScope()
     val motionScheme = MaterialTheme.motionScheme
+    val hazeState = rememberHazeState()
 
     // Re-filter whenever a filter setting changes, here or in Settings > Music folders
     val settings = viewModel.userSettingsController
@@ -174,7 +177,8 @@ fun HomeScreen(
         bottomBar = { Spacer(Modifier.navigationBarsPadding()) } // fixing broken edge to edge here
     ) { paddingValues ->
         Box(Modifier.fillMaxSize()) {
-        Crossfade(viewModel.allSongs == null, label = "") { loading ->
+        // The song list is what the frosted floating controls blur
+        Crossfade(viewModel.allSongs == null, modifier = Modifier.hazeSource(hazeState), label = "") { loading ->
             if (loading)
                 LoadingScreen()
             else
@@ -200,6 +204,7 @@ fun HomeScreen(
             exit = fadeOut(motionScheme.fastEffectsSpec()) + scaleOut(motionScheme.fastSpatialSpec()),
         ) {
             HomeOverflowMenu(
+                hazeState = hazeState,
                 onNavigateToSettingsSectionRequest = { navController.navigate(ScreenSettings) },
                 providerChoice = viewModel.userSettingsController.providerChoice,
                 onProviderChoice = viewModel.userSettingsController::choose,
@@ -223,6 +228,7 @@ fun HomeScreen(
             label = "homeToolbar",
         ) { selectionMode ->
             if (selectionMode) HomeSelectionToolbar(
+                hazeState = hazeState,
                 onSelectAll = {
                     viewModel.selectedSongs.clear()
                     viewModel.selectAllDisplayingSongs()
@@ -230,6 +236,7 @@ fun HomeScreen(
                 onInvertSelection = viewModel::invertSongSelection,
                 onBatchDownload = { isBatchDownload = true },
             ) else HomeLibraryToolbar(
+                hazeState = hazeState,
                 onSort = { viewModel.showSort = true },
                 onFilter = { viewModel.showFilters = true },
                 filterActive = viewModel.userSettingsController.hideLyrics,

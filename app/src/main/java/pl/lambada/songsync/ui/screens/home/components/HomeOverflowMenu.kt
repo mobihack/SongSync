@@ -2,6 +2,11 @@
 
 package pl.lambada.songsync.ui.screens.home.components
 
+import pl.lambada.songsync.ui.components.frosted
+import dev.chrisbanes.haze.HazeState
+import androidx.compose.ui.Alignment
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.IconButton
 import pl.lambada.songsync.ui.components.providerChoiceLabel
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Route
@@ -10,8 +15,6 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.ui.Modifier
-import androidx.compose.material3.FloatingToolbarDefaults
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.Box
@@ -41,6 +44,7 @@ import pl.lambada.songsync.util.ProviderChoice
  */
 @Composable
 fun HomeOverflowMenu(
+    hazeState: HazeState?,
     onNavigateToSettingsSectionRequest: () -> Unit,
     providerChoice: ProviderChoice,
     onProviderChoice: (ProviderChoice) -> Unit,
@@ -50,15 +54,15 @@ fun HomeOverflowMenu(
     var providersDialog by remember { mutableStateOf(false) }
 
     Box {
-        // A round button matching the floating toolbar on the other side
-        FloatingActionButton(
-            onClick = { expanded = true },
-            shape = CircleShape,
-            containerColor = FloatingToolbarDefaults.standardFloatingToolbarColors().toolbarContainerColor,
-            contentColor = FloatingToolbarDefaults.standardFloatingToolbarColors().toolbarContentColor,
-            modifier = Modifier.size(FloatingToolbarDefaults.ContainerSize),
-        ) {
-            Icon(imageVector = Icons.Default.MoreVert, contentDescription = stringResource(R.string.more))
+        // A frosted round button matching the floating toolbar on the other side
+        Box(Modifier.size(FloatingControlSize).frosted(hazeState, CircleShape), contentAlignment = Alignment.Center) {
+            IconButton(
+                onClick = { expanded = true },
+                shapes = IconButtonDefaults.shapes(),
+                modifier = Modifier.size(FloatingControlSize),
+            ) {
+                Icon(imageVector = Icons.Default.MoreVert, contentDescription = stringResource(R.string.more))
+            }
         }
         DropdownMenuPopup(
             expanded = expanded,

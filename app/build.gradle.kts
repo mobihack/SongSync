@@ -99,6 +99,8 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.compose.animation)
     implementation(libs.coil.compose)
+    implementation(libs.haze)
+    implementation(libs.haze.materials)
     implementation(libs.androidx.material.icons.extended)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.android)

@@ -2,6 +2,7 @@
 accompanist-permissions = "0.37.3"
 agp = "9.1.1"
 coil-compose = "2.7.0"
+haze = "1.7.3"
 kotlin = "2.3.21"
 core-ktx = "1.17.0"
 material3 = "1.5.0-rc01"
@@ -28,6 +29,9 @@ accompanist-permissions = { module = "com.google.accompanist:accompanist-permiss
 androidx-material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
 androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigation-compose" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coil-compose" }
+# Backdrop blur for the frosted floating controls (1.7.x: Kotlin 2.3 / Compose 1.12; 2.x needs Kotlin 2.4)
+haze = { module = "dev.chrisbanes.haze:haze", version.ref = "haze" }
+haze-materials = { module = "dev.chrisbanes.haze:haze-materials", version.ref = "haze" }
 core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinx-coroutines-android" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization-json" }
