@@ -47,6 +47,15 @@ class HomeViewModel(
 ) : ViewModel() {
     var cachedSongs: List<Song>? = null
     val selectedSongs = mutableStateListOf<String>()
+
+    /** O(1) membership for [selectedSongs]; list lookups are O(n) per row with thousands of songs. */
+    val selectedSet by derivedStateOf { selectedSongs.toHashSet() }
+
+    /**
+     * File path of the row allowed to run the shared-element transition to the lyrics screen.
+     * Only one row carries the sharedBounds modifiers, instead of every row in the list.
+     */
+    var transitionKey by mutableStateOf<String?>(null)
     var allSongs by mutableStateOf<List<Song>?>(null)
 
     var isRefreshing by mutableStateOf(false)
@@ -85,7 +94,7 @@ class HomeViewModel(
         if (selectedSongs.isEmpty())
             displaySongs
         else
-            (allSongs ?: listOf()).filter { selectedSongs.contains(it.filePath) }.toList()
+            (allSongs ?: listOf()).filter { it.filePath in selectedSet }
     }
 
     init { viewModelScope.launch { updateSongsToDisplay() } }
@@ -266,7 +275,8 @@ class HomeViewModel(
     }
 
     fun invertSongSelection() = viewModelScope.launch {
-        val newSelectedSongs = displaySongs.filter { it.filePath !in selectedSongs }
+        val selected = selectedSet
+        val newSelectedSongs = displaySongs.filter { it.filePath !in selected }
         selectedSongs.clear()
         selectedSongs.addAll(newSelectedSongs.mapNotNull { it.filePath })
     }

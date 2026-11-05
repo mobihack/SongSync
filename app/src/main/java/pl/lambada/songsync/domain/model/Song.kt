@@ -2,6 +2,7 @@ package pl.lambada.songsync.domain.model
 
 import android.net.Uri
 import android.os.Parcelable
+import androidx.compose.runtime.Immutable
 import kotlinx.parcelize.Parcelize
 
 /**
@@ -11,6 +12,7 @@ import kotlinx.parcelize.Parcelize
  * @param imgUri The URI of the image.
  * @param filePath The file path of the song.
  */
+@Immutable
 @Parcelize
 data class Song(
     val title: String?,

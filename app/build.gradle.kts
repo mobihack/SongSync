@@ -56,6 +56,14 @@ android {
                 signingConfig = signingConfigs["release"]
             }
         }
+        // Release-like build (minified, not debuggable) signed with the debug key, so it can be
+        // installed over a debug build to judge real scrolling performance.
+        create("benchmark") {
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+            isDebuggable = false
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -70,6 +78,10 @@ android {
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.14"
+    }
+    composeCompiler {
+        // Default from Kotlin 2.0.20; lets composables with unstable params (e.g. Uri) skip.
+        enableStrongSkippingMode = true
     }
     testOptions {
         unitTests.all { it.testLogging { events("passed", "skipped", "failed") } }

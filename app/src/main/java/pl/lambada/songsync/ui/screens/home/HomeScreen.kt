@@ -63,6 +63,11 @@ import pl.lambada.songsync.ui.screens.home.components.SortDialog
 import pl.lambada.songsync.util.ext.BackPressHandler
 import pl.lambada.songsync.util.ext.lowercaseWithLocale
 import pl.lambada.songsync.util.ui.SearchFABBoundsTransform
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.withFrameNanos
+import pl.lambada.songsync.domain.model.SortValues
+import pl.lambada.songsync.ui.screens.home.components.FastScroller
+import pl.lambada.songsync.ui.screens.home.components.sectionLetter
 
 /**
  * Composable function representing the home screen.
@@ -193,6 +198,17 @@ fun HomeScreenLoaded(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val refreshState = rememberPullToRefreshState()
+    val listState = rememberLazyListState()
+
+    // Give the tapped row its shared-element modifiers first, then navigate on the next frame
+    // so the transition finds a matching element in the list.
+    fun openWithTransition(key: String, navigate: () -> Unit) {
+        viewModel.transitionKey = key
+        scope.launch {
+            withFrameNanos { }
+            navigate()
+        }
+    }
 
     if (isBatchDownload) {
         BatchDownloadLyrics(
@@ -228,6 +244,7 @@ fun HomeScreenLoaded(
         }
     ) {
         LazyColumn(
+            state = listState,
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -307,14 +324,16 @@ fun HomeScreenLoaded(
                         quickSelect = false,
                         onSelectionChanged = {},
                         onNavigateToSongRequest = {
-                            navController.navigate(
-                                LyricsFetchScreen(
-                                    songName = viewModel.playingSongTitle,
-                                    artists = viewModel.playingSongArtist,
-                                    coverUri = viewModel.playingSongAlbumArt.toString(),
-                                    filePath = viewModel.playingSongFilePath
+                            openWithTransition(viewModel.playingSongFilePath) {
+                                navController.navigate(
+                                    LyricsFetchScreen(
+                                        songName = viewModel.playingSongTitle,
+                                        artists = viewModel.playingSongArtist,
+                                        coverUri = viewModel.playingSongAlbumArt.toString(),
+                                        filePath = viewModel.playingSongFilePath
+                                    )
                                 )
-                            )
+                            }
                         },
                         song = Song(
                             title = viewModel.playingSongTitle,
@@ -324,6 +343,7 @@ fun HomeScreenLoaded(
                         ),
                         sharedTransitionScope = sharedTransitionScope,
                         animatedVisibilityScope = animatedVisibilityScope,
+                        sharedElementsEnabled = viewModel.transitionKey == viewModel.playingSongFilePath,
                         disableMarquee = viewModel.userSettingsController.disableMarquee,
                         showPath = viewModel.userSettingsController.showPath
                     )
@@ -339,25 +359,28 @@ fun HomeScreenLoaded(
                 SongItem(
                     filePath = song.filePath
                         ?: error("a song in the list of files did not have a file path"),
-                    selected = selected.contains(song.filePath),
+                    selected = song.filePath in viewModel.selectedSet,
                     quickSelect = selected.size > 0,
                     onSelectionChanged = { newValue ->
                         viewModel.selectSong(song, newValue)
                     },
                     onNavigateToSongRequest = {
-                        navController.navigate(
-                            LyricsFetchScreen(
-                                songName = song.title ?: error("song.title was null"),
-                                artists = song.artist ?: "",
-                                coverUri = song.imgUri.toString(),
-                                filePath = song.filePath,
-                                durationMs = song.durationMs ?: 0
+                        openWithTransition(song.filePath) {
+                            navController.navigate(
+                                LyricsFetchScreen(
+                                    songName = song.title ?: error("song.title was null"),
+                                    artists = song.artist ?: "",
+                                    coverUri = song.imgUri.toString(),
+                                    filePath = song.filePath,
+                                    durationMs = song.durationMs ?: 0
+                                )
                             )
-                        )
+                        }
                     },
                     song = song,
                     sharedTransitionScope = sharedTransitionScope,
                     animatedVisibilityScope = animatedVisibilityScope,
+                    sharedElementsEnabled = viewModel.transitionKey == song.filePath,
                     disableMarquee = viewModel.userSettingsController.disableMarquee,
                     showPath = viewModel.userSettingsController.showPath
                 )
@@ -365,6 +388,18 @@ fun HomeScreenLoaded(
 
             item { Spacer(modifier = Modifier.height(4.dp)) }
         }
+
+        FastScroller(
+            listState = listState,
+            itemCount = viewModel.displaySongs.size,
+            firstItemIndex = 2, // search/filter header + now-playing item
+            contentPadding = scaffoldPadding,
+            sectionLabel = when (viewModel.userSettingsController.sortBy) {
+                SortValues.TITLE -> { index -> sectionLetter(viewModel.displaySongs.getOrNull(index)?.title) }
+                SortValues.ARTIST -> { index -> sectionLetter(viewModel.displaySongs.getOrNull(index)?.artist) }
+                else -> null
+            },
+        )
     }
 }
 
