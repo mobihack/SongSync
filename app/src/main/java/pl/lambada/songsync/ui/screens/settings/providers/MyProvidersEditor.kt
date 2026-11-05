@@ -1,5 +1,7 @@
 package pl.lambada.songsync.ui.screens.settings.providers
 
+import androidx.compose.foundation.layout.height
+import pl.lambada.songsync.ui.components.listGroupRow
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.animateDpAsState
@@ -177,11 +179,7 @@ fun rememberMyProvidersEditor(
 fun LazyListScope.myProvidersEditor(editor: MyProvidersEditorState) {
     // Separates the editor from whatever precedes it (on Lyrics search, the mode choices)
     item(key = "myListDivider") {
-        HorizontalDivider(
-            Modifier
-                .editorItem(this)
-                .padding(horizontal = 22.dp, vertical = 8.dp)
-        )
+        Spacer(Modifier.editorItem(this).height(8.dp))
     }
     item(key = "myListHint") {
         Text(
@@ -190,7 +188,7 @@ fun LazyListScope.myProvidersEditor(editor: MyProvidersEditorState) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier
                 .editorItem(this)
-                .padding(horizontal = 22.dp, vertical = 8.dp),
+                .padding(horizontal = 32.dp, vertical = 8.dp),
         )
     }
     item(key = "myListHeader") {
@@ -242,10 +240,7 @@ fun LazyListScope.myProvidersEditor(editor: MyProvidersEditorState) {
                         shadowElevation = elevation.toPx()
                     } else Modifier.editorItem(this)
                 )
-                .background(
-                    if (isDragged) MaterialTheme.colorScheme.surfaceContainerHigh
-                    else MaterialTheme.colorScheme.surface
-                )
+                .listGroupRow(index = index, count = editor.list.size, lifted = isDragged)
                 .semantics {
                     customActions = listOfNotNull(
                         CustomAccessibilityAction(moveUp) { editor.move(index, index - 1); true }
@@ -301,7 +296,9 @@ fun LazyListScope.myProvidersEditor(editor: MyProvidersEditorState) {
             ProviderRow(
                 provider = provider,
                 position = null,
-                modifier = Modifier.editorItem(this),
+                modifier = Modifier
+                    .editorItem(this)
+                    .listGroupRow(index = available.indexOf(provider), count = available.size),
                 leading = { Spacer(modifier = Modifier.size(48.dp)) },
                 trailing = {
                     IconButton(onClick = { editor.save(editor.list + provider) }) {

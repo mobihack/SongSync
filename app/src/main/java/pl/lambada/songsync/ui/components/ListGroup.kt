@@ -17,7 +17,10 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ListItemShapes
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.background
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 /** Side margin of a grouped list, so its rounded corners don't touch the screen edge. */
@@ -29,9 +32,30 @@ val ListGroupMargin = 16.dp
  */
 @Composable
 fun listGroupColors(): ListItemColors = ListItemDefaults.segmentedColors(
-    containerColor = if (isSystemInDarkTheme()) MaterialTheme.colorScheme.surfaceContainerHigh
-    else MaterialTheme.colorScheme.surfaceContainer,
+    containerColor = listGroupContainerColor(),
 )
+
+/** Container colour of grouped rows; see [listGroupColors]. */
+@Composable
+fun listGroupContainerColor(): Color =
+    if (isSystemInDarkTheme()) MaterialTheme.colorScheme.surfaceContainerHigh
+    else MaterialTheme.colorScheme.surfaceContainer
+
+/**
+ * Draws a hand-built row (one that isn't a `SegmentedListItem`, e.g. a draggable one) as row
+ * [index] of a group of [count]. [lifted] rows (being dragged) get large corners all round and a
+ * higher container, so they read as picked up out of the group.
+ */
+@Composable
+fun Modifier.listGroupRow(index: Int, count: Int, lifted: Boolean = false): Modifier {
+    val shape = if (lifted) MaterialTheme.shapes.large
+    else ListItemDefaults.segmentedShapes(index = index, count = count).shape
+    val color = if (lifted) MaterialTheme.colorScheme.surfaceContainerHighest else listGroupContainerColor()
+    return this
+        .padding(listGroupRowPadding(isLast = index == count - 1))
+        .clip(shape)
+        .background(color)
+}
 
 /** Padding for a row inside a group: side margin, plus the gap to the next row. */
 fun listGroupRowPadding(isLast: Boolean) = PaddingValues(

@@ -1,5 +1,7 @@
 package pl.lambada.songsync.ui.screens.settings.providers
 
+import androidx.compose.foundation.layout.height
+import pl.lambada.songsync.ui.components.listGroupRow
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.spring
@@ -45,27 +47,25 @@ private fun Modifier.pickerItem(scope: LazyItemScope) = with(scope) {
  */
 fun LazyListScope.selectedProviderPicker(settings: UserSettingsController) {
     item(key = "providerDivider") {
-        HorizontalDivider(
-            Modifier
-                .pickerItem(this)
-                .padding(horizontal = 22.dp, vertical = 8.dp)
-        )
+        Spacer(Modifier.pickerItem(this).height(8.dp))
     }
     item(key = "providerHeader") {
         Box(Modifier.pickerItem(this)) { SettingsHeadLabel(stringResource(R.string.settings_selected_provider)) }
     }
-    items(Providers.entries.filter { it.enabled }, key = { "pick:${it.name}" }) { provider ->
+    val providers = Providers.entries.filter { it.enabled }
+    items(providers, key = { "pick:${it.name}" }) { provider ->
         val selected = settings.selectedProvider == provider
         Row(
             Modifier
                 .pickerItem(this)
+                .listGroupRow(index = providers.indexOf(provider), count = providers.size)
                 .fillMaxWidth()
                 .selectable(
                     selected = selected,
                     role = Role.RadioButton,
                     onClick = { settings.updateSelectedProviders(provider) },
                 )
-                .padding(horizontal = 22.dp, vertical = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             RadioButton(selected = selected, onClick = null)
