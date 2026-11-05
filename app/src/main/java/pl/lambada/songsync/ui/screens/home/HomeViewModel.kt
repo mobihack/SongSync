@@ -1,5 +1,6 @@
 package pl.lambada.songsync.ui.screens.home
 
+import android.util.Log
 import android.content.ComponentName
 import android.content.ContentUris
 import android.content.Context
@@ -23,6 +24,8 @@ import androidx.compose.ui.util.fastMapNotNull
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -70,9 +73,13 @@ internal fun songsToDisplay(all: List<Song>, filtered: List<Song>?, query: Strin
  */
 class HomeViewModel(
     val userSettingsController: UserSettingsController,
-    private val lyricsProviderService: LyricsProviderService
+    private val lyricsProviderService: LyricsProviderService,
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val mainDispatcher: CoroutineDispatcher = Dispatchers.Main,
+    private val computeDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : ViewModel() {
     var cachedSongs: List<Song>? = null
+        private set
     val selectedSongs = mutableStateListOf<String>()
 
     /** O(1) membership for [selectedSongs]; list lookups are O(n) per row with thousands of songs. */
@@ -132,14 +139,57 @@ class HomeViewModel(
             snapshotFlow { searchQuery },
         ) { all, filtered, query -> Triple(all, filtered, query) }
             .mapLatest { (all, filtered, query) -> songsToDisplay(all, filtered, query) }
-            .flowOn(Dispatchers.Default)
+            .flowOn(computeDispatcher)
             .collect { newDisplaySongs ->
                 displaySongs = newDisplaySongs
             }
     }
 
-    fun updateAllSongs(context: Context, sortBy: SortValues, sortOrder: SortOrders) = viewModelScope.launch(Dispatchers.IO) {
-        allSongs = getAllSongs(context, sortBy, sortOrder)
+    private var loadJob: Job? = null
+    private var loadedSort: Pair<SortValues, SortOrders>? = null
+
+    /**
+     * Loads the library sorted by [sortBy] and [sortOrder], unless it is already loaded that way
+     * (back from the lyrics screen, or after rotation) and [force] isn't set. A new load replaces
+     * one still running, so an older sort can't overwrite a newer one.
+     */
+    fun loadSongs(context: Context, sortBy: SortValues, sortOrder: SortOrders, force: Boolean = false): Job? {
+        val sort = sortBy to sortOrder
+        if (!force && sort == loadedSort && allSongs != null) return null
+        loadJob?.cancel()
+        return viewModelScope.launch(ioDispatcher) {
+            // e.g. storage permission revoked: keep the list as it was rather than crash
+            val songs = try {
+                getAllSongs(context, sortBy, sortOrder)
+            } catch (e: Exception) {
+                Log.e("HomeViewModel", "Couldn't load the library: ${e.message}")
+                return@launch
+            }
+            ensureActive()
+            cachedSongs = songs
+            loadedSort = sort
+            allSongs = songs
+            filterSongs()
+            withContext(mainDispatcher) { updatePlayingSongInfo(context) }
+        }.also { loadJob = it }
+    }
+
+    /**
+     * Pull to refresh: rescans the library, keeping [isRefreshing] up for at least [minIndicatorMs]
+     * so the indicator doesn't snap away. It always comes down, even if the rescan is cancelled.
+     */
+    fun refreshSongs(context: Context, minIndicatorMs: Long) {
+        if (isRefreshing) return
+        isRefreshing = true
+        viewModelScope.launch {
+            try {
+                val startedAt = System.currentTimeMillis()
+                loadSongs(context, userSettingsController.sortBy, userSettingsController.sortOrder, force = true)?.join()
+                delay((minIndicatorMs - (System.currentTimeMillis() - startedAt)).coerceAtLeast(0))
+            } finally {
+                isRefreshing = false
+            }
+        }
     }
 
     /**
@@ -148,7 +198,7 @@ class HomeViewModel(
      * @return A list of Song objects representing the songs.
      */
     private fun getAllSongs(context: Context, sortBy: SortValues, sortOrder: SortOrders): List<Song> {
-        return cachedSongs ?: run {
+        return run {
             val selection = MediaStore.Audio.Media.IS_MUSIC + "!= 0"
             val projection = arrayOf(
                 MediaStore.Audio.Media._ID,
@@ -200,17 +250,14 @@ class HomeViewModel(
                 }
             }
             cursor?.close()
-            cachedSongs = songs
-            viewModelScope.launch { filterSongs() }
-            viewModelScope.launch { updatePlayingSongInfo(context) }
-            cachedSongs!!
+            songs
         }
     }
 
     /**
      * Applies the folder setting (all / ignore / only) and "no lyrics only" to the loaded songs.
      */
-    fun filterSongs() = viewModelScope.launch(Dispatchers.Default) {
+    fun filterSongs() = viewModelScope.launch(computeDispatcher) {
         val songs = cachedSongs ?: return@launch
         val settings = userSettingsController
         val mode = settings.folderMode

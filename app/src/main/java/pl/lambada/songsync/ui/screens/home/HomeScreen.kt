@@ -71,7 +71,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import pl.lambada.songsync.R
 import pl.lambada.songsync.domain.model.Song
@@ -125,9 +124,9 @@ fun HomeScreen(
         viewModel.filterSongs()
     }
 
+    // Loads when the sort changes; coming back to this screen keeps the list already loaded
     LaunchedEffect(viewModel.userSettingsController.sortBy to viewModel.userSettingsController.sortOrder) {
-        viewModel.cachedSongs = null
-        viewModel.updateAllSongs(context, viewModel.userSettingsController.sortBy, viewModel.userSettingsController.sortOrder)
+        viewModel.loadSongs(context, viewModel.userSettingsController.sortBy, viewModel.userSettingsController.sortOrder)
     }
 
     Scaffold(
@@ -349,19 +348,9 @@ fun HomeScreenLoaded(
     PullToRefreshBox(
         isRefreshing = viewModel.isRefreshing,
         state = refreshState,
-        onRefresh = {
-            viewModel.isRefreshing = true
-            scope.launch {
-                val startedAt = System.currentTimeMillis()
-                viewModel.cachedSongs = null
-                viewModel.updateAllSongs(context, viewModel.userSettingsController.sortBy, viewModel.userSettingsController.sortOrder)
-                    .join()
-                // A rescan can finish in a few ms; keep the indicator up long enough to be seen,
-                // otherwise it snaps away as if the pull didn't register
-                delay((MIN_REFRESH_INDICATOR_MS - (System.currentTimeMillis() - startedAt)).coerceAtLeast(0))
-                viewModel.isRefreshing = false
-            }
-        },
+        // A rescan can finish in a few ms; the indicator stays up long enough to be seen,
+        // otherwise it snaps away as if the pull didn't register
+        onRefresh = { viewModel.refreshSongs(context, MIN_REFRESH_INDICATOR_MS) },
         indicator = {
             // Material 3 Expressive pull-to-refresh: a contained, shape-morphing loading indicator
             PullToRefreshDefaults.LoadingIndicator(
