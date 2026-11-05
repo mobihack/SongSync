@@ -62,7 +62,10 @@ object SearchMatching {
             kotlin.math.abs(durationMs - candidateDurationMs) else null
         if (durationDiff != null && durationDiff > DURATION_TOLERANCE_MS) return 0.0
 
-        val titleScore = similarity(normalize(cleanTitle(title)), normalize(cleanTitle(candidateTitle)))
+        // Equal only once "(Live)"/"(Instrumental)"-style tags are stripped: slightly below an exact match
+        val exactTitle = normalize(title.orEmpty()) == normalize(candidateTitle.orEmpty())
+        val cleanedSimilarity = similarity(normalize(cleanTitle(title)), normalize(cleanTitle(candidateTitle)))
+        val titleScore = if (exactTitle) 1.0 else minOf(cleanedSimilarity, 0.95)
         if (titleScore < MIN_TITLE_SCORE) return 0.0
 
         // No artist to compare against: rely on the title alone

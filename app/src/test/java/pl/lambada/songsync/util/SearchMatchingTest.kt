@@ -111,6 +111,18 @@ class SearchMatchingTest {
     }
 
     @Test
+    fun `an exact title outranks a tagged version of it`() {
+        val instrumental = Hit("Dynamite (Instrumental)", "BTS")
+        val original = Hit("Dynamite", "BTS")
+        rank(listOf(instrumental, original), "Dynamite", "BTS").first() shouldBe original
+    }
+
+    @Test
+    fun `a tagged local title still matches the plain one`() {
+        rank(listOf(Hit("Song", "Artist")), "Song (Remastered 2011)", "Artist").size shouldBe 1
+    }
+
+    @Test
     fun `exact artist match outranks a cover`() {
         val original = SearchMatching.score("Hallelujah", "Leonard Cohen", "Hallelujah", "Leonard Cohen")
         val cover = SearchMatching.score("Hallelujah", "Leonard Cohen", "Hallelujah", "Jeff Buckley")
