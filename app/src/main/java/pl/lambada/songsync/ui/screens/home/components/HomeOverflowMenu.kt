@@ -18,6 +18,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
@@ -38,6 +41,10 @@ import androidx.compose.ui.res.stringResource
 import pl.lambada.songsync.R
 import pl.lambada.songsync.ui.components.ProvidersSheet
 import pl.lambada.songsync.util.ProviderChoice
+
+// Roomier than the default 48dp / 12dp so the items are easier to hit
+private val MenuItemHeight = 56.dp
+private val MenuItemPadding = PaddingValues(horizontal = 16.dp)
 
 /**
  * Home's ⋮ button, round in the bottom-start corner. Its menu opens upward; Lyrics provider
@@ -81,21 +88,25 @@ fun HomeOverflowMenu(
                     shadowElevation = 0.dp,
                 ) {
                     DropdownMenuItem(
-                        text = { Text(stringResource(R.string.provider)) },
+                        text = { Text(stringResource(R.string.provider), style = MaterialTheme.typography.bodyLarge) },
                         leadingIcon = { Icon(Icons.Outlined.Route, contentDescription = null) },
                         trailingContent = {
                             Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
                         },
                         shape = MenuDefaults.itemShape(0, 2).shape,
+                        modifier = Modifier.heightIn(min = MenuItemHeight),
+                        contentPadding = MenuItemPadding,
                         onClick = {
                             expanded = false
                             providersDialog = true
                         },
                     )
                     DropdownMenuItem(
-                        text = { Text(stringResource(R.string.batch_download_lyrics)) },
+                        text = { Text(stringResource(R.string.batch_download_lyrics), style = MaterialTheme.typography.bodyLarge) },
                         leadingIcon = { Icon(Icons.Outlined.Download, contentDescription = null) },
                         shape = MenuDefaults.itemShape(1, 2).shape,
+                        modifier = Modifier.heightIn(min = MenuItemHeight),
+                        contentPadding = MenuItemPadding,
                         onClick = {
                             expanded = false
                             onBatchDownloadRequest()
@@ -111,9 +122,11 @@ fun HomeOverflowMenu(
                     shadowElevation = 0.dp,
                 ) {
                     DropdownMenuItem(
-                        text = { Text(stringResource(id = R.string.settings)) },
+                        text = { Text(stringResource(id = R.string.settings), style = MaterialTheme.typography.bodyLarge) },
                         leadingIcon = { Icon(Icons.Outlined.Settings, contentDescription = null) },
                         shape = MenuDefaults.itemShape(0, 1).shape,
+                        modifier = Modifier.heightIn(min = MenuItemHeight),
+                        contentPadding = MenuItemPadding,
                         onClick = {
                             expanded = false
                             onNavigateToSettingsSectionRequest()
