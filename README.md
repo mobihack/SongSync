@@ -22,6 +22,16 @@ SongSync+ is a fork of [SongSync](https://github.com/Lambada10/SongSync). It ins
 - **Search:** find lyrics for songs that aren't in your library, and save them
 - **Material 3 Expressive design:** follows your wallpaper colours, with light, dark and pure-black themes
 
+### Screenshots
+
+<p>
+  <img src="screenshots/screenshot1.png" alt="Home: the song playing now above your library" width="19%">
+  <img src="screenshots/screenshot2.png" alt="Lyrics found for a song, with save and embed buttons" width="19%">
+  <img src="screenshots/screenshot3.png" alt="Batch download in progress" width="19%">
+  <img src="screenshots/screenshot4.png" alt="Poweramp showing lyrics provided by SongSync+" width="19%">
+  <img src="screenshots/screenshot5.png" alt="Saving Poweramp's lyrics as an .lrc file or into the song" width="19%">
+</p>
+
 ### Installation
 
 Download the latest version from the [releases page](https://github.com/mobihack/SongSync/releases), or add it to [Obtainium](https://github.com/ImranR98/Obtainium) to get updates automatically:
