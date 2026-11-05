@@ -1,5 +1,7 @@
 package pl.lambada.songsync.ui.screens.settings
 
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.PaddingValues
 import pl.lambada.songsync.ui.components.ListGroup
@@ -82,15 +84,16 @@ fun SettingsSectionScreen(
         rememberMyProvidersEditor(userSettingsController, listState, itemsBefore = 1) else null
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val hazeState = rememberHazeState()
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            SubScreenTopBar(title = title, scrollBehavior = scrollBehavior, onBack = { navController.popBackStack() })
+            SubScreenTopBar(title = title, scrollBehavior = scrollBehavior, hazeState = hazeState, onBack = { navController.popBackStack() })
         },
     ) { padding ->
         LazyColumn(
             state = listState,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().hazeSource(hazeState),
             contentPadding = PaddingValues(
                 top = padding.calculateTopPadding() + 8.dp,
                 bottom = padding.calculateBottomPadding() + 16.dp,

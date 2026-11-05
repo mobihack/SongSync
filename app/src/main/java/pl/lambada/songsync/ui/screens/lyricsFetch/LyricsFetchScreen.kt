@@ -2,6 +2,10 @@
 
 package pl.lambada.songsync.ui.screens.lyricsFetch
 
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
+import pl.lambada.songsync.ui.components.frostedTopBar
+import pl.lambada.songsync.ui.components.frostedTopBarColors
 import androidx.compose.foundation.layout.Box
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.fadeIn
@@ -72,6 +76,7 @@ fun SharedTransitionScope.LyricsFetchScreen(
     animatedVisibilityScope: AnimatedVisibilityScope,
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val hazeState = rememberHazeState()
 
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
@@ -108,6 +113,8 @@ fun SharedTransitionScope.LyricsFetchScreen(
             .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             MediumFlexibleTopAppBar(
+                modifier = Modifier.frostedTopBar(hazeState, scrollBehavior),
+                colors = frostedTopBarColors(),
                 navigationIcon = {
                     IconButton(
                         onClick = {
@@ -130,7 +137,7 @@ fun SharedTransitionScope.LyricsFetchScreen(
             )
         }
     ) { paddingValues ->
-        Box(Modifier.fillMaxSize()) {
+        Box(Modifier.fillMaxSize().hazeSource(hazeState)) {
         Column(
             modifier = Modifier
                 .fillMaxSize()

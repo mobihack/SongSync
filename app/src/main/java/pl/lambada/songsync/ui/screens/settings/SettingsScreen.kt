@@ -1,5 +1,7 @@
 package pl.lambada.songsync.ui.screens.settings
 
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 import androidx.compose.foundation.layout.padding
 import pl.lambada.songsync.ui.components.ListGroup
 import android.os.Build
@@ -57,6 +59,7 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val hazeState = rememberHazeState()
     fun open(section: SettingsSection) = navController.navigate(ScreenSettingsSection(section.name))
 
     // The plugin switch lives on another page; re-read it when coming back
@@ -68,10 +71,10 @@ fun SettingsScreen(
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = { SettingsScreenTopBar(navController = navController, scrollBehavior = scrollBehavior) },
+        topBar = { SettingsScreenTopBar(navController = navController, scrollBehavior = scrollBehavior, hazeState = hazeState) },
     ) { padding ->
         LazyColumn(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().hazeSource(hazeState),
             contentPadding = PaddingValues(
                 top = padding.calculateTopPadding() + 8.dp,
                 bottom = padding.calculateBottomPadding() + 16.dp,

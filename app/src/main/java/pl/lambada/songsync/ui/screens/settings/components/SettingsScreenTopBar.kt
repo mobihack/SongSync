@@ -1,5 +1,8 @@
 package pl.lambada.songsync.ui.screens.settings.components
 
+import pl.lambada.songsync.ui.components.frostedTopBar
+import pl.lambada.songsync.ui.components.frostedTopBarColors
+import dev.chrisbanes.haze.HazeState
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -19,8 +22,10 @@ import pl.lambada.songsync.R
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun SettingsScreenTopBar(navController: NavController, scrollBehavior: TopAppBarScrollBehavior) {
+fun SettingsScreenTopBar(navController: NavController, scrollBehavior: TopAppBarScrollBehavior, hazeState: HazeState) {
     LargeFlexibleTopAppBar(
+        modifier = Modifier.frostedTopBar(hazeState, scrollBehavior),
+        colors = frostedTopBarColors(),
         navigationIcon = {
             IconButton(
                 onClick = {

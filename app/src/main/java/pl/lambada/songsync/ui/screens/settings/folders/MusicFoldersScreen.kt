@@ -1,5 +1,7 @@
 package pl.lambada.songsync.ui.screens.settings.folders
 
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 import pl.lambada.songsync.ui.components.ListGroup
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.material3.TopAppBarDefaults
@@ -101,17 +103,19 @@ fun MusicFoldersScreen(
     }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val hazeState = rememberHazeState()
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             SubScreenTopBar(
                 title = stringResource(R.string.music_folders),
                 scrollBehavior = scrollBehavior,
+                hazeState = hazeState,
                 onBack = { navController.popBackStack() },
             )
         }
     ) { padding ->
-        LazyColumn(contentPadding = padding, modifier = Modifier.fillMaxSize()) {
+        LazyColumn(contentPadding = padding, modifier = Modifier.fillMaxSize().hazeSource(hazeState)) {
             item(key = "modes") {
                 val update = userSettingsController::updateFolderMode
                 ListGroup(Modifier.padding(top = 8.dp)) {
