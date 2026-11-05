@@ -24,15 +24,12 @@ class LRCLibAPI(private val client: HttpClient = Ktor.clientFor(Providers.LRCLIB
      * @return Search result as a SongInfo object.
      */
     suspend fun getSongInfo(query: SongInfo, offset: Int = 0): SongInfo? {
-        val search = withContext(Dispatchers.IO) {
-            URLEncoder.encode(
-                "${query.songName} ${query.artistName}",
-                StandardCharsets.UTF_8.toString()
-            )
-        }
-
-        if (search == "+")
+        val terms = SearchMatching.searchText(query.songName, query.artistName)
+        if (terms.isBlank())
             throw EmptyQueryException()
+        val search = withContext(Dispatchers.IO) {
+            URLEncoder.encode(terms, StandardCharsets.UTF_8.toString())
+        }
 
         val response = client.get(
             baseURL + "search?q=$search"

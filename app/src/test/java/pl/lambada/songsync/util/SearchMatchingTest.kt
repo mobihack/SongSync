@@ -14,6 +14,23 @@ class SearchMatchingTest {
         SearchMatching.rank(hits, title, artist, { it.title }, { it.artist })
 
     @Test
+    fun `searchText joins title and artist`() {
+        SearchMatching.searchText("Hello", "Adele") shouldBe "Hello Adele"
+    }
+
+    @Test
+    fun `searchText leaves out a missing or blank part`() {
+        SearchMatching.searchText("Hello", null) shouldBe "Hello"
+        SearchMatching.searchText(null, "Adele") shouldBe "Adele"
+        SearchMatching.searchText(" Hello ", "  ") shouldBe "Hello"
+    }
+
+    @Test
+    fun `searchText is blank when both are missing`() {
+        SearchMatching.searchText(null, null) shouldBe ""
+    }
+
+    @Test
     fun `cleanTitle strips featuring and bracketed noise`() {
         SearchMatching.cleanTitle("'Till I Collapse (feat. Nate Dogg)") shouldBe "'Till I Collapse"
         SearchMatching.cleanTitle("Song [Remastered 2011]") shouldBe "Song"

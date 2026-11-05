@@ -28,15 +28,12 @@ class AppleAPI(private val client: HttpClient = Ktor.clientFor(Providers.APPLE))
      * @return Search result as a SongInfo object.
      */
     suspend fun getSongInfo(query: SongInfo, offset: Int = 0): SongInfo? {
-        val search = withContext(Dispatchers.IO) {
-            URLEncoder.encode(
-                "${query.songName} ${query.artistName}",
-                Charsets.UTF_8.toString()
-            )
-        }
-
-        if (search.isBlank())
+        val terms = SearchMatching.searchText(query.songName, query.artistName)
+        if (terms.isBlank())
             throw EmptyQueryException()
+        val search = withContext(Dispatchers.IO) {
+            URLEncoder.encode(terms, Charsets.UTF_8.toString())
+        }
 
         return try {
             val token = tokenManager.getToken()

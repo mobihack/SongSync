@@ -43,6 +43,21 @@ class LRCLibAPITest {
     }
 
     @Test
+    fun `a song without an artist is searched by title alone, not "null"`() = runTest {
+        val http = FakeHttp { respondJson("[]") }
+        LRCLibAPI(http.client).getSongInfo(SongInfo(songName = "Bohemian Rhapsody", artistName = null))
+
+        http.requests.single().url.parameters["q"] shouldBe "Bohemian Rhapsody"
+    }
+
+    @Test
+    fun `missing title and artist throws instead of searching "null null"`() = runTest {
+        shouldThrow<EmptyQueryException> {
+            LRCLibAPI(FakeHttp { respondJson("[]") }.client).getSongInfo(SongInfo(songName = null, artistName = null))
+        }
+    }
+
+    @Test
     fun `no results gives null`() = runTest {
         val http = FakeHttp { respondJson("[]") }
         LRCLibAPI(http.client).getSongInfo(query).shouldBeNull()

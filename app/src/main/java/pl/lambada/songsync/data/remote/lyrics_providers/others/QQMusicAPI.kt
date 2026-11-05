@@ -39,7 +39,7 @@ class QQMusicAPI(private val client: HttpClient = Ktor.clientFor(Providers.QQMUS
      * @return Search result as a SongInfo object.
      */
     suspend fun getSongInfo(query: SongInfo, offset: Int = 0): SongInfo? {
-        val search = "${query.songName} ${query.artistName}"
+        val search = SearchMatching.searchText(query.songName, query.artistName)
 
         if (search.isBlank())
             throw EmptyQueryException()

@@ -14,6 +14,13 @@ object SearchMatching {
     private val nonWord = Regex("""[^\p{L}\p{N}]+""")
     private val diacritics = Regex("""\p{Mn}+""")
 
+    /**
+     * "Title Artist" as a search term, leaving out whichever is missing, so an untagged artist
+     * isn't searched as the word "null". Blank when both are missing.
+     */
+    fun searchText(title: String?, artist: String?): String =
+        listOfNotNull(title, artist).map { it.trim() }.filter { it.isNotEmpty() }.joinToString(" ")
+
     /** Title without "(feat. …)", "[Remastered]", "- Live" style noise, for building a search query. */
     fun cleanTitle(title: String?): String =
         title.orEmpty().replace(bracketed, "").replace(featuring, "").trim()
