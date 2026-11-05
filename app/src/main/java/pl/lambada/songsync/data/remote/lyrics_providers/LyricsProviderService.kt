@@ -14,6 +14,7 @@ import pl.lambada.songsync.data.remote.lyrics_providers.spotify.SpotifyLyricsAPI
 import pl.lambada.songsync.domain.model.SongInfo
 import pl.lambada.songsync.util.EmptyQueryException
 import pl.lambada.songsync.util.InternalErrorException
+import pl.lambada.songsync.util.LyricsCleanup
 import pl.lambada.songsync.util.NoTrackFoundException
 import pl.lambada.songsync.util.ProviderUnavailableException
 import pl.lambada.songsync.util.Providers
@@ -139,7 +140,8 @@ class LyricsProviderService {
         multiPersonWordByWord: Boolean = false,
         unsyncedFallbackMusixmatch: Boolean = true
     ): String? {
-        return when (provider) {
+        // Strip credits, metadata and section labels whichever provider answered
+        return LyricsCleanup.clean(when (provider) {
             Providers.SPOTIFY -> SpotifyLyricsAPI().getSyncedLyrics(spotifyUrl)
             Providers.LRCLIB -> LRCLibAPI().getSyncedLyrics(lrcLibID)
             Providers.NETEASE -> NeteaseAPI().getSyncedLyrics(
@@ -160,7 +162,7 @@ class LyricsProviderService {
             Providers.DEEZER -> DeezerAPI().getSyncedLyrics(deezerID)
             Providers.GENIUS -> GeniusAPI().getLyrics(geniusID)
             Providers.PETITLYRICS -> petitLyricsSongInfo?.unsyncedLyrics
-        }
+        })
     }
 
     suspend fun getLyricsInLanguage(songId: Long, language: String): String? {
