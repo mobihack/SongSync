@@ -2,6 +2,8 @@
 
 package pl.lambada.songsync.ui.screens.home.components
 
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.Color
 import pl.lambada.songsync.ui.components.frosted
 import dev.chrisbanes.haze.HazeState
 import androidx.compose.ui.Alignment
@@ -70,7 +72,14 @@ fun HomeOverflowMenu(
         ) {
             // Two groups: lyrics actions, then Settings on its own
             Column(verticalArrangement = Arrangement.spacedBy(MenuDefaults.GroupSpacing)) {
-                DropdownMenuGroup(shapes = MenuDefaults.groupShape(0, 2)) {
+                DropdownMenuGroup(
+                    shapes = MenuDefaults.groupShape(0, 2),
+                    // Frosted like the floating buttons: the glass replaces the solid container
+                    modifier = Modifier.frosted(hazeState, MenuDefaults.groupShape(0, 2).shape),
+                    containerColor = Color.Transparent,
+                    tonalElevation = 0.dp,
+                    shadowElevation = 0.dp,
+                ) {
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.provider)) },
                         leadingIcon = { Icon(Icons.Outlined.Route, contentDescription = null) },
@@ -93,7 +102,14 @@ fun HomeOverflowMenu(
                         },
                     )
                 }
-                DropdownMenuGroup(shapes = MenuDefaults.groupShape(1, 2)) {
+                DropdownMenuGroup(
+                    shapes = MenuDefaults.groupShape(1, 2),
+                    // Frosted like the floating buttons: the glass replaces the solid container
+                    modifier = Modifier.frosted(hazeState, MenuDefaults.groupShape(1, 2).shape),
+                    containerColor = Color.Transparent,
+                    tonalElevation = 0.dp,
+                    shadowElevation = 0.dp,
+                ) {
                     DropdownMenuItem(
                         text = { Text(stringResource(id = R.string.settings)) },
                         leadingIcon = { Icon(Icons.Outlined.Settings, contentDescription = null) },
