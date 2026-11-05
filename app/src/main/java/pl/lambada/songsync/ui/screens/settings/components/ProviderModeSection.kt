@@ -16,7 +16,7 @@ fun ProviderModeSection(userSettingsController: UserSettingsController) = Column
 
     RadioItem(
         label = stringResource(R.string.provider_mode_auto),
-        description = stringResource(R.string.provider_mode_auto_summary, selected),
+        description = stringResource(R.string.provider_mode_auto_summary),
         selected = mode == ProviderMode.AUTO,
         onClick = { userSettingsController.updateProviderMode(ProviderMode.AUTO) },
     )

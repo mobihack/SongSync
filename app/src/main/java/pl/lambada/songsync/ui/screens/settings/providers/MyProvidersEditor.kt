@@ -100,9 +100,9 @@ class MyProvidersEditorState internal constructor(
     }
 
     /** Whether the list is already the default: every enabled provider, in fallback order. */
-    val isDefault: Boolean get() = list == ProviderChain.defaultMyList
+    val isDefault: Boolean get() = list == ProviderChain.defaultOrder
 
-    fun reset() = save(ProviderChain.defaultMyList)
+    fun reset() = save(ProviderChain.defaultOrder)
 
     fun move(from: Int, to: Int) {
         if (to !in list.indices) return

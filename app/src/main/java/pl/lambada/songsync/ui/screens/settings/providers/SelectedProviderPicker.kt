@@ -40,8 +40,8 @@ private fun Modifier.pickerItem(scope: LazyItemScope) = with(scope) {
 }
 
 /**
- * Chooses the selected provider: the one Auto tries first and Selected provider uses alone.
- * Same providers and order as the provider menu on the home screen.
+ * Chooses the provider for Selected provider mode.
+ * Same providers and order as the provider menus.
  */
 fun LazyListScope.selectedProviderPicker(settings: UserSettingsController) {
     item(key = "providerDivider") {
@@ -52,7 +52,7 @@ fun LazyListScope.selectedProviderPicker(settings: UserSettingsController) {
         )
     }
     item(key = "providerHeader") {
-        Box(Modifier.pickerItem(this)) { SettingsHeadLabel(stringResource(R.string.provider)) }
+        Box(Modifier.pickerItem(this)) { SettingsHeadLabel(stringResource(R.string.settings_selected_provider)) }
     }
     items(Providers.entries.filter { it.enabled }, key = { "pick:${it.name}" }) { provider ->
         val selected = settings.selectedProvider == provider

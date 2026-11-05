@@ -176,7 +176,7 @@
         <item quantity="other">%1$d songs</item>
     </plurals>
     <string name="provider_mode_auto">Auto</string>
-    <string name="provider_mode_auto_summary">%1$s first, then every other provider</string>
+    <string name="provider_mode_auto_summary">Every provider, best synced sources first</string>
     <string name="provider_mode_my_list">Custom order</string>
     <string name="provider_mode_my_list_summary">Choose providers and the order they\'re tried in</string>
     <string name="provider_mode_selected">Selected provider</string>
@@ -227,10 +227,11 @@
     <string name="settings_appearance_pure_black">Pure black</string>
     <string name="settings_appearance_paths">Song paths shown</string>
     <string name="settings_appearance_no_marquee">No scrolling titles</string>
-    <string name="settings_lyrics_search">Lyrics search</string>
-    <string name="settings_lyrics_search_auto">Auto · %1$s first, then %2$d more</string>
+    <string name="settings_lyrics_search">Lyrics provider</string>
+    <string name="settings_lyrics_search_auto">Auto · all %1$d providers</string>
     <string name="settings_lyrics_search_my_list">Custom order · %1$s</string>
     <string name="settings_lyrics_search_selected">Only %1$s</string>
+    <string name="settings_selected_provider">Provider</string>
     <string name="settings_lyrics_content">Lyrics content</string>
     <string name="settings_lyrics_content_none">No extras</string>
     <string name="settings_lyrics_content_translation">Translation</string>

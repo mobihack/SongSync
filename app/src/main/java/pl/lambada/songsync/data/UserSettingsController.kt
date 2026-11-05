@@ -84,7 +84,7 @@ class UserSettingsController(private val dataStore: DataStore<Preferences>) {
         dataStore.get(myProvidersKey, "").split(",")
             .mapNotNull { name -> Providers.entries.find { it.name == name }?.takeIf { it.enabled } }
             .distinct()
-            .ifEmpty { ProviderChain.defaultMyList }
+            .ifEmpty { ProviderChain.defaultOrder }
     )
         private set
 

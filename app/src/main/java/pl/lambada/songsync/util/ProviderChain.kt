@@ -8,7 +8,7 @@ import java.net.UnknownHostException
  */
 /** How lyrics providers are chosen for a search. */
 enum class ProviderMode {
-    /** The selected provider first, then every other provider. */
+    /** Every enabled provider in [ProviderChain.defaultOrder]. */
     AUTO,
 
     /** The user's own ordered list of providers. */
@@ -32,7 +32,7 @@ object ProviderChain {
     /** The provider being tried right now: number [index] (1-based) of [total]. */
     data class Progress(val provider: Providers, val index: Int, val total: Int)
 
-    /** Providers tried after the selected one: synced sources first, plain-text ones last. */
+    /** Every provider in search order: synced sources first, plain-text ones last. */
     private val fallbackOrder = listOf(
         Providers.LRCLIB,
         Providers.NETEASE,
@@ -49,33 +49,23 @@ object ProviderChain {
         Providers.LYRICSOVH,
     )
 
-    fun order(selected: Providers, fallback: Boolean): List<Providers> =
-        if (!fallback) listOf(selected)
-        else listOf(selected) + fallbackOrder.filter { it.enabled && it != selected }
-
-    /** Default contents of "My list": every enabled provider in fallback order. */
-    val defaultMyList: List<Providers> get() = fallbackOrder.filter { it.enabled }
+    /** Every enabled provider, best synced sources first: Auto's order and the custom order's default. */
+    val defaultOrder: List<Providers> get() = fallbackOrder.filter { it.enabled }
 
     /**
      * Providers to search, in order, for the given [mode].
      *
-     * @param selected the provider chosen in the picker (persisted).
+     * @param selected the provider for [ProviderMode.SELECTED].
      * @param myList the user's ordered list, used in [ProviderMode.MY_LIST].
-     * @param override a temporary pick in My list mode (for the session or one song): tried first,
-     * then the rest of the list.
      */
     fun lookup(
         mode: ProviderMode,
         selected: Providers,
         myList: List<Providers>,
-        override: Providers? = null,
     ): List<Providers> = when (mode) {
-        ProviderMode.AUTO -> order(selected, fallback = true)
+        ProviderMode.AUTO -> defaultOrder
         ProviderMode.SELECTED -> listOf(selected)
-        ProviderMode.MY_LIST -> {
-            val list = myList.filter { it.enabled }.ifEmpty { defaultMyList }
-            if (override == null) list else listOf(override) + (list - override)
-        }
+        ProviderMode.MY_LIST -> myList.filter { it.enabled }.ifEmpty { defaultOrder }
     }
 
     private val lrcTimestamp = Regex("""^\[\d{1,3}:\d{2}(?:[.:]\d{1,3})?]""", RegexOption.MULTILINE)

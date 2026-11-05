@@ -138,10 +138,7 @@ private fun appearanceSummary(settings: UserSettingsController): String = listOf
 private fun searchSummary(settings: UserSettingsController): String {
     val selected = settings.selectedProvider.displayName
     return when (settings.providerMode) {
-        ProviderMode.AUTO -> stringResource(
-            R.string.settings_lyrics_search_auto, selected,
-            ProviderChain.order(settings.selectedProvider, fallback = true).size - 1,
-        )
+        ProviderMode.AUTO -> stringResource(R.string.settings_lyrics_search_auto, ProviderChain.defaultOrder.size)
         ProviderMode.MY_LIST -> stringResource(
             R.string.settings_lyrics_search_my_list,
             settings.myProviders.joinToString(" → ") { it.displayName },

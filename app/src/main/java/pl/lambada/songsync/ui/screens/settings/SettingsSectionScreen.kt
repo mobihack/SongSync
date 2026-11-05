@@ -133,9 +133,12 @@ private fun LazyListScope.library(settings: UserSettingsController, navControlle
 
 private fun LazyListScope.search(settings: UserSettingsController, editor: MyProvidersEditorState) {
     item(key = "modes") { ProviderModeSection(userSettingsController = settings) }
-    // My list edits its list; Auto and Selected provider both depend on the selected provider
-    if (settings.providerMode == ProviderMode.MY_LIST) myProvidersEditor(editor)
-    else selectedProviderPicker(settings)
+    // Custom order edits its list, Selected provider picks its one; Auto needs neither
+    when (settings.providerMode) {
+        ProviderMode.MY_LIST -> myProvidersEditor(editor)
+        ProviderMode.SELECTED -> selectedProviderPicker(settings)
+        ProviderMode.AUTO -> Unit
+    }
 }
 
 private fun LazyListScope.content(settings: UserSettingsController) {

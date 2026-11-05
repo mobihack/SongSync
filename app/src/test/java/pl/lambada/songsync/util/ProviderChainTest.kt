@@ -129,17 +129,11 @@ class ProviderChainTest {
     }
 
     @Test
-    fun `order starts with the selected provider and skips disabled ones`() {
-        val order = ProviderChain.order(selected = Providers.NETEASE, fallback = true)
-        order.first() shouldBe Providers.NETEASE
-        order.count { it == Providers.NETEASE } shouldBe 1
+    fun `default order skips disabled providers and lists each once`() {
+        val order = ProviderChain.defaultOrder
         order.none { !it.enabled } shouldBe true
-        order.contains(Providers.LRCLIB) shouldBe true
-    }
-
-    @Test
-    fun `without fallback only the selected provider is used`() {
-        ProviderChain.order(selected = Providers.APPLE, fallback = false).shouldContainExactly(Providers.APPLE)
+        order.distinct() shouldBe order
+        order.first() shouldBe Providers.LRCLIB
     }
 
     @Test
