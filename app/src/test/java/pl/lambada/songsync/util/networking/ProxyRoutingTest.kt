@@ -64,7 +64,7 @@ class ProxyRoutingTest {
         // Kept alive to the proxy...
         Ktor.connectionPool.connectionCount() shouldBe 1
 
-        AppProxy.update(ProxySettings(mode = ProxyMode.OFF))
+        AppProxy.update(ProxySettings(mode = ProxyMode.OFF), evictOn = { it.run() })
         // ...and dropped on the change, so it can't be reused for a direct request
         Ktor.connectionPool.connectionCount() shouldBe 0
         // Direct now: lyrics.invalid doesn't resolve

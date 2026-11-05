@@ -14,6 +14,8 @@ import java.net.Proxy
 import java.net.ProxySelector
 import java.net.SocketAddress
 import java.net.URI
+import java.util.concurrent.Executor
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 enum class ProxyMode {
@@ -104,11 +106,24 @@ object AppProxy {
      */
     internal val unreachable = Proxy(Proxy.Type.HTTP, InetSocketAddress(InetAddress.getLoopbackAddress(), 1))
 
-    /** Applies [to]; [pool] is cleared so keep-alive connections made the old way aren't reused. */
-    fun update(to: ProxySettings, pool: ConnectionPool? = Ktor.connectionPool) {
+    /**
+     * Applies [to]; [pool] is cleared so keep-alive connections made the old way aren't reused.
+     * Clearing closes TLS sockets, which writes to the network, so it runs on [evictOn]: callers
+     * are usually on the main thread, where that throws NetworkOnMainThreadException.
+     */
+    fun update(
+        to: ProxySettings,
+        pool: ConnectionPool? = Ktor.connectionPool,
+        evictOn: Executor = evictor,
+    ) {
         if (to == settings) return
         settings = to
-        pool?.evictAll()
+        if (pool != null) evictOn.execute { pool.evictAll() }
+    }
+
+    /** One thread, so evictions run in the order the changes were made. */
+    private val evictor: Executor = Executors.newSingleThreadExecutor { task ->
+        Thread(task, "proxy-evict").apply { isDaemon = true }
     }
 
     /** For [provider]'s requests, or the app's other requests when null. */
