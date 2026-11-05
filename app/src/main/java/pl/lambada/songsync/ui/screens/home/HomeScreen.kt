@@ -25,7 +25,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
@@ -40,7 +39,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -63,7 +61,9 @@ import pl.lambada.songsync.ui.screens.home.components.SortDialog
 import pl.lambada.songsync.util.ext.BackPressHandler
 import pl.lambada.songsync.util.ext.lowercaseWithLocale
 import pl.lambada.songsync.util.ui.SearchFABBoundsTransform
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.withFrameNanos
 import pl.lambada.songsync.domain.model.SortValues
 import pl.lambada.songsync.ui.screens.home.components.FastScroller
@@ -82,7 +82,10 @@ fun HomeScreen(
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
 ) {
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val listState = rememberLazyListState()
+    val listScrolled by remember {
+        derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0 }
+    }
     var isBatchDownload by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
@@ -92,7 +95,6 @@ fun HomeScreen(
     }
 
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             var cachedSize by remember { mutableIntStateOf(1) }
             if (viewModel.selectedSongs.size > 0) {
@@ -112,7 +114,7 @@ fun HomeScreen(
             ) { showing ->
                 HomeAppBar(
                     showing = showing,
-                    scrollBehavior = scrollBehavior,
+                    scrolled = listScrolled,
                     onSelectedClearAction = viewModel.selectedSongs::clear,
                     onNavigateToSettingsSectionRequest = { navController.navigate(ScreenSettings) },
                     onProviderSelectRequest = viewModel.userSettingsController::updateSelectedProviders,
@@ -158,7 +160,8 @@ fun HomeScreen(
                     isBatchDownload = isBatchDownload,
                     onBatchDownloadState = { onBatchDownload -> isBatchDownload = onBatchDownload },
                     sharedTransitionScope = sharedTransitionScope,
-                    animatedVisibilityScope = animatedVisibilityScope
+                    animatedVisibilityScope = animatedVisibilityScope,
+                    listState = listState,
                 )
         }
     }
@@ -194,11 +197,11 @@ fun HomeScreenLoaded(
     onBatchDownloadState: (isBatchDownload: Boolean) -> Unit,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
+    listState: LazyListState,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val refreshState = rememberPullToRefreshState()
-    val listState = rememberLazyListState()
 
     // Give the tapped row its shared-element modifiers first, then navigate on the next frame
     // so the transition finds a matching element in the list.

@@ -12,10 +12,11 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.TopAppBarScrollBehavior
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -31,7 +32,8 @@ import pl.lambada.songsync.util.Providers
 @Composable
 fun HomeAppBar(
     showing: Boolean,
-    scrollBehavior: TopAppBarScrollBehavior,
+    /** Whether the list is scrolled away from the top; tints the bar. */
+    scrolled: Boolean,
     selectedProvider: Providers,
     onSelectedClearAction: () -> Unit,
     onNavigateToSettingsSectionRequest: () -> Unit,
@@ -41,7 +43,19 @@ fun HomeAppBar(
     onInvertSongSelectionRequest: () -> Unit,
     cachedSize: Int,
 ) {
-    MediumTopAppBar(
+    // Single-line bar that never collapses or expands, so pulling down at the top of the list
+    // only drives pull-to-refresh. Tint follows the list position (not nested scroll), so it
+    // also updates when jumping with the fast scroller.
+    val containerColor by animateColorAsState(
+        targetValue = when {
+            showing -> MaterialTheme.colorScheme.surfaceVariant
+            scrolled -> MaterialTheme.colorScheme.surfaceContainer
+            else -> MaterialTheme.colorScheme.surface
+        },
+        animationSpec = tween(durationMillis = 200),
+        label = "appBarContainer"
+    )
+    TopAppBar(
         navigationIcon = {
             if (showing) {
                 IconButton(onClick = onSelectedClearAction) {
@@ -120,14 +134,9 @@ fun HomeAppBar(
                 )
             }
         },
-        colors = if (showing) {
-            TopAppBarDefaults.topAppBarColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                scrolledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-            )
-        } else {
-            TopAppBarDefaults.topAppBarColors()
-        },
-        scrollBehavior = scrollBehavior,
+        colors = TopAppBarDefaults.topAppBarColors(
+            containerColor = containerColor,
+            scrolledContainerColor = containerColor,
+        ),
     )
 }
