@@ -1,5 +1,6 @@
 package pl.lambada.songsync
 
+import pl.lambada.songsync.ui.screens.home.clearStaleCovers
 import pl.lambada.songsync.util.usesAllFilesAccess
 import android.Manifest
 import coil.Coil
@@ -22,7 +23,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.core.view.ViewCompat
 import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
@@ -56,14 +56,14 @@ class MainActivity : ComponentActivity() {
         // Cover art from providers follows the proxy setting too
         Coil.setImageLoader { ImageLoader.Builder(applicationContext).okHttpClient { Ktor.baseOkHttp }.build() }
         checkOrCreateDownloadSubFolder()
+        // A fresh start, not a rotation or theme change: other caches in cacheDir stay
+        if (savedInstanceState == null) clearStaleCovers(cacheDir)
 
         setContent {
             val navController = rememberNavController()
             var networkError by rememberSaveable { mutableStateOf<Boolean?>(null) }
-            val context = LocalContext.current
 
             LaunchedEffect(Unit) {
-                context.cacheDir.deleteRecursively()
                 if (networkError == null && Providers.SPOTIFY.enabled) lyricsProviderService
                     .refreshSpotifyToken()
                     .onFailure { networkError = true }

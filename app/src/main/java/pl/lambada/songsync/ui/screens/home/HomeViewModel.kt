@@ -57,6 +57,15 @@ import java.io.OutputStream
 import java.util.UUID
 
 /**
+ * Deletes now-playing covers left from earlier runs in [cacheDir], including ones older versions
+ * named by a bare UUID, and nothing else there (image and HTTP caches stay).
+ */
+fun clearStaleCovers(cacheDir: File) {
+    val cover = Regex("""(now_playing_)?[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.jpg""")
+    cacheDir.listFiles()?.filter { it.isFile && cover.matches(it.name) }?.forEach { it.delete() }
+}
+
+/**
  * Writes the now-playing cover with [write] to a new file in [cacheDir] and deletes [previous], so
  * covers don't pile up while songs change. A new name each time, so the image view reloads.
  *
