@@ -13,11 +13,11 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Deselect
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SelectAll
+import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material.icons.outlined.FilterAlt
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -29,6 +29,7 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
@@ -120,8 +121,12 @@ fun HomeLibraryToolbar(
 ) = Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
     FrostedToolbar(hazeState) {
         IconButton(onClick = onSort, shapes = IconButtonDefaults.shapes()) {
-            Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = stringResource(R.string.sort))
+            Icon(Icons.Filled.SwapVert, contentDescription = stringResource(R.string.sort))
         }
+        VerticalDivider(
+            modifier = Modifier.height(20.dp).padding(horizontal = 4.dp),
+            color = MaterialTheme.colorScheme.outlineVariant,
+        )
         // A dot on the icon (not a filled button) marks that a filter is hiding songs
         IconButton(
             onClick = onFilter,
@@ -136,8 +141,8 @@ fun HomeLibraryToolbar(
     FrostedFab(
         hazeState,
         onClick = onSearch,
-        tint = MaterialTheme.colorScheme.tertiaryContainer,
-        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+        tint = MaterialTheme.colorScheme.primaryContainer,
+        contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
     ) {
         Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.search))
     }

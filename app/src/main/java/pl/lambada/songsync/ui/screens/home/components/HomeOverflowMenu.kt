@@ -7,7 +7,6 @@ import dev.chrisbanes.haze.HazeState
 import androidx.compose.ui.Alignment
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.IconButton
-import pl.lambada.songsync.ui.components.providerChoiceLabel
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.Route
 import androidx.compose.material.icons.outlined.Download
@@ -74,7 +73,6 @@ fun HomeOverflowMenu(
                 DropdownMenuGroup(shapes = MenuDefaults.groupShape(0, 2)) {
                     DropdownMenuItem(
                         text = { Text(stringResource(R.string.provider)) },
-                        supportingText = { Text(providerChoiceLabel(providerChoice)) },
                         leadingIcon = { Icon(Icons.Outlined.Route, contentDescription = null) },
                         trailingContent = {
                             Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
