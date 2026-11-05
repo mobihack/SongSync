@@ -28,10 +28,26 @@ import pl.lambada.songsync.util.networking.ProxySettings
 import pl.lambada.songsync.util.networking.ProxyType
 import pl.lambada.songsync.util.set
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.runBlocking
 
-class UserSettingsController(private val dataStore: DataStore<Preferences>) {
+class UserSettingsController(
+    private val dataStore: DataStore<Preferences>,
+    saveDispatcher: CoroutineDispatcher = Dispatchers.IO,
+) {
+    /** For saves that wait for typing to pause; see [updateProxySettings]. */
+    private val saveScope = CoroutineScope(SupervisorJob() + saveDispatcher)
+    private var pendingProxySave: Job? = null
+
     companion object {
+        /** How long typing in the proxy form pauses before the change is saved and applied. */
+        const val PROXY_TYPING_DELAY_MS = 600L
+
         @Volatile
         private var instance: UserSettingsController? = null
 
@@ -170,21 +186,37 @@ class UserSettingsController(private val dataStore: DataStore<Preferences>) {
         )
     }
 
-    fun updateProxySettings(to: ProxySettings) {
-        runBlocking(Dispatchers.IO) {
-            dataStore.edit {
-                it[proxyModeKey] = to.mode.name
-                it[proxyTypeKey] = to.type.name
-                it[proxyHostKey] = to.host
-                it[proxyPortKey] = to.port
-                it[proxyUserKey] = to.username
-                it[proxyPasswordKey] = to.password
-                it[proxyScopeKey] = to.scope.name
-                it[proxyProvidersKey] = to.providers.joinToString(",") { p -> p.name }
-            }
-        }
+    /**
+     * @param debounce for text typed into the proxy form: [proxySettings] shows [to] at once, but
+     * it is saved and applied only once typing pauses for [PROXY_TYPING_DELAY_MS], instead of on
+     * every keystroke (each would write to disk and drop every open connection).
+     */
+    fun updateProxySettings(to: ProxySettings, debounce: Boolean = false) {
+        pendingProxySave?.cancel()
         proxySettings = to
-        AppProxy.update(to)
+        if (debounce) {
+            pendingProxySave = saveScope.launch {
+                delay(PROXY_TYPING_DELAY_MS)
+                AppProxy.update(to)
+                writeProxySettings(to)
+            }
+        } else {
+            runBlocking(Dispatchers.IO) { writeProxySettings(to) }
+            AppProxy.update(to)
+        }
+    }
+
+    private suspend fun writeProxySettings(to: ProxySettings) {
+        dataStore.edit {
+            it[proxyModeKey] = to.mode.name
+            it[proxyTypeKey] = to.type.name
+            it[proxyHostKey] = to.host
+            it[proxyPortKey] = to.port
+            it[proxyUserKey] = to.username
+            it[proxyPasswordKey] = to.password
+            it[proxyScopeKey] = to.scope.name
+            it[proxyProvidersKey] = to.providers.joinToString(",") { p -> p.name }
+        }
     }
 
     fun updateEmbedLyrics(to: Boolean) {

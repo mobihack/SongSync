@@ -66,7 +66,7 @@ data class ProxySettings(
     /** The proxy for [ProxyMode.MANUAL], or null when the host or port is invalid. */
     fun manualProxy(): Proxy? {
         if (!isManualValid) return null
-        val host = host.trim()
+        val host = host.trim().removeSurrounding("[", "]") // IPv6 may be typed bracketed
         return when (type) {
             // OkHttp resolves an HTTP proxy's host itself
             ProxyType.HTTP -> Proxy(Proxy.Type.HTTP, InetSocketAddress.createUnresolved(host, port))
@@ -81,9 +81,18 @@ data class ProxySettings(
 
         fun isValidPort(port: Int) = port in 1..65535
 
+        /**
+         * A host name or IP address, IPv6 bare or in brackets. Rejects a port, scheme, path or
+         * login typed into the host ("127.0.0.1:8080", "http://proxy", "user@proxy"), which
+         * would otherwise be accepted and make every request fail.
+         */
         fun isValidHost(host: String): Boolean {
             val h = host.trim()
-            return h.isNotEmpty() && h.none { it.isWhitespace() || it == '/' || it == '@' }
+            if (h.isEmpty() || h.any { it.isWhitespace() || it in "/@?#" }) return false
+            val ipv6 = h.removeSurrounding("[", "]")
+            if (':' !in ipv6) return h == ipv6 // brackets only around IPv6
+            // A colon only belongs to IPv6, which has at least two
+            return ipv6.count { it == ':' } >= 2 && ipv6.all { it.isDigit() || it.lowercaseChar() in "abcdef:." }
         }
     }
 }

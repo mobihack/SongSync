@@ -81,6 +81,8 @@ private fun Modifier.sectionItem(scope: LazyItemScope) = with(scope) {
 fun LazyListScope.network(settings: UserSettingsController) {
     val proxy = settings.proxySettings
     fun update(to: ProxySettings) = settings.updateProxySettings(to)
+    // Typed text: applied once typing pauses, not on every keystroke
+    fun updateTyped(to: ProxySettings) = settings.updateProxySettings(to, debounce = true)
 
     item(key = "proxyHeader") { Box(Modifier.sectionItem(this)) { SettingsHeadLabel(stringResource(R.string.proxy)) } }
     item(key = "proxyModes") {
@@ -119,7 +121,7 @@ fun LazyListScope.network(settings: UserSettingsController) {
         item(key = "serverHeader") {
             Box(Modifier.sectionItem(this)) { SettingsHeadLabel(stringResource(R.string.proxy_server)) }
         }
-        item(key = "server") { ProxyServerFields(proxy, ::update, Modifier.sectionItem(this)) }
+        item(key = "server") { ProxyServerFields(proxy, ::update, ::updateTyped, Modifier.sectionItem(this)) }
     }
 
     if (proxy.mode == ProxyMode.OFF) return
@@ -176,7 +178,12 @@ fun LazyListScope.network(settings: UserSettingsController) {
 }
 
 @Composable
-private fun ProxyServerFields(proxy: ProxySettings, update: (ProxySettings) -> Unit, modifier: Modifier) {
+private fun ProxyServerFields(
+    proxy: ProxySettings,
+    update: (ProxySettings) -> Unit,
+    updateTyped: (ProxySettings) -> Unit,
+    modifier: Modifier,
+) {
     // Typed text is kept as is; the settings get the parsed value, so "" and "0" both read as invalid
     var portText by remember { mutableStateOf(if (proxy.port == 0) "" else proxy.port.toString()) }
     var showPassword by remember { mutableStateOf(false) }
@@ -205,7 +212,7 @@ private fun ProxyServerFields(proxy: ProxySettings, update: (ProxySettings) -> U
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedTextField(
                 value = proxy.host,
-                onValueChange = { update(proxy.copy(host = it.trim())) },
+                onValueChange = { updateTyped(proxy.copy(host = it.trim())) },
                 label = { Text(stringResource(R.string.proxy_host)) },
                 placeholder = { Text("127.0.0.1") },
                 singleLine = true,
@@ -218,7 +225,7 @@ private fun ProxyServerFields(proxy: ProxySettings, update: (ProxySettings) -> U
                 onValueChange = { text ->
                     val digits = text.filter { it.isDigit() }.take(5)
                     portText = digits
-                    update(proxy.copy(port = digits.toIntOrNull() ?: 0))
+                    updateTyped(proxy.copy(port = digits.toIntOrNull() ?: 0))
                 },
                 label = { Text(stringResource(R.string.proxy_port)) },
                 singleLine = true,
@@ -235,14 +242,14 @@ private fun ProxyServerFields(proxy: ProxySettings, update: (ProxySettings) -> U
         if (proxy.type == ProxyType.HTTP) {
             OutlinedTextField(
                 value = proxy.username,
-                onValueChange = { update(proxy.copy(username = it)) },
+                onValueChange = { updateTyped(proxy.copy(username = it)) },
                 label = { Text(stringResource(R.string.proxy_username)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
             )
             if (proxy.username.isNotBlank()) OutlinedTextField(
                 value = proxy.password,
-                onValueChange = { update(proxy.copy(password = it)) },
+                onValueChange = { updateTyped(proxy.copy(password = it)) },
                 label = { Text(stringResource(R.string.proxy_password)) },
                 singleLine = true,
                 visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),

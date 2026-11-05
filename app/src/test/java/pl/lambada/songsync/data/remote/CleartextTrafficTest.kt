@@ -36,7 +36,11 @@ class CleartextTrafficTest {
 
         val hosts = File(main, "java").walk()
             .filter { it.extension == "kt" }
-            .flatMap { file -> httpUrl.findAll(file.readText()).map { URI(it.groupValues[1]).host } }
+            .flatMap { file ->
+                file.readLines()
+                    .filterNot { it.trimStart().let { line -> line.startsWith("*") || line.startsWith("//") } } // comments
+                    .flatMap { line -> httpUrl.findAll(line).map { URI(it.groupValues[1]).host } }
+            }
             .filterNot { it == "apache.org" } // XML parser feature names, not requests
             .toSet()
 
