@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.kotlinAndroid)
@@ -21,6 +23,14 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        // Optional provider credentials, read from local.properties (not committed).
+        // Providers whose credential is blank are hidden in the app.
+        val localProps = Properties().apply {
+            rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
+        }
+        buildConfigField("String", "GENIUS_TOKEN", "\"${localProps.getProperty("genius.token", "")}\"")
+        buildConfigField("String", "PETITLYRICS_CLIENT_ID", "\"${localProps.getProperty("petitlyrics.clientId", "")}\"")
     }
     androidResources {
         generateLocaleConfig = true
@@ -56,6 +66,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.14"

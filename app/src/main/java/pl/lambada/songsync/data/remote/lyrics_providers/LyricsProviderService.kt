@@ -2,7 +2,10 @@ package pl.lambada.songsync.data.remote.lyrics_providers
 
 import android.util.Log
 import pl.lambada.songsync.data.remote.lyrics_providers.apple.AppleAPI
+import pl.lambada.songsync.data.remote.lyrics_providers.others.DeezerAPI
+import pl.lambada.songsync.data.remote.lyrics_providers.others.GeniusAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.others.LRCLibAPI
+import pl.lambada.songsync.data.remote.lyrics_providers.others.PetitLyricsAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.others.MusixmatchAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.others.NeteaseAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.others.QQMusicAPI
@@ -44,6 +47,13 @@ class LyricsProviderService {
 
     // Musixmatch Song Info
     private var musixmatchSongInfo: SongInfo? = null
+
+    // Deezer / Genius Track IDs
+    private var deezerID = 0L
+    private var geniusID = 0L
+
+    // PetitLyrics returns lyrics with the search result
+    private var petitLyricsSongInfo: SongInfo? = null
     // TODO: Use values from SongInfo object returned by search instead of storing them here
 
     /**
@@ -92,6 +102,18 @@ class LyricsProviderService {
                 Providers.MUSIXMATCH -> MusixmatchAPI().getSongInfo(query, offset).also {
                     musixmatchSongInfo = it
                 } ?: throw NoTrackFoundException()
+
+                Providers.DEEZER -> DeezerAPI().getSongInfo(query, offset).also {
+                    deezerID = it?.deezerID ?: 0
+                } ?: throw NoTrackFoundException()
+
+                Providers.GENIUS -> GeniusAPI().getSongInfo(query, offset).also {
+                    geniusID = it?.geniusID ?: 0
+                } ?: throw NoTrackFoundException()
+
+                Providers.PETITLYRICS -> PetitLyricsAPI().getSongInfo(query, offset).also {
+                    petitLyricsSongInfo = it
+                } ?: throw NoTrackFoundException()
             }
         } catch (e: Exception) {
             when (e) {
@@ -134,6 +156,10 @@ class LyricsProviderService {
                 musixmatchSongInfo,
                 unsyncedFallbackMusixmatch
             )
+
+            Providers.DEEZER -> DeezerAPI().getSyncedLyrics(deezerID)
+            Providers.GENIUS -> GeniusAPI().getLyrics(geniusID)
+            Providers.PETITLYRICS -> petitLyricsSongInfo?.unsyncedLyrics
         }
     }
 

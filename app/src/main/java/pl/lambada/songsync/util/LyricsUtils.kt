@@ -1,5 +1,6 @@
 package pl.lambada.songsync.util
 
+import pl.lambada.songsync.BuildConfig
 import android.annotation.SuppressLint
 import android.app.PendingIntent
 import android.app.RecoverableSecurityException
@@ -186,6 +187,10 @@ enum class Providers(
     MUSIXMATCH("Musixmatch", false),
     QQMUSIC("QQ Music", true),
     NETEASE("Netease", false) { val inf = 0 },
+    DEEZER("Deezer", false),
+    // Plain-text only; hidden unless a credential is set in local.properties
+    GENIUS("Genius", false, enabled = BuildConfig.GENIUS_TOKEN.isNotBlank()),
+    PETITLYRICS("PetitLyrics", false, enabled = BuildConfig.PETITLYRICS_CLIENT_ID.isNotBlank()),
 }
 
 // only for invoking the task and handling and reporting progress
