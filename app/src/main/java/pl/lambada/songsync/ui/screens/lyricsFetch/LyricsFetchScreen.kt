@@ -45,7 +45,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import pl.lambada.songsync.R
 import pl.lambada.songsync.ui.components.ProvidersDropdownMenu
-import pl.lambada.songsync.util.ProviderMode
 import pl.lambada.songsync.ui.screens.lyricsFetch.components.CloudProviderTitle
 import pl.lambada.songsync.ui.screens.lyricsFetch.components.FailedDialogue
 import pl.lambada.songsync.ui.screens.lyricsFetch.components.LocalSongContent
@@ -120,11 +119,10 @@ fun SharedTransitionScope.LyricsFetchScreen(
                     }
                     ProvidersDropdownMenu(
                         expanded = expandedProviders,
-                        selectedProvider = viewModel.userSettingsController.pickerSelection(viewModel.songProvider),
-                        showMyList = viewModel.userSettingsController.providerMode == ProviderMode.MY_LIST,
+                        selected = viewModel.userSettingsController.providerChoice,
                         onDismissRequest = { expandedProviders = false },
-                        onProviderSelectRequest = { it ->
-                            viewModel.pickProvider(it)
+                        onChoose = {
+                            viewModel.userSettingsController.choose(it)
                             if (viewModel.queryState != QueryStatus.NotSubmitted)
                                 viewModel.loadSongInfo(context)
                         },

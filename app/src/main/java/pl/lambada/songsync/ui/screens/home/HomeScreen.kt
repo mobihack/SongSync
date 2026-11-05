@@ -68,7 +68,6 @@ import androidx.compose.runtime.withFrameNanos
 import pl.lambada.songsync.domain.model.SortValues
 import pl.lambada.songsync.ui.screens.home.components.FastScroller
 import pl.lambada.songsync.ui.screens.home.components.sectionLetter
-import pl.lambada.songsync.util.ProviderMode
 import pl.lambada.songsync.ui.ScreenMusicFolders
 import pl.lambada.songsync.ui.screens.settings.folders.folderModeSummary
 
@@ -126,10 +125,9 @@ fun HomeScreen(
                     scrolled = listScrolled,
                     onSelectedClearAction = viewModel.selectedSongs::clear,
                     onNavigateToSettingsSectionRequest = { navController.navigate(ScreenSettings) },
-                    onProviderSelectRequest = viewModel.userSettingsController::pickProvider,
+                    onProviderChoice = viewModel.userSettingsController::choose,
                     onBatchDownloadRequest = { isBatchDownload = true },
-                    selectedProvider = viewModel.userSettingsController.pickerSelection(),
-                    showMyList = viewModel.userSettingsController.providerMode == ProviderMode.MY_LIST,
+                    providerChoice = viewModel.userSettingsController.providerChoice,
                     onSelectAllSongsRequest = viewModel::selectAllDisplayingSongs,
                     onInvertSongSelectionRequest = viewModel::invertSongSelection,
                     cachedSize = cachedSize

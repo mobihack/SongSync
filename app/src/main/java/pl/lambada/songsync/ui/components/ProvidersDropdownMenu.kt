@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -26,20 +27,19 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import pl.lambada.songsync.R
 import pl.lambada.songsync.ui.components.dropdown.AnimatedDropdownMenu
+import pl.lambada.songsync.util.ProviderChoice
 import pl.lambada.songsync.util.Providers
 
 /**
- * Provider picker. In My list mode ([showMyList]) the first entry is "My list", selected when
- * [selectedProvider] is null; picking it passes null to [onProviderSelectRequest].
- * Callers decide whether a pick is saved or temporary.
+ * Provider menu: Auto, Custom order, then every provider (picking one means "only this one").
+ * The radio marks [selected]; [onChoose] receives the pick. Callers save it.
  */
 @Composable
 fun ProvidersDropdownMenu(
     expanded: Boolean,
     onDismissRequest: () -> Unit,
-    selectedProvider: Providers?,
-    showMyList: Boolean = false,
-    onProviderSelectRequest: (Providers?) -> Unit,
+    selected: ProviderChoice,
+    onChoose: (ProviderChoice) -> Unit,
 ) {
     AnimatedDropdownMenu(
         expanded = expanded,
@@ -47,9 +47,8 @@ fun ProvidersDropdownMenu(
     ) {
         ProvidersDropdownMenuContent(
             onDismissRequest = onDismissRequest,
-            selectedProvider = selectedProvider,
-            showMyList = showMyList,
-            onProviderSelectRequest = onProviderSelectRequest,
+            selected = selected,
+            onChoose = onChoose,
         )
     }
 }
@@ -57,58 +56,42 @@ fun ProvidersDropdownMenu(
 @Composable
 fun ProvidersDropdownMenuContent(
     onDismissRequest: () -> Unit,
-    selectedProvider: Providers?,
-    showMyList: Boolean = false,
-    onProviderSelectRequest: (Providers?) -> Unit,
+    selected: ProviderChoice,
+    onChoose: (ProviderChoice) -> Unit,
 ) = Column {
     val providers = Providers.entries.filter { it.enabled }
     val scope = rememberCoroutineScope()
-    fun pick(provider: Providers?) {
-        onProviderSelectRequest(provider)
+    fun pick(choice: ProviderChoice) {
+        onChoose(choice)
+        // Let the radio change register before the menu closes
         scope.launch {
             delay(200)
             onDismissRequest()
         }
     }
+
+    @Composable
+    fun Choice(choice: ProviderChoice, label: String, wordByWord: Boolean = false) = DropdownMenuItem(
+        text = {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(text = label, modifier = Modifier.padding(start = 6.dp))
+                if (wordByWord) WordByWordBadge()
+                Spacer(modifier = Modifier.weight(1f))
+                RadioButton(selected = selected == choice, onClick = { pick(choice) })
+            }
+        },
+        onClick = { pick(choice) },
+    )
+
     Text(
         text = stringResource(id = R.string.provider),
         modifier = Modifier.padding(start = 18.dp, top = 8.dp),
         fontSize = 12.sp
     )
-    if (showMyList) {
-        DropdownMenuItem(
-            text = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = stringResource(R.string.provider_mode_my_list),
-                        modifier = Modifier.padding(start = 6.dp)
-                    )
-                    Spacer(modifier = Modifier.weight(1f))
-                    RadioButton(selected = selectedProvider == null, onClick = { pick(null) })
-                }
-            },
-            onClick = { pick(null) }
-        )
-    }
-    providers.forEach {
-        DropdownMenuItem(
-            text = {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = it.displayName,
-                        modifier = Modifier.padding(start = 6.dp)
-                    )
-                    if (it.hasWordByWord) WordByWordBadge()
-                    Spacer(modifier = Modifier.weight(1f))
-                    RadioButton(
-                        selected = selectedProvider == it,
-                        onClick = { pick(it) }
-                    )
-                }
-            },
-            onClick = { pick(it) }
-        )
-    }
+    Choice(ProviderChoice.Auto, stringResource(R.string.provider_mode_auto))
+    Choice(ProviderChoice.CustomOrder, stringResource(R.string.provider_mode_my_list))
+    HorizontalDivider(Modifier.padding(vertical = 4.dp))
+    providers.forEach { Choice(ProviderChoice.Only(it), it.displayName, it.hasWordByWord) }
 }
 
 /** Small "W" badge for providers with word-by-word lyrics. */

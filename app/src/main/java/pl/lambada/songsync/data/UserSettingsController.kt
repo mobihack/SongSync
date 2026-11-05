@@ -11,6 +11,7 @@ import pl.lambada.songsync.domain.model.SortOrders
 import pl.lambada.songsync.domain.model.SortValues
 import pl.lambada.songsync.util.FolderMode
 import pl.lambada.songsync.util.ProviderChain
+import pl.lambada.songsync.util.ProviderChoice
 import pl.lambada.songsync.util.ProviderMode
 import pl.lambada.songsync.util.Providers
 import pl.lambada.songsync.util.get
@@ -87,12 +88,6 @@ class UserSettingsController(private val dataStore: DataStore<Preferences>) {
     )
         private set
 
-    /**
-     * Provider picked from the home menu while in [ProviderMode.MY_LIST]. Lasts until the app
-     * restarts (not persisted); null means "use My list".
-     */
-    var sessionProvider by mutableStateOf<Providers?>(null)
-        private set
 
     var sdCardPath by mutableStateOf(dataStore.get(sdCardPathKey, null))
         private set
@@ -177,7 +172,6 @@ class UserSettingsController(private val dataStore: DataStore<Preferences>) {
     fun updateProviderMode(to: ProviderMode) {
         dataStore.set(providerModeKey, to.name)
         providerMode = to
-        if (to != ProviderMode.MY_LIST) sessionProvider = null
     }
 
     fun updateMyProviders(to: List<Providers>) {
@@ -185,31 +179,33 @@ class UserSettingsController(private val dataStore: DataStore<Preferences>) {
         myProviders = to
     }
 
-    /**
-     * What the provider picker shows as selected: in My list mode the temporary pick, or null for
-     * "My list"; otherwise the saved provider.
-     */
-    fun pickerSelection(songOverride: Providers? = null): Providers? =
-        if (providerMode == ProviderMode.MY_LIST) songOverride ?: sessionProvider else selectedProvider
+    /** What the provider menus show as chosen. */
+    val providerChoice: ProviderChoice
+        get() = when (providerMode) {
+            ProviderMode.AUTO -> ProviderChoice.Auto
+            ProviderMode.MY_LIST -> ProviderChoice.CustomOrder
+            ProviderMode.SELECTED -> ProviderChoice.Only(selectedProvider)
+        }
 
     /**
-     * Picker choice from the home menu. In My list mode it only lasts for this session (null goes
-     * back to the list); otherwise it changes the saved provider.
+     * A choice from a provider menu (home or song screen), saved like the same choice in
+     * Settings. Picking a provider means Selected provider mode with that provider; the custom
+     * order is kept for when Custom order is chosen again.
      */
-    fun pickProvider(provider: Providers?) {
-        if (providerMode == ProviderMode.MY_LIST) sessionProvider = provider
-        else if (provider != null) updateSelectedProviders(provider)
+    fun choose(choice: ProviderChoice) = when (choice) {
+        ProviderChoice.Auto -> updateProviderMode(ProviderMode.AUTO)
+        ProviderChoice.CustomOrder -> updateProviderMode(ProviderMode.MY_LIST)
+        is ProviderChoice.Only -> {
+            updateSelectedProviders(choice.provider)
+            updateProviderMode(ProviderMode.SELECTED)
+        }
     }
 
-    /**
-     * Providers to search, in order, for the current mode.
-     * @param songOverride a provider picked for one song (My list mode only).
-     */
-    fun lookupProviders(songOverride: Providers? = null): List<Providers> = ProviderChain.lookup(
+    /** Providers to search, in order, for the current mode. */
+    fun lookupProviders(): List<Providers> = ProviderChain.lookup(
         mode = providerMode,
         selected = selectedProvider,
         myList = myProviders,
-        override = songOverride ?: sessionProvider,
     )
 
     fun updateDisableMarquee(to: Boolean) {

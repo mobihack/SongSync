@@ -18,6 +18,14 @@ enum class ProviderMode {
     SELECTED,
 }
 
+/** A choice in the provider menu: one of the two multi-provider modes, or a single provider. */
+sealed interface ProviderChoice {
+    data object Auto : ProviderChoice
+    data object CustomOrder : ProviderChoice
+    /** Selected provider mode with [provider]. */
+    data class Only(val provider: Providers) : ProviderChoice
+}
+
 object ProviderChain {
     data class Found<T>(val provider: Providers, val value: T)
 

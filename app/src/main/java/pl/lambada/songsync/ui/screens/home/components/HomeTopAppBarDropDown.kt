@@ -23,16 +23,15 @@ import androidx.compose.ui.unit.dp
 import pl.lambada.songsync.R
 import pl.lambada.songsync.ui.components.ProvidersDropdownMenuContent
 import pl.lambada.songsync.ui.components.dropdown.AnimatedDropdownMenu
-import pl.lambada.songsync.util.Providers
+import pl.lambada.songsync.util.ProviderChoice
 import pl.lambada.songsync.util.ui.tweenEnter
 import pl.lambada.songsync.util.ui.tweenExit
 
 @Composable
 fun HomeTopAppBarDropDown(
     onNavigateToSettingsSectionRequest: () -> Unit,
-    selectedProvider: Providers?,
-    showMyList: Boolean,
-    onProviderSelectRequest: (Providers?) -> Unit,
+    providerChoice: ProviderChoice,
+    onProviderChoice: (ProviderChoice) -> Unit,
     onBatchDownloadRequest: () -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -72,9 +71,8 @@ fun HomeTopAppBarDropDown(
             if(it)
                 ProvidersDropdownMenuContent(
                     onDismissRequest = { expanded = false },
-                    selectedProvider = selectedProvider,
-                    showMyList = showMyList,
-                    onProviderSelectRequest = onProviderSelectRequest
+                    selected = providerChoice,
+                    onChoose = onProviderChoice,
                 )
             else
                 HomeDropdownContent(
