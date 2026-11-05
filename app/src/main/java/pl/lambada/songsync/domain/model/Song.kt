@@ -20,4 +20,8 @@ data class Song(
     val imgUri: Uri?,
     val filePath: String?,
     val durationMs: Long? = null,
-) : Parcelable
+) : Parcelable {
+    /** The title to search lyrics with: the tagged title, else the file name without extension. */
+    val searchTitle: String
+        get() = title ?: filePath?.substringAfterLast('/')?.substringBeforeLast('.').orEmpty()
+}

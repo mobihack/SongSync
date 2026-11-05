@@ -510,7 +510,7 @@ fun HomeScreenLoaded(
                         openWithTransition(song.filePath) {
                             navController.navigate(
                                 LyricsFetchScreen(
-                                    songName = song.title ?: error("song.title was null"),
+                                    songName = song.searchTitle,
                                     artists = song.artist ?: "",
                                     coverUri = song.imgUri.toString(),
                                     filePath = song.filePath,

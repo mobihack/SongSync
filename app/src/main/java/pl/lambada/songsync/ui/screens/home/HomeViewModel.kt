@@ -299,7 +299,7 @@ class HomeViewModel(
             downloadLyrics(
                 songs = songsToBatchDownload,
                 findLyrics = { song ->
-                    findLyrics(SongInfo(song.title, song.artist, durationMs = song.durationMs))?.value
+                    findLyrics(SongInfo(song.searchTitle, song.artist, durationMs = song.durationMs))?.value
                 },
                 saveLyrics = { song, lyrics ->
                     withContext(Dispatchers.IO) {
