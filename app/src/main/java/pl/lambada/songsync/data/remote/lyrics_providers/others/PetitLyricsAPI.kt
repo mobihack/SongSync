@@ -57,8 +57,9 @@ class PetitLyricsAPI(
 
     private fun parseSongs(xml: String): List<SongInfo> {
         val doc = DocumentBuilderFactory.newInstance().apply {
-            // Don't resolve external entities from a remote document
-            setFeature("http://apache.org/xml/features/disallow-doctype-decl", true)
+            // Don't resolve external entities from a remote document. Android's parser rejects
+            // this feature (and doesn't resolve external entities anyway), so it's best-effort.
+            runCatching { setFeature("http://apache.org/xml/features/disallow-doctype-decl", true) }
         }.newDocumentBuilder().parse(xml.byteInputStream())
 
         val nodes = doc.getElementsByTagName("song")
