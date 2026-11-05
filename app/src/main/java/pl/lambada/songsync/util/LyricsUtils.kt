@@ -182,7 +182,8 @@ enum class Providers(
 ) {
     APPLE("Apple Music", true),
     LRCLIB("LRCLib", false),
-    // Disabled: the TOTP secrets source (xyloflake/spot-secrets-go) was taken down.
+    // Disabled: search works again (spot-secrets-go is back, checked 2026-11-05), but the
+    // lyrics proxy in SpotifyLyricsAPI returns "Lyrics isn't available" for every track.
     SPOTIFY("Spotify", false, enabled = false),
     MUSIXMATCH("Musixmatch", false),
     QQMUSIC("QQ Music", true),
