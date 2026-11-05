@@ -9,6 +9,10 @@ enum class Contributor(
     val github: String? = null,
     val telegram: String? = null
 ) {
+    MOBIHACK(
+        "mobihack", ContributionLevel.FORK_DEVELOPER,
+        github = "https://github.com/mobihack"
+    ),
     LAMBADA10(
         "Lambada10", ContributionLevel.LEAD_DEVELOPER,
         github = "https://github.com/Lambada10", telegram = "https://t.me/Lambada10"
@@ -45,6 +49,7 @@ enum class Contributor(
 enum class ContributionLevel(val stringResource: Int) {
     CONTRIBUTOR(R.string.contributor),
     DEVELOPER(R.string.developer),
-    LEAD_DEVELOPER(R.string.lead_developer)
+    LEAD_DEVELOPER(R.string.lead_developer),
+    FORK_DEVELOPER(R.string.fork_developer)
 }
 

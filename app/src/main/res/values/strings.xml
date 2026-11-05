@@ -46,6 +46,7 @@
     <string name="contributor">Contributor</string>
     <string name="developer">Developer</string>
     <string name="lead_developer">Lead developer</string>
+    <string name="fork_developer">SongSync+ developer</string>
     <string name="close_app">Close app</string>
     <string name="permission_denied">Permission denied</string>
     <string name="requires_higher_storage_permissions">This app requires storage access for scanning your music library and saving lyrics.</string>
