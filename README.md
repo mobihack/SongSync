@@ -4,6 +4,8 @@ An Android app that finds synced lyrics (.lrc files) for the music already on yo
 
 SongSync+ is a fork of [SongSync](https://github.com/Lambada10/SongSync). It installs alongside the original (package `me.mobihack.songsyncplus`).
 
+[![Support me on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/mobihack)
+
 ### Features
 
 - **Whole library in one tap:** download lyrics for every song at once, or pick songs one by one
@@ -22,7 +24,9 @@ SongSync+ is a fork of [SongSync](https://github.com/Lambada10/SongSync). It ins
 
 ### Installation
 
-Download the latest version from the [releases page](https://github.com/mobihack/SongSync/releases).
+Download the latest version from the [releases page](https://github.com/mobihack/SongSync/releases), or add it to [Obtainium](https://github.com/ImranR98/Obtainium) to get updates automatically:
+
+<a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/mobihack/SongSync"><img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="54"></a>
 
 Requires Android 7.0 (API 24) or newer.
 
