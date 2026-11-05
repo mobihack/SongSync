@@ -22,7 +22,6 @@ import pl.lambada.songsync.activities.quicksearch.viewmodel.QuickLyricsSearchVie
 import pl.lambada.songsync.data.UserSettingsController
 import pl.lambada.songsync.data.remote.lyrics_providers.LyricsProviderService
 import pl.lambada.songsync.ui.theme.SongSyncTheme
-import pl.lambada.songsync.util.dataStore
 import pl.lambada.songsync.util.networking.Ktor
 
 class QuickLyricsSearchActivity : AppCompatActivity() {
@@ -33,7 +32,7 @@ class QuickLyricsSearchActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val userSettingsController = UserSettingsController(dataStore)
+        val userSettingsController = UserSettingsController.shared(this)
         val viewModel: QuickLyricsSearchViewModel by viewModels {
             QuickLyricsSearchViewModelFactory(userSettingsController, lyricsProviderService)
         }

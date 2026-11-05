@@ -1,5 +1,6 @@
 package pl.lambada.songsync.data
 
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -17,6 +18,7 @@ import pl.lambada.songsync.util.ProviderChain
 import pl.lambada.songsync.util.ProviderChoice
 import pl.lambada.songsync.util.ProviderMode
 import pl.lambada.songsync.util.Providers
+import pl.lambada.songsync.util.dataStore
 import pl.lambada.songsync.util.get
 import pl.lambada.songsync.util.networking.AppProxy
 import pl.lambada.songsync.util.networking.ProxyMode
@@ -28,6 +30,20 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 
 class UserSettingsController(private val dataStore: DataStore<Preferences>) {
+    companion object {
+        @Volatile
+        private var instance: UserSettingsController? = null
+
+        /**
+         * The app's one controller. Screens keep it across activity recreation (dark mode, rotation,
+         * wallpaper colours), so a view model that outlives the activity never reads stale settings.
+         */
+        fun shared(context: Context): UserSettingsController =
+            instance ?: synchronized(this) {
+                instance ?: UserSettingsController(context.applicationContext.dataStore).also { instance = it }
+            }
+    }
+
     var embedLyricsIntoFiles by mutableStateOf(dataStore.get(embedKey, false))
         private set
 

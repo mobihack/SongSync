@@ -12,7 +12,6 @@ import kotlinx.coroutines.withTimeoutOrNull
 import pl.lambada.songsync.data.UserSettingsController
 import pl.lambada.songsync.data.remote.lyrics_providers.LyricsProviderService
 import pl.lambada.songsync.domain.model.SongInfo
-import pl.lambada.songsync.util.dataStore
 
 /**
  * Poweramp lyrics plugin (Poweramp build 948+).
@@ -73,7 +72,7 @@ class PowerampLyricsReceiver : BroadcastReceiver() {
 
     /** @return the provider's name and its lyrics, or null if nothing was found. */
     private suspend fun findLyrics(context: Context, query: SongInfo): Pair<String, String>? {
-        val settings = UserSettingsController(context.dataStore)
+        val settings = UserSettingsController.shared(context)
         return runCatching {
             LyricsProviderService().findLyrics(
                 query,

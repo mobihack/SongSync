@@ -46,7 +46,6 @@ import pl.lambada.songsync.services.PowerampApi
 import pl.lambada.songsync.services.PowerampLyricsStore
 import pl.lambada.songsync.services.PowerampTrackPath
 import pl.lambada.songsync.ui.theme.SongSyncTheme
-import pl.lambada.songsync.util.dataStore
 import pl.lambada.songsync.util.embedLyricsInFile
 import pl.lambada.songsync.util.generateLrcContent
 import pl.lambada.songsync.util.isLegacyFileAccessRequired
@@ -65,7 +64,7 @@ class PowerampLyricsActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val settings = UserSettingsController(dataStore)
+        val settings = UserSettingsController.shared(this)
         val entry = realId(intent)?.let { PowerampLyricsStore.load(this, it) }?.let { stored ->
             // Entries stored without a file: look it up now from the link's track details
             if (stored.path != null) stored

@@ -35,7 +35,6 @@ import pl.lambada.songsync.ui.Navigator
 import pl.lambada.songsync.ui.components.dialogs.NoInternetDialog
 import pl.lambada.songsync.ui.theme.SongSyncTheme
 import pl.lambada.songsync.util.Providers
-import pl.lambada.songsync.util.dataStore
 import java.io.File
 
 /**
@@ -55,8 +54,7 @@ class MainActivity : ComponentActivity() {
             insets
         }
 
-        val dataStore = this.dataStore
-        val userSettingsController = UserSettingsController(dataStore)
+        val userSettingsController = UserSettingsController.shared(this)
         // Cover art from providers follows the proxy setting too
         Coil.setImageLoader { ImageLoader.Builder(applicationContext).okHttpClient { Ktor.baseOkHttp }.build() }
         checkOrCreateDownloadSubFolder()
