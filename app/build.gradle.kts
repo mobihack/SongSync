@@ -46,6 +46,12 @@ android {
         }
     }
     buildTypes {
+        // Own package id, so a debug build installs beside the release one instead of clashing
+        // with its signature
+        debug {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
         release {
             isMinifyEnabled = true
             proguardFiles(
@@ -61,6 +67,7 @@ android {
         create("benchmark") {
             initWith(getByName("release"))
             signingConfig = signingConfigs.getByName("debug")
+            applicationIdSuffix = ".debug"
             matchingFallbacks += listOf("release")
             isDebuggable = false
         }
