@@ -69,6 +69,14 @@ class HomeViewModel(
     var playingSongAlbumArt by mutableStateOf<Uri?>(null)
     var playingSongFilePath by mutableStateOf("")
 
+    /** Whether to show the now-playing song: always, unless a search is on and it doesn't match. */
+    val showNowPlaying: Boolean
+        get() = playingSongTitle.isNotEmpty() && (
+            searchQuery.isEmpty() ||
+                playingSongTitle.contains(searchQuery, ignoreCase = true) ||
+                playingSongArtist.contains(searchQuery, ignoreCase = true)
+            )
+
     // Songs left after the folder and "no lyrics only" filters; null when nothing is filtered.
     // (An empty list is a real result, e.g. "only these folders" with none chosen.)
     private var _cachedFilteredSongs = MutableStateFlow<List<Song>?>(null)

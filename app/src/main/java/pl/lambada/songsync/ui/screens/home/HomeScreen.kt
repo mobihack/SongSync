@@ -409,7 +409,7 @@ fun HomeScreenLoaded(
             }
 
             item {
-                if (viewModel.playingSongTitle.isNotEmpty()) {
+                if (viewModel.showNowPlaying) {
                     Text(stringResource(id = R.string.now_playing_song))
                     SongItem(
                         filePath = viewModel.playingSongFilePath,
@@ -446,7 +446,7 @@ fun HomeScreenLoaded(
 
             item(key = "libraryHeader") {
                 Column {
-                    if (viewModel.playingSongTitle.isNotEmpty()) HorizontalDivider()
+                    if (viewModel.showNowPlaying) HorizontalDivider()
                     LibraryHeader(songCount = viewModel.displaySongs.size)
                 }
             }
