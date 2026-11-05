@@ -135,6 +135,9 @@
     <string name="multi_person_word_by_word">Multi-person word by word lyrics</string>
     <string name="multi_person_word_by_word_summary2">Use multi-person lyrics format when getting lyrics from supported provider</string>
     <string name="offset">Offset</string>
+    <string name="offset_decrease">Decrease offset by 0.1 seconds</string>
+    <string name="offset_increase">Increase offset by 0.1 seconds</string>
+    <string name="language_original">%1$s (Original)</string>
     <string name="song_path">Show song path</string>
     <string name="song_path_description">Show the path of a song file on song list</string>
     <string name="synced_lyrics">Get Unsynced Lyrics</string>

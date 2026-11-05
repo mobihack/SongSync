@@ -2,7 +2,6 @@ package pl.lambada.songsync.ui.screens.home.components
 
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.imeAnimationTarget
@@ -15,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ShapeDefaults
 import androidx.compose.material3.Text
@@ -96,26 +96,23 @@ fun HomeSearchBar(
     TextField(
         query,
         onValueChange = onQueryChange,
+        // IconButtons: a 48dp touch target and a button role for TalkBack
         leadingIcon = {
-            Icon(
-                Icons.Filled.Search,
-                contentDescription = stringResource(id = R.string.search),
-                modifier = Modifier.clickable {
-                    onShowSearchChange(false)
-                    onShowingSearchChange(false)
-                }
-            )
+            IconButton(onClick = {
+                onShowSearchChange(false)
+                onShowingSearchChange(false)
+            }) {
+                Icon(Icons.Filled.Search, contentDescription = stringResource(id = R.string.search))
+            }
         },
         trailingIcon = {
-            Icon(
-                imageVector = Icons.Default.Clear,
-                contentDescription = stringResource(id = R.string.clear),
-                modifier = Modifier.clickable {
-                    onQueryChange("")
-                    onShowSearchChange(false)
-                    onShowingSearchChange(false)
-                }
-            )
+            IconButton(onClick = {
+                onQueryChange("")
+                onShowSearchChange(false)
+                onShowingSearchChange(false)
+            }) {
+                Icon(Icons.Default.Clear, contentDescription = stringResource(id = R.string.clear))
+            }
         },
         placeholder = { Text(stringResource(id = R.string.search)) },
         shape = ShapeDefaults.ExtraLarge,

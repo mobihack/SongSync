@@ -79,7 +79,7 @@ fun LanguageSelector(
             originalLanguage?.let { origLang ->
                 DropdownMenuItem(
                     text = {
-                        Text("${musixmatchAPI.getLanguageDisplayName(origLang)} (Original)")
+                        Text(stringResource(R.string.language_original, musixmatchAPI.getLanguageDisplayName(origLang)))
                     },
                     onClick = {
                         onLanguageSelected(origLang)

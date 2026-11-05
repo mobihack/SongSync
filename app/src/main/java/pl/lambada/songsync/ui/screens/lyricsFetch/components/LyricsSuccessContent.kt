@@ -117,7 +117,7 @@ fun LyricsSuccessContent(
             ) {
                 Icon(
                     imageVector = Icons.Default.Remove,
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.offset_decrease),
                     modifier = Modifier.size(20.dp)
                 )
             }
@@ -145,7 +145,7 @@ fun LyricsSuccessContent(
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = null,
+                    contentDescription = stringResource(R.string.offset_increase),
                     modifier = Modifier.size(20.dp)
                 )
             }
