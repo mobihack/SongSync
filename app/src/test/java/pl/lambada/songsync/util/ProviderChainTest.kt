@@ -91,6 +91,24 @@ class ProviderChainTest {
     }
 
     @Test
+    fun `providers finding nothing aren't reported as an error`() = runTest {
+        // One provider erroring and the rest finding nothing is "nothing found", not that error
+        val (found, _) = run(
+            listOf(Providers.MUSIXMATCH, Providers.LRCLIB),
+            mapOf(
+                Providers.MUSIXMATCH to { throw InternalErrorException("timeout") },
+                Providers.LRCLIB to { throw NoTrackFoundException() },
+            ),
+        )
+        found.shouldBeNull()
+    }
+
+    @Test
+    fun `a single provider finding nothing gives null`() = runTest {
+        run(listOf(Providers.LRCLIB), mapOf(Providers.LRCLIB to { throw NoTrackFoundException() })).first.shouldBeNull()
+    }
+
+    @Test
     fun `with a single provider its error is reported as before`() = runTest {
         shouldThrow<ProviderUnavailableException> {
             run(listOf(Providers.MUSIXMATCH), mapOf(Providers.MUSIXMATCH to { throw ProviderUnavailableException("blocked") }))

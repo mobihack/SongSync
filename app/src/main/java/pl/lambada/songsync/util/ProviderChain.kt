@@ -115,6 +115,10 @@ object ProviderChain {
                 throw e
             } catch (e: CancellationException) {
                 throw e
+            } catch (e: NoTrackFoundException) {
+                // An answer, just not a match: "nothing found" rather than an error to report
+                anyAnswered = true
+                null
             } catch (e: EmptyQueryException) {
                 throw e
             } catch (e: Exception) {
