@@ -186,7 +186,7 @@ enum class Providers(
     SPOTIFY("Spotify", false, enabled = false),
     MUSIXMATCH("Musixmatch", false),
     QQMUSIC("QQ Music", true),
-    NETEASE("Netease", false) { val inf = 0 },
+    NETEASE("Netease", true) { val inf = 0 },
     DEEZER("Deezer", false),
     // Plain-text only; hidden unless a credential is set in local.properties
     GENIUS("Genius", false, enabled = BuildConfig.GENIUS_TOKEN.isNotBlank()),

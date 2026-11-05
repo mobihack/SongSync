@@ -71,6 +71,31 @@ class NeteaseAPITest {
     }
 
     @Test
+    fun `lyrics request asks for word timings`() = runTest {
+        val http = FakeHttp { respondJson(lyricsResponse) }
+        NeteaseAPI(http.client).getSyncedLyrics(1)
+
+        val request = http.requests.single()
+        request.url.encodedPath shouldBe "/api/song/lyric/v1"
+        request.url.parameters["yv"] shouldBe "1"
+    }
+
+    @Test
+    fun `word-by-word lyrics are preferred when available`() = runTest {
+        val http = FakeHttp {
+            respondJson(
+                """
+                {"lrc":{"lyric":"[00:12.77]No matter"},
+                 "yrc":{"lyric":"{\"t\":0,\"c\":[]}\n[12770,2460](12770,210,0)No (12980,390,0)matter"},
+                 "code":200}
+                """.trimIndent()
+            )
+        }
+        NeteaseAPI(http.client).getSyncedLyrics(1) shouldBe
+            "[00:12.770]<00:12.770>No <00:12.980>matter<00:13.370>"
+    }
+
+    @Test
     fun `lyrics appends translation and romanization when asked`() = runTest {
         val http = FakeHttp { respondJson(lyricsResponse) }
         NeteaseAPI(http.client).getSyncedLyrics(1, includeTranslation = true, includeRomanization = true) shouldBe

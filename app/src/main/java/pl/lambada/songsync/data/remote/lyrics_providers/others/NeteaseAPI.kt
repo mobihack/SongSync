@@ -12,6 +12,7 @@ import pl.lambada.songsync.domain.model.lyrics_providers.others.NeteaseLyricsRes
 import pl.lambada.songsync.domain.model.lyrics_providers.others.NeteaseResponse
 import pl.lambada.songsync.util.EmptyQueryException
 import pl.lambada.songsync.util.InternalErrorException
+import pl.lambada.songsync.util.WordSync
 import pl.lambada.songsync.util.networking.Ktor
 import pl.lambada.songsync.util.networking.Ktor.json
 
@@ -90,7 +91,7 @@ class NeteaseAPI(private val client: HttpClient = Ktor.client) {
         includeRomanization: Boolean = false
     ): String? {
         val response = client.get(
-            baseURL + "song/lyric"
+            baseURL + "song/lyric/v1"
         ) {
             reqHeaders.forEach {
                 header(it.key, it.value)
@@ -99,6 +100,7 @@ class NeteaseAPI(private val client: HttpClient = Ktor.client) {
             parameter("lv", 1)
             parameter("tv", 1)
             parameter("rv", 1)
+            parameter("yv", 1) // word-by-word timings ("yrc")
         }
         val responseBody = response.bodyAsText(Charsets.UTF_8)
 
@@ -107,10 +109,14 @@ class NeteaseAPI(private val client: HttpClient = Ktor.client) {
 
         val json = json.decodeFromString<NeteaseLyricsResponse>(responseBody)
 
-        if (json.lrc.lyric.isEmpty())
+        val wordByWord = json.yrc?.lyric
+            ?.let { WordSync.render(WordSync.parseYrc(it)) }
+            ?.takeIf { it.isNotBlank() }
+
+        if (wordByWord == null && json.lrc.lyric.isEmpty())
             return null
 
-        var lyric = json.lrc.lyric
+        var lyric = wordByWord ?: json.lrc.lyric
 
         if (includeTranslation && json.tlyric?.lyric?.isNotEmpty() == true)
             lyric += "\n\n" + json.tlyric.lyric
