@@ -102,9 +102,16 @@ class LrcmuxAPITest {
     }
 
     @Test
-    fun `missing artist throws`() = runTest {
+    fun `missing artist finds nothing, without a request`() = runTest {
+        val http = FakeHttp { notFound() }
+        LrcmuxAPI(http.client).getSongInfo(SongInfo("Song", "")).shouldBeNull()
+        http.requests.shouldBeEmpty()
+    }
+
+    @Test
+    fun `missing title throws`() = runTest {
         shouldThrow<EmptyQueryException> {
-            LrcmuxAPI(FakeHttp { notFound() }.client).getSongInfo(SongInfo("Song", ""))
+            LrcmuxAPI(FakeHttp { notFound() }.client).getSongInfo(SongInfo("", "Artist"))
         }
     }
 }

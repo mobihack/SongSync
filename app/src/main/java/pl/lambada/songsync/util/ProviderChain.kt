@@ -1,6 +1,7 @@
 package pl.lambada.songsync.util
 
 import java.net.UnknownHostException
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Tries lyrics providers in order until one has synced lyrics, so a provider that is down or
@@ -92,7 +93,7 @@ object ProviderChain {
 
     /**
      * Calls [attempt] for each provider in turn and returns the first synced result, or the first
-     * plain one if none is synced. A provider that errors is skipped; being offline or an empty
+     * plain one if none is synced. A provider that errors is skipped; being offline, cancellation or an empty
      * query stops the chain. With a single provider, or when every provider errored, the (last)
      * error is rethrown so callers can report it as before.
      */
@@ -111,6 +112,8 @@ object ProviderChain {
             val value = try {
                 attempt(provider).also { anyAnswered = true }
             } catch (e: UnknownHostException) {
+                throw e
+            } catch (e: CancellationException) {
                 throw e
             } catch (e: EmptyQueryException) {
                 throw e

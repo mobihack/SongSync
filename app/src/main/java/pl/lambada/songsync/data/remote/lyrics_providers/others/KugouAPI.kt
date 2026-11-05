@@ -32,8 +32,9 @@ class KugouAPI(private val client: HttpClient = Ktor.clientFor(Providers.KUGOU))
     suspend fun getSongInfo(query: SongInfo, offset: Int = 0): SongInfo? {
         val artist = query.artistName.orEmpty().trim()
         val title = SearchMatching.cleanTitle(query.songName)
-        if (artist.isBlank() || title.isBlank())
-            throw EmptyQueryException()
+        if (title.isBlank()) throw EmptyQueryException()
+        // This provider needs an artist: without one it has no match, and the chain moves on
+        if (artist.isBlank()) return null
 
         val response = get(songSearchURL) {
             parameter("format", "json")

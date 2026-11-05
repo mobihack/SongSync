@@ -13,6 +13,7 @@ import pl.lambada.songsync.util.ProviderUnavailableException
 import pl.lambada.songsync.util.ProviderChain
 import pl.lambada.songsync.util.Providers
 import java.io.FileNotFoundException
+import kotlin.coroutines.cancellation.CancellationException
 import java.net.UnknownHostException
 
 /**
@@ -65,11 +66,7 @@ class LyricsProviderService {
         return try {
             sourceFor(provider).search(query, offset) ?: throw NoTrackFoundException()
         } catch (e: Exception) {
-            when (e) {
-                is InternalErrorException, is NoTrackFoundException, is EmptyQueryException,
-                is ProviderUnavailableException -> throw e
-                else -> throw InternalErrorException(Log.getStackTraceString(e))
-            }
+            throw searchError(e)
         }
     }
 
@@ -108,6 +105,17 @@ class LyricsProviderService {
     suspend fun getLyricsInLanguage(songId: Long, language: String): String? {
         return MusixmatchAPI().getLyricsInLanguage(songId, language)
     }
+}
+
+/**
+ * What a provider's search error is reported as. Errors callers act on pass through: being offline
+ * (shown as "No connection"), cancellation, and the lookup outcomes. Anything else becomes an
+ * [InternalErrorException] carrying its stack trace.
+ */
+internal fun searchError(e: Exception): Exception = when (e) {
+    is InternalErrorException, is NoTrackFoundException, is EmptyQueryException,
+    is ProviderUnavailableException, is UnknownHostException, is CancellationException -> e
+    else -> InternalErrorException(Log.getStackTraceString(e) ?: e.toString())
 }
 
 /** A matched song together with its lyrics. */

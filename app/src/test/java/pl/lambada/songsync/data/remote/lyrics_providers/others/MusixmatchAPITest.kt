@@ -175,9 +175,16 @@ class MusixmatchAPITest {
     }
 
     @Test
-    fun `missing title or artist throws`() = runTest {
+    fun `missing artist finds nothing, without a request`() = runTest {
+        val http = backend()
+        MusixmatchAPI(http.client).getSongInfo(SongInfo(songName = "Song", artistName = "")).shouldBeNull()
+        http.requests.shouldBeEmpty()
+    }
+
+    @Test
+    fun `missing title throws`() = runTest {
         shouldThrow<EmptyQueryException> {
-            MusixmatchAPI(backend().client).getSongInfo(SongInfo(songName = "Song", artistName = ""))
+            MusixmatchAPI(backend().client).getSongInfo(SongInfo(songName = "", artistName = "Artist"))
         }
     }
 

@@ -37,8 +37,9 @@ class MusixmatchAPI(private val client: HttpClient = Ktor.clientFor(Providers.MU
     suspend fun getSongInfo(query: SongInfo, offset: Int = 0): SongInfo? {
         val artist = query.artistName.orEmpty().trim()
         val title = query.songName.orEmpty().trim()
-        if (artist.isBlank() || title.isBlank())
-            throw EmptyQueryException()
+        if (title.isBlank()) throw EmptyQueryException()
+        // This provider needs an artist: without one it has no match, and the chain moves on
+        if (artist.isBlank()) return null
         if (offset > 0)
             return null
 

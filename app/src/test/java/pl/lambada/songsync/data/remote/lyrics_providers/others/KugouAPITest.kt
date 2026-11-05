@@ -1,6 +1,7 @@
 package pl.lambada.songsync.data.remote.lyrics_providers.others
 
 import android.util.Base64
+import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
@@ -128,8 +129,15 @@ class KugouAPITest {
     }
 
     @Test
-    fun `missing artist throws`() = runTest {
-        shouldThrow<EmptyQueryException> { KugouAPI(backend().client).getSongInfo(SongInfo("晴天", "")) }
+    fun `missing artist finds nothing, without a request`() = runTest {
+        val http = backend()
+        KugouAPI(http.client).getSongInfo(SongInfo("晴天", "")).shouldBeNull()
+        http.requests.shouldBeEmpty()
+    }
+
+    @Test
+    fun `missing title throws`() = runTest {
+        shouldThrow<EmptyQueryException> { KugouAPI(backend().client).getSongInfo(SongInfo("", "周杰伦")) }
     }
 
     @Test

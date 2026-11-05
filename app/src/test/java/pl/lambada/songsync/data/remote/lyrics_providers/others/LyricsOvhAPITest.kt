@@ -55,9 +55,16 @@ class LyricsOvhAPITest {
     }
 
     @Test
-    fun `missing artist throws`() = runTest {
+    fun `missing artist finds nothing, without a request`() = runTest {
+        val http = FakeHttp { respondJson("{}") }
+        LyricsOvhAPI(http.client).getSongInfo(SongInfo("Song", " ")).shouldBeNull()
+        http.requests.shouldBeEmpty()
+    }
+
+    @Test
+    fun `missing title throws`() = runTest {
         shouldThrow<EmptyQueryException> {
-            LyricsOvhAPI(FakeHttp { respondJson("{}") }.client).getSongInfo(SongInfo("Song", " "))
+            LyricsOvhAPI(FakeHttp { respondJson("{}") }.client).getSongInfo(SongInfo(" ", "Artist"))
         }
     }
 }

@@ -4,6 +4,7 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import java.net.UnknownHostException
@@ -119,6 +120,29 @@ class ProviderChainTest {
             }
         }
         tried.shouldContainExactly(Providers.LRCLIB)
+    }
+
+    @Test
+    fun `cancellation stops the chain instead of trying the next provider`() = runTest {
+        val tried = mutableListOf<Providers>()
+        shouldThrow<CancellationException> {
+            ProviderChain.find(listOf(Providers.LRCLIB, Providers.NETEASE), ProviderChain::isSynced) { provider ->
+                tried += provider
+                throw CancellationException("search cancelled")
+            }
+        }
+        tried.shouldContainExactly(Providers.LRCLIB)
+    }
+
+    @Test
+    fun `a song without an artist still reaches providers that only need a title`() = runTest {
+        // Artist-only providers answer "no match" for a blank artist rather than stopping the chain
+        val (found, tried) = run(
+            listOf(Providers.MUSIXMATCH, Providers.BINILYRICS),
+            mapOf(Providers.MUSIXMATCH to { null }, Providers.BINILYRICS to { synced }),
+        )
+        found shouldBe ProviderChain.Found(Providers.BINILYRICS, synced)
+        tried.shouldContainExactly(Providers.MUSIXMATCH, Providers.BINILYRICS)
     }
 
     @Test
