@@ -1,47 +1,43 @@
 # SongSync+
 
-A fork of [SongSync](https://github.com/Lambada10/SongSync) by Lambada10. It installs alongside the original (package `me.mobihack.songsyncplus`).
+An Android app that finds synced lyrics (.lrc files) for the music already on your phone and saves them next to your songs.
 
-A simple Android app to download lyrics (.lrc files) for songs in your music library.
+SongSync+ is a fork of [SongSync](https://github.com/Lambada10/SongSync). It installs alongside the original (package `me.mobihack.songsyncplus`).
 
 ### Features
 
-- Download lyrics for whole music library with a single click
-- Download lyrics for individual songs in your music library
-- Embed lyrics directly to song
-- Download lyrics from various providers
-- Search for lyrics for songs not in your music library (and download them)
-
-### Screenshots (v4.0.0)
-
-![Screenshot 1](https://github.com/Lambada10/SongSync/raw/master/screenshots/screenshot1.png)
-![Screenshot 2](https://github.com/Lambada10/SongSync/raw/master/screenshots/screenshot2.png)
-![Screenshot 3](https://github.com/Lambada10/SongSync/raw/master/screenshots/screenshot3.png)
-![Screenshot 4](https://github.com/Lambada10/SongSync/raw/master/screenshots/screenshot4.png)
-![Screenshot 5](https://github.com/Lambada10/SongSync/raw/master/screenshots/screenshot5.png)
+- **Whole library in one tap:** download lyrics for every song at once, or pick songs one by one
+- **Many lyrics providers:** pick the one that works best for your music
+- **Automatic fallback:** if one provider has nothing, the next one is tried, in the default order or your own
+- **Better matches:** uses the track's duration to pick the right result and prefers the exact title over tagged versions
+- **Word-by-word lyrics:** from providers that have them, including separate voices for duets
+- **Clean lyrics:** strips songwriter credits, metadata and section labels
+- **Save or embed:** write an .lrc file next to the song, or embed the lyrics in the audio file
+- **Now playing:** shows the song playing on your phone and gets its lyrics in one tap (needs notification access)
+- **Poweramp plugin:** answers Poweramp's lyrics requests with your providers
+- **Music folders:** include only some folders, or ignore some
+- **Proxy support:** route provider requests through an HTTP or SOCKS proxy
+- **Search:** find lyrics for songs that aren't in your library, and save them
+- **Material 3 Expressive design:** follows your wallpaper colours, with light, dark and pure-black themes
 
 ### Installation
 
-You can download the latest version of the app from the [releases page](https://github.com/mobihack/SongSync/releases).
+Download the latest version from the [releases page](https://github.com/mobihack/SongSync/releases).
 
-Requires Android 7.0 (API 24) or newer. Version 4.3.3 is the last release for Android 5.0–6.0.
+Requires Android 7.0 (API 24) or newer.
 
 ### Translation
 
-If you would like to help translating this app, you can do so [here](https://hosted.weblate.org/engage/songsync/).
+Translations live in `app/src/main/res/values-*/strings.xml`. To add or improve one, open a [pull request](https://github.com/mobihack/SongSync/pulls).
+
+### Issues
+
+Found a bug or have an idea? [Open an issue](https://github.com/mobihack/SongSync/issues).
+
+### Thanks to SongSync
+
+SongSync+ is built on [SongSync](https://github.com/Lambada10/SongSync) by [Lambada10](https://github.com/Lambada10) and its contributors. Everything up to version 4.3.3 is their work: library scanning, lyrics downloading and embedding, the original providers, and the translations from the SongSync community on Weblate. Thank you for building it and for releasing it as free software.
 
 ### License
 
-This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
-
-### Thanks to
-
-- [Spotify](https://developer.spotify.com/documentation/web-api)
-- [SpotifyLyricsAPI](https://github.com/akashrchandran/spotify-lyrics-api)
-- [syncedlyrics](https://github.com/0x7d4/syncedlyrics)
-- [Statusbar Lyric Ext](https://github.com/cjybyjk/StatusBarLyricExt)
-- [Alex](https://github.com/paxsenix0) for access to various apis
-
-### Friend projects
-
-[Gramophone](https://github.com/AkaneTan/Gramophone)
+This project is licensed under the GNU General Public License v3.0. See the [LICENSE](LICENSE) file for details.
