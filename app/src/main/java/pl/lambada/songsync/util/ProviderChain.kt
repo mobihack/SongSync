@@ -39,11 +39,13 @@ object ProviderChain {
         Providers.LRCMUX,
         Providers.KUGOU,
         Providers.BINILYRICS,
+        Providers.BETTERLYRICS,
         Providers.MUSIXMATCH,
         Providers.QQMUSIC,
         Providers.APPLE,
         Providers.DEEZER,
         Providers.GENIE,
+        Providers.UNISON,
         Providers.GENIUS,
         Providers.PETITLYRICS,
         Providers.LYRICSOVH,
@@ -51,6 +53,22 @@ object ProviderChain {
 
     /** Every enabled provider, best synced sources first: Auto's order and the custom order's default. */
     val defaultOrder: List<Providers> get() = fallbackOrder.filter { it.enabled }
+
+    /**
+     * [saved] plus every enabled provider that wasn't in [known] when it was saved (one added in an
+     * app update), each placed after the provider it follows in the default order. Providers the
+     * user removed from the list stay out.
+     */
+    fun withNewProviders(saved: List<Providers>, known: Set<Providers>): List<Providers> {
+        val result = saved.toMutableList()
+        for (provider in defaultOrder) {
+            if (provider in known || provider in result) continue
+            // The nearest provider before it in the default order that the list has
+            val anchor = defaultOrder.subList(0, defaultOrder.indexOf(provider)).lastOrNull { it in result }
+            result.add(if (anchor == null) 0 else result.indexOf(anchor) + 1, provider)
+        }
+        return result
+    }
 
     /**
      * Providers to search, in order, for the given [mode].

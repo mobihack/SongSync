@@ -1,6 +1,7 @@
 package pl.lambada.songsync.data.remote.lyrics_providers
 
 import pl.lambada.songsync.data.remote.lyrics_providers.apple.AppleAPI
+import pl.lambada.songsync.data.remote.lyrics_providers.others.BetterLyricsAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.others.BiniLyricsAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.others.DeezerAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.others.GenieAPI
@@ -13,6 +14,7 @@ import pl.lambada.songsync.data.remote.lyrics_providers.others.MusixmatchAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.others.NeteaseAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.others.PetitLyricsAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.others.QQMusicAPI
+import pl.lambada.songsync.data.remote.lyrics_providers.others.UnisonAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.spotify.SpotifyAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.spotify.SpotifyLyricsAPI
 import pl.lambada.songsync.domain.model.SongInfo
@@ -118,6 +120,14 @@ sealed interface LyricsSource {
 
     data object Lrcmux : Prefetched() {
         override suspend fun search(query: SongInfo, offset: Int) = LrcmuxAPI().getSongInfo(query, offset)
+    }
+
+    data object BetterLyrics : Prefetched() {
+        override suspend fun search(query: SongInfo, offset: Int) = BetterLyricsAPI().getSongInfo(query, offset)
+    }
+
+    data object Unison : Prefetched() {
+        override suspend fun search(query: SongInfo, offset: Int) = UnisonAPI().getSongInfo(query, offset)
     }
 
     data object LyricsOvh : Prefetched() {

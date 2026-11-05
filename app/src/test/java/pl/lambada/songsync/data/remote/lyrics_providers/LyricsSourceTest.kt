@@ -26,6 +26,7 @@ class LyricsSourceTest {
         listOf(
             LyricsSource.LrcLib, LyricsSource.Netease, LyricsSource.QQMusic, LyricsSource.Deezer,
             LyricsSource.Genius, LyricsSource.Kugou, LyricsSource.BiniLyrics, LyricsSource.Genie,
+            LyricsSource.BetterLyrics, LyricsSource.Unison,
         ).forEach { it.lyrics(bare, options) shouldBe null }
     }
 }

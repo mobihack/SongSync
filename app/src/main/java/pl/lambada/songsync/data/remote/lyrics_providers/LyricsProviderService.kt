@@ -34,7 +34,9 @@ class LyricsProviderService {
         Providers.GENIUS -> LyricsSource.Genius
         Providers.KUGOU -> LyricsSource.Kugou
         Providers.BINILYRICS -> LyricsSource.BiniLyrics
+        Providers.BETTERLYRICS -> LyricsSource.BetterLyrics
         Providers.GENIE -> LyricsSource.Genie
+        Providers.UNISON -> LyricsSource.Unison
         Providers.PETITLYRICS -> LyricsSource.PetitLyrics
         Providers.LRCMUX -> LyricsSource.Lrcmux
         Providers.LYRICSOVH -> LyricsSource.LyricsOvh

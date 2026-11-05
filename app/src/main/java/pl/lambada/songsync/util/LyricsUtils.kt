@@ -192,7 +192,9 @@ enum class Providers(
     LRCMUX("lrcmux", true),
     KUGOU("KuGou", true),
     BINILYRICS("BiniLyrics", true),
+    BETTERLYRICS("BetterLyrics", true),
     GENIE("Genie", false),
+    UNISON("Unison", true),
     // Plain-text only; hidden unless a credential is set in local.properties
     GENIUS("Genius", false, enabled = BuildConfig.GENIUS_TOKEN.isNotBlank()),
     PETITLYRICS("PetitLyrics", false, enabled = BuildConfig.PETITLYRICS_CLIENT_ID.isNotBlank()),

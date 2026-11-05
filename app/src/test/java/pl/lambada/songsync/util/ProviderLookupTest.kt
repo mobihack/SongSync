@@ -34,4 +34,29 @@ class ProviderLookupTest {
             .shouldContainExactly(Providers.LRCLIB)
         ProviderChain.lookup(ProviderMode.MY_LIST, Providers.LRCLIB, emptyList()) shouldBe ProviderChain.defaultOrder
     }
+
+    @Test
+    fun `new providers join a saved list after the provider they follow by default`() {
+        val saved = listOf(Providers.APPLE, Providers.BINILYRICS, Providers.LRCLIB, Providers.GENIE)
+        val known = Providers.entries.toSet() - setOf(Providers.BETTERLYRICS, Providers.UNISON)
+
+        ProviderChain.withNewProviders(saved, known).shouldContainExactly(
+            Providers.APPLE, Providers.BINILYRICS, Providers.BETTERLYRICS, Providers.LRCLIB,
+            Providers.GENIE, Providers.UNISON,
+        )
+    }
+
+    @Test
+    fun `providers the user removed stay out, and a new one with no predecessor goes first`() {
+        val known = Providers.entries.toSet() - Providers.LRCLIB
+        ProviderChain.withNewProviders(listOf(Providers.NETEASE), known)
+            .shouldContainExactly(Providers.LRCLIB, Providers.NETEASE)
+    }
+
+    @Test
+    fun `the fallback order has the new providers in place`() {
+        val order = ProviderChain.defaultOrder
+        order.indexOf(Providers.BETTERLYRICS) shouldBe order.indexOf(Providers.BINILYRICS) + 1
+        order.indexOf(Providers.UNISON) shouldBe order.indexOf(Providers.GENIE) + 1
+    }
 }

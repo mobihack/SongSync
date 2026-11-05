@@ -82,10 +82,17 @@ class UserSettingsController(private val dataStore: DataStore<Preferences>) {
 
     /** The user's ordered providers for [ProviderMode.MY_LIST]. */
     var myProviders by mutableStateOf(
-        dataStore.get(myProvidersKey, "").split(",")
-            .mapNotNull { name -> Providers.entries.find { it.name == name }?.takeIf { it.enabled } }
-            .distinct()
-            .ifEmpty { ProviderChain.defaultOrder }
+        dataStore.get(myProvidersKey, "").parseProviders().filter { it.enabled }
+            .takeIf { it.isNotEmpty() }
+            ?.let { saved ->
+                ProviderChain.withNewProviders(
+                    saved,
+                    // Lists saved before this was recorded knew every provider but these
+                    known = dataStore.get(knownProvidersKey, null)?.parseProviders()?.toSet()
+                        ?: (Providers.entries.toSet() - setOf(Providers.BETTERLYRICS, Providers.UNISON)),
+                )
+            }
+            ?: ProviderChain.defaultOrder
     )
         private set
 
@@ -177,6 +184,8 @@ class UserSettingsController(private val dataStore: DataStore<Preferences>) {
 
     fun updateMyProviders(to: List<Providers>) {
         dataStore.set(myProvidersKey, to.joinToString(",") { it.name })
+        // So a provider added in a later update can be told apart from one the user removed
+        dataStore.set(knownProvidersKey, Providers.entries.filter { it.enabled }.joinToString(",") { it.name })
         myProviders = to
     }
 
@@ -272,6 +281,10 @@ private val disableMarqueeKey = booleanPreferencesKey("marquee_disable")
 private val providerFallbackKey = booleanPreferencesKey("provider_fallback") // legacy, read for migration
 private val providerModeKey = stringPreferencesKey("provider_mode")
 private val myProvidersKey = stringPreferencesKey("my_providers")
+private val knownProvidersKey = stringPreferencesKey("my_providers_known")
+
+private fun String.parseProviders(): List<Providers> =
+    split(",").mapNotNull { name -> Providers.entries.find { it.name == name } }.distinct()
 private val folderModeKey = stringPreferencesKey("folder_mode")
 private val onlyFoldersKey = stringPreferencesKey("only_folders")
 private val pureBlackKey = booleanPreferencesKey("pure_black")
