@@ -1,5 +1,6 @@
 package pl.lambada.songsync.ui.screens.settings.components
 
+import android.content.Intent
 import android.net.Uri
 import android.os.Environment
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -21,6 +22,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -29,6 +31,7 @@ import pl.lambada.songsync.R
 
 @Composable
 fun SdCardPathSetting(sdPath: String?, onClearPath: () -> Unit, onUpdatePath: (String) -> Unit) {
+    val context = LocalContext.current
     var picker by remember { mutableStateOf(false) }
     Column(
         modifier = Modifier.padding(horizontal = 22.dp, vertical = 16.dp)
@@ -57,7 +60,14 @@ fun SdCardPathSetting(sdPath: String?, onClearPath: () -> Unit, onUpdatePath: (S
         if (picker) {
             val sdCardPicker =
                 rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) {
-                    it?.let { uri -> onUpdatePath(uri.toString()) }
+                    it?.let { uri ->
+                        // Keep access after the app restarts; without this the grant ends with the process
+                        context.contentResolver.takePersistableUriPermission(
+                            uri,
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+                        )
+                        onUpdatePath(uri.toString())
+                    }
                     picker = false
                 }
             LaunchedEffect(Unit) {
