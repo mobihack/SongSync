@@ -136,39 +136,29 @@ fun embedLyricsInFile(
     securityExceptionHandler: (PendingIntent) -> Unit = {}
 ): Boolean {
     return try {
-        val fd = getFileDescriptorFromPath(context, filePath, mode = "w")
+        // "rw", not "w": "w" is write-only and may truncate, which would empty the song file
+        // before its tags are read
+        val fd = getFileDescriptorFromPath(context, filePath, mode = "rw")
             ?: throw IllegalStateException("File descriptor is null")
 
-        val fileDescriptor = fd.dup().detachFd()
-        val metadata = TagLib.getMetadata(fileDescriptor, false) ?: error("Metadata is null")
+        fd.use {
+            val metadata = TagLib.getMetadata(it.dup().detachFd(), false) ?: error("Metadata is null")
 
-        TagLib.savePropertyMap(
-            fd.dup().detachFd(),
-            propertyMap = metadata.propertyMap.apply { put("LYRICS", arrayOf(lyrics)) }
-        )
-
-        true
+            TagLib.savePropertyMap(
+                it.dup().detachFd(),
+                propertyMap = metadata.propertyMap.apply { put("LYRICS", arrayOf(lyrics)) }
+            )
+        }
     } catch (securityException: SecurityException) {
-        handleSecurityException(securityException, securityExceptionHandler)
+        Log.e("LyricsUtils", "No permission to embed lyrics: ${securityException.message}")
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            (securityException as? RecoverableSecurityException)
+                ?.let { securityExceptionHandler(it.userAction.actionIntent) }
+        }
         false
     } catch (e: Exception) {
-        Log.e("LyricsFetchViewModel", "Error embedding lyrics: ${e.message}")
+        Log.e("LyricsUtils", "Error embedding lyrics: ${e.message}")
         false
-    }
-}
-
-fun handleSecurityException(
-    securityException: SecurityException,
-    intentPassthrough: (PendingIntent) -> Unit
-) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        val recoverableSecurityException =
-            securityException as? RecoverableSecurityException
-                ?: throw RuntimeException(securityException.message, securityException)
-
-        intentPassthrough(recoverableSecurityException.userAction.actionIntent)
-    } else {
-        throw RuntimeException(securityException.message, securityException)
     }
 }
 

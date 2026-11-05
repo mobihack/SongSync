@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import pl.lambada.songsync.R
 import pl.lambada.songsync.data.UserSettingsController
 import pl.lambada.songsync.data.remote.lyrics_providers.LyricsProviderService
@@ -158,16 +159,19 @@ class LyricsFetchViewModel(
     ) {
         val lrcContent = generateLrcContent(song, lyrics, context.getString(R.string.generated_using), lrcOffset, userSettingsController.directlyModifyTimestamps)
 
-        runCatching {
-            embedLyricsInFile(
-                context = context,
-                filePath = if (filePath != null && filePath.isNotEmpty()) filePath else throw NullPointerException("File path is null"),
-                lrcContent
+        if (filePath.isNullOrEmpty()) {
+            showToast(context, R.string.embed_non_local_song_error)
+            return
+        }
+
+        viewModelScope.launch {
+            val embedded = withContext(Dispatchers.IO) {
+                embedLyricsInFile(context = context, filePath = filePath, lyrics = lrcContent)
+            }
+            showToast(
+                context,
+                if (embedded) R.string.embedded_lyrics_in_file else R.string.poweramp_embed_failed
             )
-        }.onFailure { exception ->
-            showToast(context, resolveEmbedErrorMessage(context, exception))
-        }.onSuccess {
-            showToast(context, R.string.embedded_lyrics_in_file)
         }
     }
 
@@ -196,13 +200,6 @@ class LyricsFetchViewModel(
                 lyricsFetchState = LyricsFetchState.Failed(e)
             }
         }
-    }
-}
-
-private fun resolveEmbedErrorMessage(context: Context, exception: Throwable): String {
-    return when (exception) {
-        is NullPointerException -> context.getString(R.string.embed_non_local_song_error)
-        else -> exception.message ?: context.getString(R.string.error)
     }
 }
 
