@@ -37,6 +37,7 @@ import kotlinx.coroutines.withContext
 import pl.lambada.songsync.R
 import pl.lambada.songsync.data.UserSettingsController
 import pl.lambada.songsync.domain.model.SongInfo
+import pl.lambada.songsync.services.PowerampApi
 import pl.lambada.songsync.services.PowerampLyricsStore
 import pl.lambada.songsync.services.PowerampTrackPath
 import pl.lambada.songsync.ui.theme.SongSyncTheme
@@ -135,6 +136,7 @@ class PowerampLyricsActivity : AppCompatActivity() {
         }
         result
             .onSuccess {
+                if (settings.powerampRescanAfterSave) entry.path?.let { path -> PowerampApi.rescanFolderOf(this, path) }
                 showToast(this, R.string.file_saved_to, it)
                 finish()
             }
@@ -147,6 +149,7 @@ class PowerampLyricsActivity : AppCompatActivity() {
             embedLyricsInFile(this@PowerampLyricsActivity, path, lrcContent(entry, settings))
         }
         if (embedded) {
+            if (settings.powerampRescanAfterSave) PowerampApi.rescanFolderOf(this, path)
             showToast(this, R.string.embedded_lyrics_in_file)
             finish()
         } else {

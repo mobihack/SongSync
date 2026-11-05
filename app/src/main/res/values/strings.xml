@@ -215,4 +215,7 @@
     </plurals>
     <string name="poweramp_lyrics_not_found">SongSync no longer has these lyrics. Re-request them in Poweramp and try again.</string>
     <string name="poweramp_embed_failed">Couldn\'t embed the lyrics in the song file</string>
+    <string name="poweramp">Poweramp</string>
+    <string name="poweramp_rescan_after_save">Refresh Poweramp after saving</string>
+    <string name="poweramp_rescan_after_save_description">After saving or embedding lyrics from Poweramp\'s lyrics link, ask Poweramp to rescan the song\'s folder so it picks up the change</string>
 </resources>

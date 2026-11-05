@@ -20,6 +20,7 @@ import pl.lambada.songsync.R
 import pl.lambada.songsync.data.remote.UpdateState
 import pl.lambada.songsync.data.UserSettingsController
 import pl.lambada.songsync.ui.components.SettingsHeadLabel
+import pl.lambada.songsync.ui.components.SwitchItem
 import pl.lambada.songsync.ui.screens.settings.components.OffsetModeSwitch
 import pl.lambada.songsync.ui.screens.settings.components.SettingsScreenTopBar
 import pl.lambada.songsync.ui.screens.settings.components.AppInfoSection
@@ -136,6 +137,18 @@ fun SettingsScreen(
                 OffsetModeSwitch(
                     selected = userSettingsController.directlyModifyTimestamps,
                     onToggle = { userSettingsController.updateDirectlyModifyTimestamps(it) }
+                )
+            }
+
+            item { SettingsHeadLabel(label = stringResource(R.string.poweramp)) }
+            item {
+                SwitchItem(
+                    label = stringResource(R.string.poweramp_rescan_after_save),
+                    description = stringResource(R.string.poweramp_rescan_after_save_description),
+                    selected = userSettingsController.powerampRescanAfterSave,
+                    onClick = {
+                        userSettingsController.updatePowerampRescanAfterSave(!userSettingsController.powerampRescanAfterSave)
+                    },
                 )
             }
 

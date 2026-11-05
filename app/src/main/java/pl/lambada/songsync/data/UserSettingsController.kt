@@ -100,6 +100,10 @@ class UserSettingsController(private val dataStore: DataStore<Preferences>) {
     var showPath by mutableStateOf(dataStore.get(showPathKey, false))
         private set
 
+    /** After saving lyrics from Poweramp's link, ask Poweramp to rescan the song's folder. */
+    var powerampRescanAfterSave by mutableStateOf(dataStore.get(powerampRescanKey, false))
+        private set
+
     var directlyModifyTimestamps by mutableStateOf(dataStore.get(directlyModifyTimestampsKey, false))
         private set
 
@@ -223,6 +227,11 @@ class UserSettingsController(private val dataStore: DataStore<Preferences>) {
         sdCardPath = to
     }
 
+    fun updatePowerampRescanAfterSave(to: Boolean) {
+        dataStore.set(powerampRescanKey, to)
+        powerampRescanAfterSave = to
+    }
+
     fun updateShowPath(to: Boolean) {
         dataStore.set(showPathKey, to)
         showPath = to
@@ -262,6 +271,7 @@ private val onlyFoldersKey = stringPreferencesKey("only_folders")
 private val pureBlackKey = booleanPreferencesKey("pure_black")
 private val sdCardPathKey = stringPreferencesKey("sd_card_path")
 private val showPathKey = booleanPreferencesKey("show_path")
+private val powerampRescanKey = booleanPreferencesKey("poweramp_rescan_after_save")
 private val sortOrderKey = stringPreferencesKey("sort_order")
 private val sortByKey = stringPreferencesKey("sort_by")
 private val directlyModifyTimestampsKey = booleanPreferencesKey("directly_modify_timestamps")
