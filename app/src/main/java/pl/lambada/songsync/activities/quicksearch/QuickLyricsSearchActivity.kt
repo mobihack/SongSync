@@ -93,12 +93,14 @@ class QuickLyricsSearchActivity : AppCompatActivity() {
     ) {
         when (intent.action) {
             Intent.ACTION_SEND -> {
-                val songName =
-                    intent.getStringExtra("songName")
-                val artistName = intent.getStringExtra("artistName")
-                    ?: "" // Artist name is optional. This may be misleading sometimes.
+                // A player's own extras, or plain shared text ("Hello by Adele https://…")
+                val song = sharedSong(
+                    songName = intent.getStringExtra("songName"),
+                    artistName = intent.getStringExtra("artistName"),
+                    text = intent.getStringExtra(Intent.EXTRA_TEXT),
+                )
 
-                if (songName.isNullOrBlank()) {
+                if (song == null) {
                     Toast.makeText(
                         this,
                         this.getString(R.string.song_name_not_provided),
@@ -110,7 +112,7 @@ class QuickLyricsSearchActivity : AppCompatActivity() {
 
                 sendEvent(
                     QuickLyricsSearchViewModel.Event.Fetch(
-                        song = songName to artistName,
+                        song = song,
                         context = this
                     )
                 )
