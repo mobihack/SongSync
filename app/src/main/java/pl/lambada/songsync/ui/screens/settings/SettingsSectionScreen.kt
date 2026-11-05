@@ -238,7 +238,7 @@ private fun LazyListScope.about(viewModel: SettingsViewModel) {
     item {
         val uriHandler = LocalUriHandler.current
         ListGroup {
-            row { ExternalLinkSection(url = "https://github.com/Lambada10/SongSync", uriHandler = uriHandler, shapes = it) }
+            row { ExternalLinkSection(url = "https://github.com/mobihack/SongSync", uriHandler = uriHandler, shapes = it) }
             row { SupportSection(uriHandler = uriHandler, shapes = it) }
             row { TranslationSection(uriHandler = uriHandler, shapes = it) }
         }

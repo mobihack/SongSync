@@ -63,7 +63,7 @@ class PowerampLyricsReceiver : BroadcastReceiver() {
                     appContext,
                     realId,
                     lyrics = found?.second,
-                    infoLine = found?.first?.let { "Lyrics from $it via SongSync" },
+                    infoLine = found?.first?.let { "Lyrics from $it via SongSync+" },
                 )
             } finally {
                 pending.finish()

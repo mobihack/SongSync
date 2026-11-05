@@ -1,4 +1,6 @@
-# SongSync
+# SongSync+
+
+A fork of [SongSync](https://github.com/Lambada10/SongSync) by Lambada10. It installs alongside the original (package `me.mobihack.songsyncplus`).
 
 A simple Android app to download lyrics (.lrc files) for songs in your music library.
 
@@ -20,9 +22,7 @@ A simple Android app to download lyrics (.lrc files) for songs in your music lib
 
 ### Installation
 
-<a href="https://apt.izzysoft.de/fdroid/index/apk/pl.lambada.songsync/"><img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" alt="Get it on IzzyOnDroid" height="100"></a>
-
-You can download the latest version of the app from the [releases page](https://github.com/Lambada10/SongSync/releases).
+You can download the latest version of the app from the [releases page](https://github.com/mobihack/SongSync/releases).
 
 Requires Android 7.0 (API 24) or newer. Version 4.3.3 is the last release for Android 5.0–6.0.
 
@@ -32,7 +32,7 @@ If you would like to help translating this app, you can do so [here](https://hos
 
 ### License
 
-This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](https://github.com/Lambada10/SongSync/blob/master/LICENSE) file for details.
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
 
 ### Thanks to
 

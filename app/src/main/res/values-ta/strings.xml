@@ -218,7 +218,7 @@
         <item quantity="one">%d கோப்புறை மட்டும்</item>
         <item quantity="other">%d கோப்புறைகள் மட்டும்</item>
     </plurals>
-    <string name="poweramp_lyrics_not_found">இந்த வரிகள் இனி SongSync இல் இல்லை. Poweramp இல் மீண்டும் கோரி மீண்டும் முயலவும்.</string>
+    <string name="poweramp_lyrics_not_found">இந்த வரிகள் இனி SongSync+ இல் இல்லை. Poweramp இல் மீண்டும் கோரி மீண்டும் முயலவும்.</string>
     <string name="poweramp_embed_failed">பாடல் கோப்பில் வரிகளை உட்பொதிக்க முடியவில்லை</string>
     <string name="poweramp">Poweramp</string>
     <string name="poweramp_rescan_after_save">சேமித்த பின் Poweramp ஐப் புதுப்பி</string>
@@ -243,7 +243,7 @@
     <string name="settings_lyrics_content_multi_person">பலர் பாடுவது</string>
     <string name="settings_lyrics_content_unsynced">ஒத்திசைவற்ற மாற்று</string>
     <string name="poweramp_plugin">Poweramp க்கான பாடல் வரிகள்</string>
-    <string name="poweramp_plugin_description">Poweramp இன் பாடல் வரி கோரிக்கைகளுக்கு உங்கள் வழங்குநர்களைக் கொண்டு பதிலளிக்கவும். வரிகளைச் சேமிக்க, Poweramp இல் வரிகளின் கீழுள்ள SongSync இணைப்பைத் தட்டவும்.</string>
+    <string name="poweramp_plugin_description">Poweramp இன் பாடல் வரி கோரிக்கைகளுக்கு உங்கள் வழங்குநர்களைக் கொண்டு பதிலளிக்கவும். வரிகளைச் சேமிக்க, Poweramp இல் வரிகளின் கீழுள்ள SongSync+ இணைப்பைத் தட்டவும்.</string>
     <string name="poweramp_plugin_off">பாடல் வரி செருகுநிரல் முடக்கத்தில்</string>
     <string name="poweramp_plugin_on">பாடல் வரி செருகுநிரல் இயக்கத்தில்</string>
     <string name="poweramp_plugin_on_rescan">பாடல் வரி செருகுநிரல் இயக்கத்தில் · சேமித்த பின் Poweramp ஐப் புதுப்பிக்கும்</string>

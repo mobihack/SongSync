@@ -44,7 +44,7 @@ fun newLyricsFilePath(filePath: String?, song: SongInfo): File {
     return if (filePath == null || filePath.isEmpty()) {
         File(
             Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-            "SongSync/${song.songName} - ${song.artistName}.lrc"
+            "SongSync+/${song.songName} - ${song.artistName}.lrc"
         ).sanitize()
     } else {
         filePath.toLrcFile()!!

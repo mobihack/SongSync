@@ -13,7 +13,7 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "pl.lambada.songsync"
+        applicationId = "me.mobihack.songsyncplus"
         minSdk = 24
         //noinspection OldTargetApi
         targetSdk = 35

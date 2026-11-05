@@ -1,5 +1,5 @@
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
-    <string name="app_name" translatable="false">SongSync</string>
+    <string name="app_name" translatable="false">SongSync+</string>
     <string name="batch_download_lyrics">Batch download lyrics</string>
     <string name="get_lyrics">Get lyrics</string>
     <string name="try_again">Try again</string>
@@ -23,16 +23,16 @@
     <string name="no_results">No results</string>
     <string name="no_internet_server">No internet connection or server is down</string>
     <string name="unknown">Unknown</string>
-    <string name="generated_using" translatable="false">Generated using SongSync</string>
-    <string name="what_is_songsync">SongSync is an app that lets you to download synced lyrics (.lrc files) for your local music library.</string>
+    <string name="generated_using" translatable="false">Generated using SongSync+</string>
+    <string name="what_is_songsync">SongSync+ is an app that lets you to download synced lyrics (.lrc files) for your local music library.</string>
     <string name="extra_what_is_songsync">You can also search for specific songs to get their lyrics (and save them to downloads).</string>
     <string name="app_version">App version: %1$s</string>
     <string name="spotify_for_developers">Spotify for Developers</string>
     <string name="spotifylyrics_api" translatable="false">SpotifyLyrics API</string>
-    <string name="about_songsync">About SongSync</string>
-    <string name="how_we_get_lyrics">SongSync uses SpotifyLyrics API to get lyrics for songs. You can find more information about SpotifyLyrics API on their GitHub page.</string>
+    <string name="about_songsync">About SongSync+</string>
+    <string name="how_we_get_lyrics">SongSync+ uses SpotifyLyrics API to get lyrics for songs. You can find more information about SpotifyLyrics API on their GitHub page.</string>
     <string name="view_on_github">View on GitHub</string>
-    <string name="we_are_open_source">SongSync is an open-source project. You can find the source code on GitHub.</string>
+    <string name="we_are_open_source">SongSync+ is an open-source project. You can find the source code on GitHub.</string>
     <string name="contributors">Contributors</string>
     <string name="github" translatable="false">GitHub</string>
     <string name="telegram" translatable="false">Telegram</string>
@@ -168,7 +168,7 @@
     <string name="show_notification_permission">Show notification (Optional)</string>
     <string name="show_notification_description">Used to show download progress notification</string>
     <string name="_continue">Continue</string>
-    <string name="init_screen_title">Welcome to SongSync!</string>
+    <string name="init_screen_title">Welcome to SongSync+!</string>
     <string name="init_screen_description">To get started, please grant the following permissions:</string>
     <string name="now_playing_song">Now playing song</string>
     <string name="now_playing">Now playing</string>
@@ -223,7 +223,7 @@
         <item quantity="one">Only %d folder</item>
         <item quantity="other">Only %d folders</item>
     </plurals>
-    <string name="poweramp_lyrics_not_found">SongSync no longer has these lyrics. Re-request them in Poweramp and try again.</string>
+    <string name="poweramp_lyrics_not_found">SongSync+ no longer has these lyrics. Re-request them in Poweramp and try again.</string>
     <string name="poweramp_embed_failed">Couldn\'t embed the lyrics in the song file</string>
     <string name="poweramp">Poweramp</string>
     <string name="poweramp_rescan_after_save">Refresh Poweramp after saving</string>
@@ -248,7 +248,7 @@
     <string name="settings_lyrics_content_multi_person">Multi-person</string>
     <string name="settings_lyrics_content_unsynced">Unsynced fallback</string>
     <string name="poweramp_plugin">Lyrics for Poweramp</string>
-    <string name="poweramp_plugin_description">Answer Poweramp\'s lyrics requests with your providers. Tap the SongSync link under the lyrics in Poweramp to save them.</string>
+    <string name="poweramp_plugin_description">Answer Poweramp\'s lyrics requests with your providers. Tap the SongSync+ link under the lyrics in Poweramp to save them.</string>
     <string name="poweramp_plugin_off">Lyrics plugin off</string>
     <string name="poweramp_plugin_on">Lyrics plugin on</string>
     <string name="poweramp_plugin_on_rescan">Lyrics plugin on · refreshes Poweramp after saving</string>

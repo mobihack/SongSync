@@ -13,5 +13,5 @@ fun SupportSection(uriHandler: UriHandler, shapes: ListItemShapes) = LinkItem(
     label = stringResource(R.string.support_issues),
     description = stringResource(R.string.support_issues_summary),
     shapes = shapes,
-    onClick = { uriHandler.openUri("https://github.com/Lambada10/SongSync/issues") },
+    onClick = { uriHandler.openUri("https://github.com/mobihack/SongSync/issues") },
 )

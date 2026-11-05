@@ -23,11 +23,11 @@
     <string name="no_results">Brak wyników</string>
     <string name="no_internet_server">Brak połączenia z internetem, lub serwer jest niedostępny</string>
     <string name="unknown">Nieznany</string>
-    <string name="what_is_songsync">SongSync to aplikacja, która pozwala na pobieranie zsynchronizowanych tekstów (pliki .lrc) do użytku w lokalnej bibliotece muzycznej.</string>
+    <string name="what_is_songsync">SongSync+ to aplikacja, która pozwala na pobieranie zsynchronizowanych tekstów (pliki .lrc) do użytku w lokalnej bibliotece muzycznej.</string>
     <string name="extra_what_is_songsync">Możesz również wyszukiwać konkretne utwory, aby pobrać ich teksty (oraz zapisać w katalogu).</string>
     <string name="app_version">Wersja aplikacji: %1$s</string>
     <string name="spotify_for_developers">Spotify dla deweloperów</string>
-    <string name="about_songsync">O SongSync</string>
+    <string name="about_songsync">O SongSync+</string>
     <string name="copy_lyrics_to_clipboard">Kopiuj tekst do schowka</string>
     <string name="local_song">Utwór lokalny</string>
     <string name="cloud_song">Utwór z chmury</string>
@@ -90,7 +90,7 @@
     <string name="show_notification_permission">Pokaż powiadomienie (Opcjonalne)</string>
     <string name="show_notification_description">Pokaż powiadomienie postępu pobierania</string>
     <string name="_continue">Kontynuuj</string>
-    <string name="init_screen_title">Witaj w SongSync!</string>
+    <string name="init_screen_title">Witaj w SongSync+!</string>
     <string name="init_screen_description">Aby rozpocząć, proszę, zezwól na wymagane uprawnienia:</string>
     <string name="now_playing_song">Teraz odtwarzany utwór</string>
     <string name="notification_access">Dostęp do powiadomień (Opcjonalne)</string>
@@ -103,9 +103,9 @@
         <item quantity="many">%1$d utworów</item>
         <item quantity="other">%1$d utworów</item>
     </plurals>
-    <string name="how_we_get_lyrics">SongSync używa SpotifyLyrics API, żeby pobierać teksty utworów. Aby dowiedzieć się więcej o SpotifyLyrics API odwiedź stronę na GitHub\'ie.</string>
+    <string name="how_we_get_lyrics">SongSync+ używa SpotifyLyrics API, żeby pobierać teksty utworów. Aby dowiedzieć się więcej o SpotifyLyrics API odwiedź stronę na GitHub\'ie.</string>
     <string name="view_on_github">Odwiedź stronę na GitHub\'ie</string>
-    <string name="we_are_open_source">SongSync to projekt otwartoźródłowy. Możesz zobaczyć jego kod na GitHub\'ie.</string>
+    <string name="we_are_open_source">SongSync+ to projekt otwartoźródłowy. Możesz zobaczyć jego kod na GitHub\'ie.</string>
     <string name="contributors">Współtwórcy</string>
     <string name="bugs_or_suggestions_contact_us">Znalazłeś błąd? Masz sugestię? Chcesz współtworzyć? Zapraszam do kontaktu na grupie Telegram.</string>
     <string name="telegram_group">Grupa Telegram</string>
@@ -228,7 +228,7 @@
         <item quantity="many">Tylko %d katalogów</item>
         <item quantity="other">Tylko %d katalogu</item>
     </plurals>
-    <string name="poweramp_lyrics_not_found">SongSync nie ma już tego tekstu. Poproś o niego ponownie w Poweramp i spróbuj jeszcze raz.</string>
+    <string name="poweramp_lyrics_not_found">SongSync+ nie ma już tego tekstu. Poproś o niego ponownie w Poweramp i spróbuj jeszcze raz.</string>
     <string name="poweramp_embed_failed">Nie udało się osadzić tekstu w pliku utworu</string>
     <string name="poweramp">Poweramp</string>
     <string name="poweramp_rescan_after_save">Odśwież Poweramp po zapisaniu</string>
@@ -255,7 +255,7 @@
     <string name="settings_lyrics_content_multi_person">Wielu wykonawców</string>
     <string name="settings_lyrics_content_unsynced">Niezsynchronizowany zapasowy</string>
     <string name="poweramp_plugin">Teksty dla Poweramp</string>
-    <string name="poweramp_plugin_description">Odpowiadaj na żądania tekstów z Poweramp przy użyciu swoich dostawców. Dotknij linku SongSync pod tekstem w Poweramp, aby go zapisać.</string>
+    <string name="poweramp_plugin_description">Odpowiadaj na żądania tekstów z Poweramp przy użyciu swoich dostawców. Dotknij linku SongSync+ pod tekstem w Poweramp, aby go zapisać.</string>
     <string name="poweramp_plugin_off">Wtyczka tekstów wyłączona</string>
     <string name="poweramp_plugin_on">Wtyczka tekstów włączona</string>
     <string name="poweramp_plugin_on_rescan">Wtyczka tekstów włączona · odświeża Poweramp po zapisaniu</string>

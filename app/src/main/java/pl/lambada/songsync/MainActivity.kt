@@ -132,7 +132,7 @@ private fun checkOrCreateDownloadSubFolder() {
         Environment.DIRECTORY_DOWNLOADS
     )
 
-    val songSyncDir = File(downloadsDir, "SongSync")
+    val songSyncDir = File(downloadsDir, "SongSync+")
 
     if (!songSyncDir.exists()) songSyncDir.mkdir()
 }

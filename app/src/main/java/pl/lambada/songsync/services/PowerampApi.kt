@@ -41,7 +41,7 @@ object PowerampApi {
             Intent(ACTION_SCAN_DIRS)
                 .putExtra(EXTRA_SCAN_PATH, toPowerampPath(folder) + "/")
                 .putExtra(EXTRA_FAST_SCAN, true)
-                .putExtra(EXTRA_CAUSE, "SongSync saved lyrics"),
+                .putExtra(EXTRA_CAUSE, "SongSync+ saved lyrics"),
         )
     }
 
