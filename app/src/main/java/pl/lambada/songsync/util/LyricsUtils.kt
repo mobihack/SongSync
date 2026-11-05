@@ -193,6 +193,7 @@ enum class Providers(
     // Plain-text only; hidden unless a credential is set in local.properties
     GENIUS("Genius", false, enabled = BuildConfig.GENIUS_TOKEN.isNotBlank()),
     PETITLYRICS("PetitLyrics", false, enabled = BuildConfig.PETITLYRICS_CLIENT_ID.isNotBlank()),
+    LYRICSOVH("lyrics.ovh", false),
 }
 
 // only for invoking the task and handling and reporting progress

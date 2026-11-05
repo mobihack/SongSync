@@ -24,6 +24,7 @@ object ProviderChain {
         Providers.DEEZER,
         Providers.GENIUS,
         Providers.PETITLYRICS,
+        Providers.LYRICSOVH,
     )
 
     fun order(selected: Providers, fallback: Boolean): List<Providers> =

@@ -7,6 +7,7 @@ import pl.lambada.songsync.data.remote.lyrics_providers.others.GeniusAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.others.KugouAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.others.LRCLibAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.others.LrcmuxAPI
+import pl.lambada.songsync.data.remote.lyrics_providers.others.LyricsOvhAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.others.PetitLyricsAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.others.MusixmatchAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.others.NeteaseAPI
@@ -56,9 +57,8 @@ class LyricsProviderService {
     private var deezerID = 0L
     private var geniusID = 0L
 
-    // PetitLyrics and lrcmux return lyrics with the search result
-    private var petitLyricsSongInfo: SongInfo? = null
-    private var lrcmuxSongInfo: SongInfo? = null
+    // Providers whose search result already carries the lyrics (PetitLyrics, lrcmux, lyrics.ovh)
+    private val prefetched = mutableMapOf<Providers, SongInfo?>()
 
     // KuGou looks lyrics up by the song's hash
     private var kugouSongInfo: SongInfo? = null
@@ -120,11 +120,15 @@ class LyricsProviderService {
                 } ?: throw NoTrackFoundException()
 
                 Providers.PETITLYRICS -> PetitLyricsAPI().getSongInfo(query, offset).also {
-                    petitLyricsSongInfo = it
+                    prefetched[provider] = it
                 } ?: throw NoTrackFoundException()
 
                 Providers.LRCMUX -> LrcmuxAPI().getSongInfo(query, offset).also {
-                    lrcmuxSongInfo = it
+                    prefetched[provider] = it
+                } ?: throw NoTrackFoundException()
+
+                Providers.LYRICSOVH -> LyricsOvhAPI().getSongInfo(query, offset).also {
+                    prefetched[provider] = it
                 } ?: throw NoTrackFoundException()
 
                 Providers.KUGOU -> KugouAPI().getSongInfo(query, offset).also {
@@ -176,8 +180,8 @@ class LyricsProviderService {
 
             Providers.DEEZER -> DeezerAPI().getSyncedLyrics(deezerID)
             Providers.GENIUS -> GeniusAPI().getLyrics(geniusID)
-            Providers.PETITLYRICS -> petitLyricsSongInfo?.unsyncedLyrics
-            Providers.LRCMUX -> lrcmuxSongInfo?.let { it.syncedLyrics ?: it.unsyncedLyrics }
+            Providers.PETITLYRICS, Providers.LRCMUX, Providers.LYRICSOVH ->
+                prefetched[provider]?.let { it.syncedLyrics ?: it.unsyncedLyrics }
             Providers.KUGOU -> kugouSongInfo?.kugouHash?.let { KugouAPI().getSyncedLyrics(it, kugouSongInfo?.durationMs) }
         })
     }
