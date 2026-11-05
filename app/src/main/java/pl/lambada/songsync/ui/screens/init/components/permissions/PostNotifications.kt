@@ -3,7 +3,6 @@ package pl.lambada.songsync.ui.screens.init.components.permissions
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberPermissionState
 
@@ -23,7 +22,7 @@ fun PostNotifications(
             onDismiss()
         }
     )
-    LaunchedEffect(Unit) {
+    LaunchOnce {
         notificationPermission.launchPermissionRequest()
     }
 }

@@ -7,7 +7,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.NotificationManagerCompat
 import pl.lambada.songsync.services.NotificationListener
@@ -29,8 +28,11 @@ fun NotificationPermission(
         }
         onDismiss()
     }
-    LaunchedEffect(Unit) {
-        val intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
-        notificationManager.launch(intent)
+    LaunchOnce {
+        val launched = launchFirstAvailable(
+            listOf(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS), appDetailsIntent(context)),
+            notificationManager::launch,
+        )
+        if (!launched) onDismiss()
     }
 }

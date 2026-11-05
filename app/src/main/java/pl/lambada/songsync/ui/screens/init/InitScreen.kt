@@ -2,6 +2,7 @@
 
 package pl.lambada.songsync.ui.screens.init
 
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import android.os.Build
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -29,7 +30,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -56,8 +56,11 @@ fun InitScreen(
     viewModel: InitScreenViewModel = viewModel(),
 ) {
     val context = LocalContext.current
-    LaunchedEffect(Unit) {
+    // On every return to this screen too: a permission granted in system settings (or after
+    // "Don't ask again", only there) shows up without restarting setup
+    LifecycleResumeEffect(Unit) {
         viewModel.onLoad(context)
+        onPauseOrDispose { }
     }
     Scaffold(
         bottomBar = {
