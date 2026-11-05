@@ -1,20 +1,23 @@
+@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
+
 package pl.lambada.songsync.ui.theme
 
 import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.MaterialExpressiveTheme
+import androidx.compose.material3.MotionScheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.expressiveLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 
 private val darkColorScheme = darkColorScheme(
@@ -23,7 +26,7 @@ private val darkColorScheme = darkColorScheme(
     tertiary = Pink80
 )
 
-private val lightColorScheme = lightColorScheme(
+private val lightColorScheme = expressiveLightColorScheme().copy(
     primary = Purple40,
     secondary = PurpleGrey40,
     tertiary = Pink40
@@ -51,6 +54,7 @@ fun SongSyncTheme(
                     dynamicDarkColorScheme(context).copy(
                         surface = Color.Black,
                         background = Color.Black,
+                        surfaceContainerLowest = Color.Black,
                     )
                 else
                     dynamicDarkColorScheme(context)
@@ -61,6 +65,7 @@ fun SongSyncTheme(
         pureBlack -> darkColorScheme.copy(
             surface = Color.Black,
             background = Color.Black,
+            surfaceContainerLowest = Color.Black,
         )
 
         darkTheme -> darkColorScheme
@@ -81,10 +86,11 @@ fun SongSyncTheme(
         }
     }
 
-    MaterialTheme(
+    MaterialExpressiveTheme(
         colorScheme = colorScheme,
+        motionScheme = MotionScheme.expressive(),
+        shapes = Shapes(),
         typography = Typography,
         content = content,
-        shapes = MaterialTheme.shapes.copy(extraSmall = RoundedCornerShape(16.dp)),
     )
 }

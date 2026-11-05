@@ -1,5 +1,6 @@
 package pl.lambada.songsync.ui.screens.home.components
 
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -110,7 +111,8 @@ fun HomeAppBar(
                 }
                 DropdownMenu(
                     expanded = expanded,
-                    onDismissRequest = { expanded = false }
+                    onDismissRequest = { expanded = false },
+                    shape = RoundedCornerShape(16.dp),
                 ) {
                     DropdownMenuItem(
                         text = {

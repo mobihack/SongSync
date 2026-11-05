@@ -73,7 +73,8 @@ fun LanguageSelector(
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            modifier = Modifier.heightIn(max = 300.dp)
+            modifier = Modifier.heightIn(max = 300.dp),
+            shape = RoundedCornerShape(16.dp),
         ) {
             // Original language first
             originalLanguage?.let { origLang ->
