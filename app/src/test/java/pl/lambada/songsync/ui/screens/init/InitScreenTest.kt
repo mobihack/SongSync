@@ -44,11 +44,12 @@ class InitScreenTest {
 
     private fun showSetup(storageAccess: Boolean): UserSettingsController {
         val settings = UserSettingsController(PreferenceDataStoreFactory.create { File(tmp.root, "s.preferences_pb") })
+        val viewModel = InitScreenViewModel(settings, hasStorageAccess = { storageAccess })
         compose.setContent {
             nav = rememberNavController()
             MaterialTheme {
                 NavHost(nav, startDestination = InitRoute) {
-                    composable<InitRoute> { InitScreen(nav, InitScreenViewModel(settings, hasStorageAccess = { storageAccess })) }
+                    composable<InitRoute> { InitScreen(nav, viewModel) }
                     composable<ScreenHome> { Text("library") }
                 }
             }
