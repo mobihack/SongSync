@@ -1,5 +1,11 @@
 package pl.lambada.songsync.ui.screens.home.components
 
+import pl.lambada.songsync.util.ui.EaseOutStrong
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.padding
@@ -74,16 +80,21 @@ fun HomeAppBar(
             }
         },
         title = {
-            if (showing) {
-                // No animation: the count changes on every tap in multi-select.
+            // Fades between the app name and the count when selection starts or ends. Keyed on
+            // [showing], not the count: the count changes on every tap and must not animate.
+            AnimatedContent(
+                targetState = showing,
+                transitionSpec = {
+                    fadeIn(tween(150, easing = EaseOutStrong)) togetherWith
+                        fadeOut(tween(100, easing = EaseOutStrong)) using
+                        SizeTransform(clip = false)
+                },
+                label = "appBarTitle",
+            ) { selecting ->
                 Text(
                     modifier = Modifier.padding(start = 6.dp),
-                    text = stringResource(id = R.string.selected_count, cachedSize)
-                )
-            } else {
-                Text(
-                    modifier = Modifier.padding(start = 6.dp),
-                    text = stringResource(R.string.app_name)
+                    text = if (selecting) stringResource(id = R.string.selected_count, cachedSize)
+                    else stringResource(R.string.app_name)
                 )
             }
         },

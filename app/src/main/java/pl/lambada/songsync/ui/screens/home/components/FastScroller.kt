@@ -1,7 +1,7 @@
 package pl.lambada.songsync.ui.screens.home.components
 
+import pl.lambada.songsync.util.ui.EaseOutStrong
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -61,7 +61,6 @@ private const val ThumbIdleScaleY = 48f / 64f // 48dp tall when idle
 private val GestureExclusionHeight = 96.dp // around the thumb, so the back gesture doesn't win
 private val BubbleSize = 56.dp
 private const val HideDelayMs = 1500L
-private val EaseOutStrong = CubicBezierEasing(0.23f, 1f, 0.32f, 1f)
 
 /**
  * A draggable thumb on the end edge of a [androidx.compose.foundation.lazy.LazyColumn] for

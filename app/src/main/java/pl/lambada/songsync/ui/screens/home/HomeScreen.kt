@@ -1,5 +1,8 @@
 package pl.lambada.songsync.ui.screens.home
 
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
 import dev.chrisbanes.haze.rememberHazeState
 import dev.chrisbanes.haze.hazeSource
 import pl.lambada.songsync.ui.screens.home.components.HomeOverflowMenu
@@ -27,8 +30,6 @@ import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -61,6 +62,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -139,41 +141,36 @@ fun HomeScreen(
                 onBackPressed = { viewModel.selectedSongs.clear() }
             )
 
-            Crossfade(
-                targetState = viewModel.selectedSongs.size > 0,
-                animationSpec = tween(durationMillis = 180, easing = FastOutSlowInEasing),
-                label = ""
-            ) { showing ->
-                HomeAppBar(
-                    showing = showing,
-                    scrolled = listScrolled,
-                    hazeState = hazeState,
-                    onSelectedClearAction = viewModel.selectedSongs::clear,
-                    searchLyricsAction = {
-                        // Lyrics search for any song; grows into the Search screen
-                        with(sharedTransitionScope) {
-                            IconButton(
-                                onClick = { navController.navigate(LyricsFetchScreen()) },
-                                shapes = IconButtonDefaults.shapes(),
-                                modifier = Modifier
-                                    .skipToLookaheadSize()
-                                    .sharedBounds(
-                                        sharedContentState = rememberSharedContentState(key = "fab"),
-                                        animatedVisibilityScope = animatedVisibilityScope,
-                                        boundsTransform = SearchFABBoundsTransform,
-                                        resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
-                                    ),
-                            ) {
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.ManageSearch,
-                                    contentDescription = stringResource(R.string.search_lyrics),
-                                )
-                            }
+            // One bar: its colour and title animate on their own, so the two states never overlap
+            HomeAppBar(
+                showing = viewModel.selectedSongs.size > 0,
+                scrolled = listScrolled,
+                hazeState = hazeState,
+                onSelectedClearAction = viewModel.selectedSongs::clear,
+                searchLyricsAction = {
+                    // Lyrics search for any song; grows into the Search screen
+                    with(sharedTransitionScope) {
+                        IconButton(
+                            onClick = { navController.navigate(LyricsFetchScreen()) },
+                            shapes = IconButtonDefaults.shapes(),
+                            modifier = Modifier
+                                .skipToLookaheadSize()
+                                .sharedBounds(
+                                    sharedContentState = rememberSharedContentState(key = "fab"),
+                                    animatedVisibilityScope = animatedVisibilityScope,
+                                    boundsTransform = SearchFABBoundsTransform,
+                                    resizeMode = SharedTransitionScope.ResizeMode.RemeasureToBounds,
+                                ),
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ManageSearch,
+                                contentDescription = stringResource(R.string.search_lyrics),
+                            )
                         }
-                    },
-                    cachedSize = cachedSize
-                )
-            }
+                    }
+                },
+                cachedSize = cachedSize
+            )
         },
         bottomBar = { Spacer(Modifier.navigationBarsPadding()) } // fixing broken edge to edge here
     ) { paddingValues ->
@@ -201,8 +198,17 @@ fun HomeScreen(
             modifier = Modifier
                 .align(Alignment.BottomStart)
                 .padding(start = 16.dp, bottom = paddingValues.calculateBottomPadding() + 16.dp),
-            enter = fadeIn(motionScheme.defaultEffectsSpec()) + scaleIn(motionScheme.defaultSpatialSpec()),
-            exit = fadeOut(motionScheme.fastEffectsSpec()) + scaleOut(motionScheme.fastSpatialSpec()),
+            // Grows from and shrinks toward its bottom-start corner, where it is anchored
+            enter = fadeIn(motionScheme.defaultEffectsSpec()) + scaleIn(
+                motionScheme.defaultSpatialSpec(),
+                initialScale = 0.9f,
+                transformOrigin = TransformOrigin(0f, 1f),
+            ),
+            exit = fadeOut(motionScheme.fastEffectsSpec()) + scaleOut(
+                motionScheme.fastSpatialSpec(),
+                targetScale = 0.9f,
+                transformOrigin = TransformOrigin(0f, 1f),
+            ),
         ) {
             HomeOverflowMenu(
                 hazeState = hazeState,
@@ -224,7 +230,8 @@ fun HomeScreen(
                 (fadeIn(motionScheme.defaultEffectsSpec()) +
                     slideInVertically(motionScheme.defaultSpatialSpec()) { it / 2 }) togetherWith
                     (fadeOut(motionScheme.fastEffectsSpec()) +
-                        slideOutVertically(motionScheme.fastSpatialSpec()) { it / 2 })
+                        slideOutVertically(motionScheme.fastSpatialSpec()) { it / 2 }) using
+                    SizeTransform(clip = false) // let the toolbars slide instead of wiping
             },
             label = "homeToolbar",
         ) { selectionMode ->
@@ -242,9 +249,15 @@ fun HomeScreen(
                 onFilter = { viewModel.showFilters = true },
                 filterActive = viewModel.userSettingsController.hideLyrics,
                 onSearch = {
-                    viewModel.showSearch = true
-                    viewModel.showingSearch = true
-                    scope.launch { listState.animateScrollToItem(0) }
+                    scope.launch {
+                        // The search item is zero-height while hidden, so a scroll that runs
+                        // alongside its expansion can stop with the next item on top, and the bar
+                        // grows above the viewport. Pin item 0 as the first visible item first,
+                        // then open the search so it expands downward into view.
+                        listState.scrollToItem(0)
+                        viewModel.showSearch = true
+                        viewModel.showingSearch = true
+                    }
                 },
             )
         }
@@ -373,9 +386,10 @@ fun HomeScreenLoaded(
                     AnimatedVisibility(
                         visible = viewModel.showingSearch,
                         enter = fadeIn(MaterialTheme.motionScheme.defaultEffectsSpec()) +
-                            expandVertically(MaterialTheme.motionScheme.defaultSpatialSpec()),
+                            // Heights don't overshoot: a bounce would open a gap under the field
+                            expandVertically(spring(dampingRatio = 1f, stiffness = Spring.StiffnessMediumLow)),
                         exit = fadeOut(MaterialTheme.motionScheme.fastEffectsSpec()) +
-                            shrinkVertically(MaterialTheme.motionScheme.fastSpatialSpec()),
+                            shrinkVertically(spring(dampingRatio = 1f, stiffness = Spring.StiffnessMedium)),
                     ) {
                         HomeSearchBar(
                             query = viewModel.searchQuery,

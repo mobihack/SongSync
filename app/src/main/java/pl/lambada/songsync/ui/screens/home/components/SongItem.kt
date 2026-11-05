@@ -16,6 +16,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
@@ -41,7 +42,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -102,27 +102,34 @@ fun SongItem(
     val selectedBg = MaterialTheme.colorScheme.secondaryContainer
     val contentColor = if (selected) MaterialTheme.colorScheme.onSecondaryContainer
     else MaterialTheme.colorScheme.onSurface
-    val selection by animateFloatAsState(
+    // Opacity and colour don't overshoot; only the check's scale gets the Expressive bounce.
+    // Both are read in layout/draw lambdas, so the row doesn't recompose on every frame.
+    val selectionAlphaState = animateFloatAsState(
+        targetValue = if (selected) 1f else 0f,
+        animationSpec = MaterialTheme.motionScheme.fastEffectsSpec(),
+        label = "songItemSelectionAlpha",
+    )
+    val selectionAlpha by selectionAlphaState
+    val selectionScale by animateFloatAsState(
         targetValue = if (selected) 1f else 0f,
         animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
-        label = "songItemSelection",
+        label = "songItemSelectionScale",
     )
-    val coverShape = if (selection == 0f) CoverShape
-    else RoundedCornerShape(percent = (CoverCornerPercent + (50 - CoverCornerPercent) * selection).toInt().coerceIn(0, 50))
+    val showCheck by remember { derivedStateOf { selectionAlphaState.value > 0f } }
 
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .height(if (showPath) 100.dp else 80.dp)
             .drawBehind {
-                if (selection > 0f) {
+                if (selectionAlpha > 0f) {
                     val inset = SelectedPillInset.toPx()
                     drawRoundRect(
                         color = selectedBg,
-                        alpha = selection.coerceIn(0f, 1f),
+                        alpha = selectionAlpha,
                         topLeft = Offset(inset, 2.dp.toPx()),
                         size = Size(size.width - inset * 2, size.height - 4.dp.toPx()),
-                        cornerRadius = CornerRadius(size.height / 2 * selection.coerceIn(0f, 1f)),
+                        cornerRadius = CornerRadius(size.height / 2 * selectionAlpha),
                     )
                 }
             }
@@ -161,15 +168,23 @@ fun SongItem(
                                 overlayClip = CoverShape,
                             )
                             .fillMaxSize()
-                            .clip(coverShape)
+                            .graphicsLayer {
+                                // Rounds into a circle as the song is selected
+                                shape = if (selectionAlpha == 0f) CoverShape
+                                else RoundedCornerShape(
+                                    percent = (CoverCornerPercent + (50 - CoverCornerPercent) * selectionAlpha)
+                                        .toInt().coerceIn(0, 50)
+                                )
+                                clip = true
+                            }
                             .drawWithContent {
                                 drawContent()
-                                if (selection > 0f) {
-                                    drawRect(checkScrim, alpha = selection.coerceIn(0f, 1f))
+                                if (selectionAlpha > 0f) {
+                                    drawRect(checkScrim, alpha = selectionAlpha)
                                 }
                             }
                     )
-                    if (selection > 0f) {
+                    if (showCheck) {
                         Icon(
                             imageVector = Icons.Filled.Check,
                             contentDescription = null,
@@ -177,9 +192,11 @@ fun SongItem(
                             modifier = Modifier
                                 .size(24.dp)
                                 .graphicsLayer {
-                                    alpha = selection.coerceIn(0f, 1f)
-                                    scaleX = selection
-                                    scaleY = selection
+                                    alpha = selectionAlpha
+                                    // Starts near full size: a check doesn't grow from a dot
+                                    val scale = 0.9f + 0.1f * selectionScale
+                                    scaleX = scale
+                                    scaleY = scale
                                 },
                         )
                     }

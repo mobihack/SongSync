@@ -19,9 +19,7 @@ package pl.lambada.songsync.util.ui
 import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -58,8 +56,7 @@ private const val ProgressThreshold = 0.35f
 private val Int.ForOutgoing: Int
     get() = (this * ProgressThreshold).toInt()
 
-private val Int.ForIncoming: Int
-    get() = this - this.ForOutgoing
+private const val FadeInDuration = 200
 
 /**
  * [materialSharedAxisX] allows to switch a layout with shared X-axis transition.
@@ -90,11 +87,8 @@ fun materialSharedAxisXIn(
     ),
     initialOffsetX = initialOffsetX
 ) + fadeIn(
-    animationSpec = tween(
-        durationMillis = durationMillis.ForIncoming,
-        delayMillis = durationMillis.ForOutgoing,
-        easing = LinearOutSlowInEasing
-    )
+    // No delay: the incoming screen starts appearing on the tap
+    animationSpec = tween(durationMillis = FadeInDuration, easing = EaseOutStrong)
 )
 
 /**
@@ -113,8 +107,7 @@ fun materialSharedAxisXOut(
 ) + fadeOut(
     animationSpec = tween(
         durationMillis = durationMillis.ForOutgoing,
-        delayMillis = 0,
-        easing = FastOutLinearInEasing
+        easing = EaseOutStrong
     )
 )
 
@@ -148,11 +141,8 @@ fun materialSharedAxisYIn(
     ),
     initialOffsetY = initialOffsetY
 ) + fadeIn(
-    animationSpec = tween(
-        durationMillis = durationMillis.ForIncoming,
-        delayMillis = durationMillis.ForOutgoing,
-        easing = LinearOutSlowInEasing
-    )
+    // No delay: the incoming screen starts appearing on the tap
+    animationSpec = tween(durationMillis = FadeInDuration, easing = EaseOutStrong)
 )
 
 /**
@@ -171,8 +161,7 @@ fun materialSharedAxisYOut(
 ) + fadeOut(
     animationSpec = tween(
         durationMillis = durationMillis.ForOutgoing,
-        delayMillis = 0,
-        easing = FastOutLinearInEasing
+        easing = EaseOutStrong
     )
 )
 
@@ -203,11 +192,8 @@ fun materialSharedAxisZIn(
     forward: Boolean,
     durationMillis: Int = MotionConstants.DefaultMotionDuration,
 ): EnterTransition = fadeIn(
-    animationSpec = tween(
-        durationMillis = durationMillis.ForIncoming,
-        delayMillis = durationMillis.ForOutgoing,
-        easing = LinearOutSlowInEasing
-    )
+    // No delay: the incoming screen starts appearing on the tap
+    animationSpec = tween(durationMillis = FadeInDuration, easing = EaseOutStrong)
 ) + scaleIn(
     animationSpec = tween(
         durationMillis = durationMillis,
@@ -228,8 +214,7 @@ fun materialSharedAxisZOut(
 ): ExitTransition = fadeOut(
     animationSpec = tween(
         durationMillis = durationMillis.ForOutgoing,
-        delayMillis = 0,
-        easing = FastOutLinearInEasing
+        easing = EaseOutStrong
     )
 ) + scaleOut(
     animationSpec = tween(

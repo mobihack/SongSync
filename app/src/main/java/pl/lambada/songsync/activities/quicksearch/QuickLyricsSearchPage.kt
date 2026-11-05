@@ -2,8 +2,8 @@
 
 package pl.lambada.songsync.activities.quicksearch
 
+import pl.lambada.songsync.util.ui.tickerTransform
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -56,152 +56,154 @@ fun QuickLyricsSearchPage(
             .fillMaxWidth()
             .padding(16.dp)
     ) {
-        Crossfade(state.value.screenState) { pageState ->
-            LazyColumn(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                state.value.song?.let { song ->
-                    item {
-                        Heading(
-                            song = song,
-                            lyricsState = lyricsState,
-                            onSendLyrics = onSendLyrics
-                        )
-                    }
-                }
-
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            state.value.song?.let { song ->
                 item {
-                    HorizontalDivider()
+                    Heading(
+                        song = song,
+                        lyricsState = lyricsState,
+                        onSendLyrics = onSendLyrics
+                    )
                 }
+            }
 
-                item {
-                    AnimatedContent(
-                        modifier = Modifier.fillMaxWidth(),
-                        targetState = pageState
-                    ) { animatedPageState ->
-                        when (animatedPageState) {
-                            is ScreenState.Loading -> {
-                                Column(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+            item {
+                HorizontalDivider()
+            }
+
+            item {
+                AnimatedContent(
+                    modifier = Modifier.fillMaxWidth(),
+                    targetState = state.value.screenState
+                ) { animatedPageState ->
+                    when (animatedPageState) {
+                        is ScreenState.Loading -> {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                LoadingIndicator()
+                                // Follows the fallback live: the provider being tried right now
+                                state.value.searchProgress?.let { progress ->
+                                    AnimatedContent(
+                                    targetState = progress,
+                                    transitionSpec = { tickerTransform() }, // same as Lyrics search
+                                    label = "provider",
                                 ) {
-                                    LoadingIndicator()
-                                    // Follows the fallback live: the provider being tried right now
-                                    state.value.searchProgress?.let { progress ->
-                                        AnimatedContent(targetState = progress, label = "provider") {
-                                            Text(
-                                                text = stringResource(
-                                                    R.string.searching_provider,
-                                                    it.provider.displayName, it.index, it.total
-                                                ),
-                                                style = MaterialTheme.typography.labelMedium,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            )
-                                        }
+                                        Text(
+                                            text = stringResource(
+                                                R.string.searching_provider,
+                                                it.provider.displayName, it.index, it.total
+                                            ),
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
                                     }
                                 }
                             }
+                        }
 
-                            is ScreenState.Success -> {
-                                Column(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                                ) {
-                                    animatedPageState.data?.let {
-                                        Column(
+                        is ScreenState.Success -> {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                animatedPageState.data?.let {
+                                    Column(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        Row(
                                             modifier = Modifier.fillMaxWidth(),
-                                            verticalArrangement = Arrangement.spacedBy(4.dp)
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
                                         ) {
-                                            Row(
-                                                modifier = Modifier.fillMaxWidth(),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Filled.Cloud,
-                                                    contentDescription = null,
+                                            Icon(
+                                                imageVector = Icons.Filled.Cloud,
+                                                contentDescription = null,
+                                            )
+                                            Text(
+                                                text = stringResource(R.string.cloud_song).uppercase(),
+                                                style = MaterialTheme.typography.bodyMedium.copy(
+                                                    letterSpacing = 1.sp,
+                                                    fontWeight = FontWeight.SemiBold
                                                 )
-                                                Text(
-                                                    text = stringResource(R.string.cloud_song).uppercase(),
-                                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                                        letterSpacing = 1.sp,
-                                                        fontWeight = FontWeight.SemiBold
-                                                    )
-                                                )
-                                            }
-
-                                            QuickLyricsSongInfo(
-                                                songInfo = animatedPageState.data,
-                                                modifier = Modifier.fillMaxWidth()
                                             )
                                         }
 
-                                        AnimatedContent(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            transitionSpec = { AnimatedCardContentTransformation },
-                                            targetState = state.value.lyricsState
-                                        ) { lyricsState ->
-                                            when (lyricsState) {
-                                                is ResourceState.Loading<*> -> {
-                                                    Box(
-                                                        modifier = Modifier.fillMaxWidth(),
-                                                        contentAlignment = Alignment.Center
+                                        QuickLyricsSongInfo(
+                                            songInfo = animatedPageState.data,
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
+                                    }
+
+                                    AnimatedContent(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        transitionSpec = { AnimatedCardContentTransformation },
+                                        targetState = state.value.lyricsState
+                                    ) { lyricsState ->
+                                        when (lyricsState) {
+                                            is ResourceState.Loading<*> -> {
+                                                Box(
+                                                    modifier = Modifier.fillMaxWidth(),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    LinearWavyProgressIndicator(
+                                                        modifier = Modifier.fillMaxWidth(
+                                                            0.8f
+                                                        )
+                                                    )
+                                                }
+                                            }
+
+                                            is ResourceState.Success<*> -> {
+                                                lyricsState.data?.let { _ ->
+                                                    ExpandableOutlinedCard(
+                                                        title = stringResource(R.string.song_lyrics),
+                                                        subtitle = stringResource(R.string.lyrics_subtitle),
+                                                        icon = Icons.Rounded.Subtitles,
+                                                        isExpanded = false,
+                                                        modifier = Modifier.fillMaxWidth()
                                                     ) {
-                                                        LinearWavyProgressIndicator(
-                                                            modifier = Modifier.fillMaxWidth(
-                                                                0.8f
-                                                            )
+                                                        SyncedLyricsColumn(
+                                                            lyricsList = parsedLyrics,
+                                                            modifier = Modifier
+                                                                .heightIn(
+                                                                    min = 200.dp, max = 600.dp
+                                                                )
+                                                                .fillMaxWidth()
+                                                                .padding(8.dp)
                                                         )
                                                     }
                                                 }
+                                            }
 
-                                                is ResourceState.Success<*> -> {
-                                                    lyricsState.data?.let { _ ->
-                                                        ExpandableOutlinedCard(
-                                                            title = stringResource(R.string.song_lyrics),
-                                                            subtitle = stringResource(R.string.lyrics_subtitle),
-                                                            icon = Icons.Rounded.Subtitles,
-                                                            isExpanded = false,
-                                                            modifier = Modifier.fillMaxWidth()
-                                                        ) {
-                                                            SyncedLyricsColumn(
-                                                                lyricsList = parsedLyrics,
-                                                                modifier = Modifier
-                                                                    .heightIn(
-                                                                        min = 200.dp, max = 600.dp
-                                                                    )
-                                                                    .fillMaxWidth()
-                                                                    .padding(8.dp)
-                                                            )
-                                                        }
-                                                    }
-                                                }
-
-                                                is ResourceState.Error<*> -> {
-                                                    ErrorCard(
-                                                        modifier = Modifier
-                                                            .fillMaxWidth()
-                                                            .heightIn(max = 300.dp),
-                                                        stacktrace = lyricsState.message ?: ""
-                                                    )
-                                                }
+                                            is ResourceState.Error<*> -> {
+                                                ErrorCard(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .heightIn(max = 300.dp),
+                                                    stacktrace = lyricsState.message ?: ""
+                                                )
                                             }
                                         }
                                     }
                                 }
                             }
+                        }
 
-                            is ScreenState.Error -> {
-                                ErrorCard(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .heightIn(max = 300.dp),
-                                    stacktrace = animatedPageState.exception.message
-                                        ?: animatedPageState.exception.stackTrace.toString()
-                                )
-                            }
+                        is ScreenState.Error -> {
+                            ErrorCard(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(max = 300.dp),
+                                stacktrace = animatedPageState.exception.message
+                                    ?: animatedPageState.exception.stackTrace.toString()
+                            )
                         }
                     }
                 }

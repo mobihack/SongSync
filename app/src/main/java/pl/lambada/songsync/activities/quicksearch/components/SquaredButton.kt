@@ -2,12 +2,13 @@
 
 package pl.lambada.songsync.activities.quicksearch.components
 
-import pl.lambada.songsync.ui.components.connectedButtonShapes
+import pl.lambada.songsync.util.ui.EaseOutStrong
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.animateDpAsState
 import pl.lambada.songsync.ui.components.ConnectedButtonRow
 import androidx.compose.runtime.remember
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -17,7 +18,6 @@ import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -54,13 +54,11 @@ fun SquareButtons() {
             icon = Icons.Default.Home,
             text = "Home",
             modifier = Modifier.size(96.dp),
-            shape = connectedButtonShapes(0, 2).shape,
         )
         ButtonWithIconAndText(
             icon = Icons.Default.Settings,
             text = "Settings",
             modifier = Modifier.size(96.dp),
-            shape = connectedButtonShapes(1, 2).shape,
         )
     }
 }
@@ -73,7 +71,6 @@ fun ButtonWithIconAndText(
     enabled: Boolean = true,
     border: Boolean = false,
     backgroundColor: Color = MaterialTheme.colorScheme.secondaryContainer,
-    shape: Shape = MaterialTheme.shapes.large,
     onClick: () -> Unit = {}
 ) {
 
@@ -81,9 +78,16 @@ fun ButtonWithIconAndText(
         targetValue = if (enabled) 1f else 0.4f,
         animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec(),
     )
-    // Squeezes to small corners while pressed, like Expressive buttons
+    // Squeezes to small corners while pressed, like Expressive buttons: fast on press,
+    // springing back on release
     val interactionSource = remember { MutableInteractionSource() }
     val pressed by interactionSource.collectIsPressedAsState()
+    val corner by animateDpAsState(
+        targetValue = if (pressed) 8.dp else 16.dp, // shapes.small / shapes.large
+        animationSpec = if (pressed) tween(100, easing = EaseOutStrong)
+        else MaterialTheme.motionScheme.fastSpatialSpec(),
+        label = "buttonCorner",
+    )
 
     Surface(
         modifier = modifier
@@ -91,7 +95,7 @@ fun ButtonWithIconAndText(
             .alpha(animatedAlpha),
         onClick = onClick,
         enabled = enabled,
-        shape = if (pressed) MaterialTheme.shapes.small else shape,
+        shape = RoundedCornerShape(corner),
         interactionSource = interactionSource,
         border = if (border) BorderStroke(1.dp, MaterialTheme.colorScheme.outline) else null,
         color = backgroundColor

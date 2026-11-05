@@ -5,7 +5,12 @@ package pl.lambada.songsync.activities.quicksearch.components
 import androidx.compose.material3.Card
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -51,12 +56,13 @@ fun ExpandableOutlinedCard(
 
     val animatedDegree = animateFloatAsState(
         targetValue = if (expanded) 0f else -180f,
-        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
+        // No overshoot: a chevron shows state, and a wobbling one looks unsure
+        animationSpec = spring(dampingRatio = 1f, stiffness = Spring.StiffnessMedium),
         label = "Button Rotation",
     )
 
     Card(
-        modifier = modifier.animateContentSize(MaterialTheme.motionScheme.defaultSpatialSpec()),
+        modifier = modifier,
         onClick = { expanded = !expanded },
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -103,7 +109,14 @@ fun ExpandableOutlinedCard(
                 )
             }
         }
-        AnimatedVisibility(visible = expanded) {
+        // The only size animation on the card; heights don't overshoot
+        AnimatedVisibility(
+            visible = expanded,
+            enter = fadeIn(MaterialTheme.motionScheme.defaultEffectsSpec()) +
+                expandVertically(spring(dampingRatio = 1f, stiffness = Spring.StiffnessMediumLow)),
+            exit = fadeOut(MaterialTheme.motionScheme.fastEffectsSpec()) +
+                shrinkVertically(spring(dampingRatio = 1f, stiffness = Spring.StiffnessMedium)),
+        ) {
             content()
         }
     }

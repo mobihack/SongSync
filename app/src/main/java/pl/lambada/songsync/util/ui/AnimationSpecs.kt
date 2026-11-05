@@ -1,66 +1,28 @@
 package pl.lambada.songsync.util.ui
 
-import android.graphics.Path
-import android.view.animation.PathInterpolator
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.BoundsTransform
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.ArcMode
 import androidx.compose.animation.core.CubicBezierEasing
-import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.ExperimentalAnimationSpecApi
 import androidx.compose.animation.core.keyframes
-import androidx.compose.animation.core.tween
-import pl.lambada.songsync.util.ui.MotionConstants.DURATION
-import pl.lambada.songsync.util.ui.MotionConstants.DURATION_ENTER
 import pl.lambada.songsync.util.ui.MotionConstants.DURATION_ENTER_SHORT
-import pl.lambada.songsync.util.ui.MotionConstants.DURATION_EXIT
-import pl.lambada.songsync.util.ui.MotionConstants.DURATION_EXIT_SHORT
 
-fun PathInterpolator.toEasing(): Easing {
-    return Easing { f -> this.getInterpolation(f) }
-}
+/** Strong ease-out for UI that enters, exits or responds to a tap. */
+val EaseOutStrong = CubicBezierEasing(0.23f, 1f, 0.32f, 1f)
 
-private val path = Path().apply {
-    moveTo(0f, 0f)
-    cubicTo(0.05F, 0F, 0.133333F, 0.06F, 0.166666F, 0.4F)
-    cubicTo(0.208333F, 0.82F, 0.25F, 1F, 1F, 1F)
-}
-
-val EmphasizedPathInterpolator = PathInterpolator(path)
-val EmphasizedEasing = EmphasizedPathInterpolator.toEasing()
-
-val EmphasizeEasingVariant = CubicBezierEasing(.2f, 0f, 0f, 1f)
 val EmphasizedDecelerate = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1f)
-val EmphasizedAccelerate = CubicBezierEasing(0.3f, 0f, 1f, 1f)
-val EmphasizedDecelerateEasing = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1f)
-val EmphasizedAccelerateEasing = CubicBezierEasing(0.3f, 0f, 0.8f, 0.15f)
 
-val StandardDecelerate = CubicBezierEasing(.0f, .0f, 0f, 1f)
 val MotionEasingStandard = CubicBezierEasing(0.4F, 0.0F, 0.2F, 1F)
-
-val tweenSpec = tween<Float>(durationMillis = DURATION_ENTER, easing = EmphasizedEasing)
-
-fun <T> tweenEnter(
-    delayMillis: Int = DURATION_EXIT,
-    durationMillis: Int = DURATION_ENTER
-) =
-    tween<T>(
-        delayMillis = delayMillis,
-        durationMillis = durationMillis,
-        easing = EmphasizedDecelerateEasing
-    )
-
-fun <T> tweenExit(
-    durationMillis: Int = DURATION_EXIT_SHORT,
-) = tween<T>(
-    durationMillis = durationMillis,
-    easing = EmphasizedAccelerateEasing
-)
-
-@OptIn(ExperimentalSharedTransitionApi::class)
-val DefaultBoundsTransform = BoundsTransform { _, _ ->
-    tween(easing = EmphasizedEasing, durationMillis = DURATION)
-}
 
 @OptIn(ExperimentalAnimationSpecApi::class, ExperimentalSharedTransitionApi::class)
 val SearchFABBoundsTransform = BoundsTransform { initialBounds, targetBounds ->
@@ -71,3 +33,10 @@ val SearchFABBoundsTransform = BoundsTransform { initialBounds, targetBounds ->
     }
 }
 
+/** Text that ticks upward as the provider fallback advances: in from below, out above. */
+fun <S> AnimatedContentTransitionScope<S>.tickerTransform(): ContentTransform =
+    (slideInVertically(tween(180, easing = EaseOutStrong)) { it / 2 } +
+        fadeIn(tween(180, easing = EaseOutStrong))) togetherWith
+        (slideOutVertically(tween(120, easing = EaseOutStrong)) { -it / 2 } +
+            fadeOut(tween(120, easing = EaseOutStrong))) using
+        SizeTransform(clip = false)

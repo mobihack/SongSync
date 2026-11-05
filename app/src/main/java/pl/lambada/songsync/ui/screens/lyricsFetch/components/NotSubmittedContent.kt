@@ -2,6 +2,8 @@
 
 package pl.lambada.songsync.ui.screens.lyricsFetch.components
 
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.graphicsLayer
@@ -93,7 +95,8 @@ fun NotSubmittedContent(
                     ) {
                         val rotation by animateFloatAsState(
                             targetValue = if (providerMenuExpanded) 180f else 0f,
-                            animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
+                            // No overshoot: the chevron shows state
+                            animationSpec = spring(dampingRatio = 1f, stiffness = Spring.StiffnessMedium),
                             label = "providerChevron",
                         )
                         Icon(

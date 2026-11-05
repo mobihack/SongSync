@@ -1,5 +1,10 @@
 package pl.lambada.songsync.ui.screens.settings.providers
 
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.CoroutineScope
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import pl.lambada.songsync.ui.components.listGroupRow
@@ -87,6 +92,7 @@ class MyProvidersEditorState internal constructor(
     private val haptics: HapticFeedback,
     /** Items of the surrounding list placed before the editor. */
     private val itemsBefore: Int,
+    private val scope: CoroutineScope,
 ) {
     var list by mutableStateOf(settings.myProviders)
         private set
@@ -94,6 +100,11 @@ class MyProvidersEditorState internal constructor(
         private set
     var dragOffset by mutableFloatStateOf(0f)
         private set
+
+    /** The row gliding back into its slot after being dropped, and its remaining offset. */
+    var settling by mutableStateOf<Providers?>(null)
+        private set
+    val settleOffset = Animatable(0f)
 
     val available: List<Providers> get() = Providers.entries.filter { it.enabled && it !in list }
 
@@ -113,12 +124,25 @@ class MyProvidersEditorState internal constructor(
     }
 
     fun startDrag(provider: Providers) {
+        // A new drag interrupts a row that is still settling
+        settling = null
+        scope.launch { settleOffset.snapTo(0f) }
         dragging = provider
         dragOffset = 0f
         haptics.performHapticFeedback(HapticFeedbackType.LongPress)
     }
 
     fun endDrag() {
+        // Glide from where the row was let go instead of snapping into its slot.
+        // Undispatched, so the offset is in place before the next frame draws.
+        val from = dragOffset
+        val dropped = dragging
+        settling = dropped
+        scope.launch(start = CoroutineStart.UNDISPATCHED) {
+            settleOffset.snapTo(from)
+            settleOffset.animateTo(0f, spring(stiffness = Spring.StiffnessMediumLow))
+            if (settling == dropped) settling = null
+        }
         dragging = null
         dragOffset = 0f
         save(list)
@@ -167,8 +191,9 @@ fun rememberMyProvidersEditor(
     itemsBefore: Int,
 ): MyProvidersEditorState {
     val haptics = LocalHapticFeedback.current
-    return remember(settings, listState, itemsBefore) {
-        MyProvidersEditorState(settings, listState, haptics, itemsBefore)
+    val scope = rememberCoroutineScope()
+    return remember(settings, listState, itemsBefore, scope) {
+        MyProvidersEditorState(settings, listState, haptics, itemsBefore, scope)
     }
 }
 
@@ -223,6 +248,8 @@ fun LazyListScope.myProvidersEditor(editor: MyProvidersEditorState) {
 
     itemsIndexed(editor.list, key = { _, p -> p.name }) { index, provider ->
         val isDragged = editor.dragging == provider
+        // Stays lifted until it has settled into its slot
+        val lifted = isDragged || editor.settling == provider
         val elevation by animateDpAsState(
             targetValue = if (isDragged) 8.dp else 0.dp,
             animationSpec = tween(150),
@@ -233,14 +260,14 @@ fun LazyListScope.myProvidersEditor(editor: MyProvidersEditorState) {
         ProviderRow(
             provider = provider,
             modifier = Modifier
-                .zIndex(if (isDragged) 1f else 0f)
+                .zIndex(if (lifted) 1f else 0f)
                 .then(
-                    if (isDragged) Modifier.graphicsLayer {
-                        translationY = editor.dragOffset
+                    if (lifted) Modifier.graphicsLayer {
+                        translationY = if (isDragged) editor.dragOffset else editor.settleOffset.value
                         shadowElevation = elevation.toPx()
                     } else Modifier.editorItem(this)
                 )
-                .listGroupRow(index = index, count = editor.list.size, lifted = isDragged)
+                .listGroupRow(index = index, count = editor.list.size, lifted = lifted)
                 .semantics {
                     customActions = listOfNotNull(
                         CustomAccessibilityAction(moveUp) { editor.move(index, index - 1); true }
