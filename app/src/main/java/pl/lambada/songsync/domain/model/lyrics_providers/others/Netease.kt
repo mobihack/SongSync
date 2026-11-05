@@ -29,14 +29,15 @@ data class NeteaseArtist(
 
 @Serializable
 data class NeteaseLyricsResponse(
-    val lrc: NeteaseLyrics,
+    // Missing for instrumental or uncollected tracks ({"nolyric":true} / {"uncollected":true})
+    val lrc: NeteaseLyrics? = null,
     val tlyric: NeteaseLyrics? = null,
     val romalrc: NeteaseLyrics? = null,
     val yrc: NeteaseLyrics? = null,
-    val code: Int
+    val code: Int = 0
 )
 
 @Serializable
 data class NeteaseLyrics(
-    val lyric: String
+    val lyric: String = ""
 )

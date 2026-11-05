@@ -127,10 +127,11 @@ class NeteaseAPI(private val client: HttpClient = Ktor.clientFor(Providers.NETEA
             ?.let { WordSync.render(WordSync.parseYrc(it)) }
             ?.takeIf { it.isNotBlank() }
 
-        if (wordByWord == null && json.lrc.lyric.isEmpty())
+        val lineSynced = json.lrc?.lyric.orEmpty()
+        if (wordByWord == null && lineSynced.isEmpty())
             return null
 
-        var lyric = wordByWord ?: json.lrc.lyric
+        var lyric = wordByWord ?: lineSynced
 
         if (includeTranslation && json.tlyric?.lyric?.isNotEmpty() == true)
             lyric += "\n\n" + json.tlyric.lyric

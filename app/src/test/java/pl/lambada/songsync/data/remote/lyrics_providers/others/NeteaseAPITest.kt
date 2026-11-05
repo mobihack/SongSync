@@ -103,6 +103,18 @@ class NeteaseAPITest {
     }
 
     @Test
+    fun `an instrumental track has no lyrics instead of failing`() = runTest {
+        val http = FakeHttp { respondJson("""{"sgc":true,"nolyric":true,"code":200}""") }
+        NeteaseAPI(http.client).getSyncedLyrics(1).shouldBeNull()
+    }
+
+    @Test
+    fun `an uncollected track has no lyrics instead of failing`() = runTest {
+        val http = FakeHttp { respondJson("""{"uncollected":true,"code":200}""") }
+        NeteaseAPI(http.client).getSyncedLyrics(1).shouldBeNull()
+    }
+
+    @Test
     fun `empty lyrics give null`() = runTest {
         val http = FakeHttp { respondJson("""{"lrc":{"lyric":""},"tlyric":null,"romalrc":null,"code":200}""") }
         NeteaseAPI(http.client).getSyncedLyrics(1).shouldBeNull()
