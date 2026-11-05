@@ -3,6 +3,9 @@ package pl.lambada.songsync.ui.components
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -29,6 +32,7 @@ import coil.compose.rememberAsyncImagePainter
 import coil.imageLoader
 import coil.request.ImageRequest
 import pl.lambada.songsync.R
+import pl.lambada.songsync.ui.screens.home.components.SharedTextResizeMode
 import pl.lambada.songsync.util.openFileFromPath
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -73,6 +77,10 @@ fun SharedTransitionScope.SongCard(
                         .sharedBounds(
                             sharedContentState = rememberSharedContentState(key = "cover$filePath"),
                             animatedVisibilityScope = animatedVisibilityScope,
+                            // The home-side cover stays drawn throughout and turns into this
+                            // shape; this one shows only near the end, and leaves fast on back
+                            enter = fadeIn(tween(durationMillis = 150, delayMillis = 200)),
+                            exit = fadeOut(tween(durationMillis = 100)),
                             clipInOverlayDuringTransition = OverlayClip(
                                 RoundedCornerShape(
                                     topStart = 30f,
@@ -106,7 +114,8 @@ fun SharedTransitionScope.SongCard(
                     animate = animateText,
                     modifier = Modifier.sharedBounds(
                         sharedContentState = rememberSharedContentState(key = "title$filePath"),
-                        animatedVisibilityScope = animatedVisibilityScope
+                        animatedVisibilityScope = animatedVisibilityScope,
+                        resizeMode = SharedTextResizeMode,
                     )
                 )
                 Spacer(modifier = Modifier.weight(1f))
@@ -116,7 +125,8 @@ fun SharedTransitionScope.SongCard(
                     animate = animateText,
                     modifier = Modifier.sharedBounds(
                         sharedContentState = rememberSharedContentState(key = "artist$filePath"),
-                        animatedVisibilityScope = animatedVisibilityScope
+                        animatedVisibilityScope = animatedVisibilityScope,
+                        resizeMode = SharedTextResizeMode,
                     )
                 )
             }

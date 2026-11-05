@@ -18,6 +18,9 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.animateColorAsState
@@ -166,6 +169,7 @@ fun SongItem(
                                 sharedTransitionScope = sharedTransitionScope,
                                 animatedVisibilityScope = animatedVisibilityScope,
                                 overlayClip = CoverShape,
+                                homeSideCover = true,
                             )
                             .fillMaxSize()
                             .graphicsLayer {
@@ -216,6 +220,7 @@ fun SongItem(
                             key = "title$filePath",
                             sharedTransitionScope = sharedTransitionScope,
                             animatedVisibilityScope = animatedVisibilityScope,
+                            scaleText = true,
                         )
                     )
                     AnimatedText(
@@ -228,6 +233,7 @@ fun SongItem(
                             key = "artist$filePath",
                             sharedTransitionScope = sharedTransitionScope,
                             animatedVisibilityScope = animatedVisibilityScope,
+                            scaleText = true,
                         )
                     )
                 }
@@ -245,28 +251,57 @@ fun SongItem(
     }
 }
 
+/**
+ * Shared title/artist text: drawn at its own size and scaled to the moving bounds, start-aligned,
+ * so a big title shrinks into a small one instead of reflowing (and re-wrapping) every frame.
+ * Used on both ends: here and on the lyrics screen's SongCard.
+ */
+@OptIn(ExperimentalSharedTransitionApi::class)
+val SharedTextResizeMode = SharedTransitionScope.ResizeMode.scaleToBounds(
+    contentScale = ContentScale.FillHeight,
+    alignment = Alignment.CenterStart,
+)
+
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-private fun Modifier.sharedBoundsIf(
+internal fun Modifier.sharedBoundsIf(
     enabled: Boolean,
     key: String,
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     overlayClip: Shape? = null,
+    /**
+     * A home-screen cover: drawn for the whole transition, both ways, instead of crossfading.
+     * The lyrics screen's cover fades in late and out fast (see SongCard), so its own shape
+     * doesn't show around this one while the two are different sizes.
+     */
+    homeSideCover: Boolean = false,
+    /** Text: scale the content to the moving bounds instead of reflowing it at every size. */
+    scaleText: Boolean = false,
 ): Modifier {
     if (!enabled) return this
     return with(sharedTransitionScope) {
         val state = rememberSharedContentState(key = key)
+        val enter = if (homeSideCover) EnterTransition.None else fadeIn()
+        // Fully opaque throughout: stays visible until the shared bounds settle
+        val exit = if (homeSideCover) fadeOut(targetAlpha = 1f) else fadeOut()
+        val resizeMode = if (scaleText) SharedTextResizeMode else SharedTransitionScope.ResizeMode.RemeasureToBounds
         if (overlayClip != null) {
             this@sharedBoundsIf.sharedBounds(
                 sharedContentState = state,
                 animatedVisibilityScope = animatedVisibilityScope,
+                enter = enter,
+                exit = exit,
+                resizeMode = resizeMode,
                 clipInOverlayDuringTransition = OverlayClip(overlayClip),
             )
         } else {
             this@sharedBoundsIf.sharedBounds(
                 sharedContentState = state,
                 animatedVisibilityScope = animatedVisibilityScope,
+                enter = enter,
+                exit = exit,
+                resizeMode = resizeMode,
             )
         }
     }
