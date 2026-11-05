@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -165,13 +166,24 @@ fun SharedTransitionScope.LyricsFetchScreen(
                         Modifier.fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
+                        val progress = viewModel.searchProgress
                         Spacer(modifier = Modifier.height(10.dp))
                         CloudProviderTitle(
-                            selectedProvider = viewModel.userSettingsController.selectedProvider,
+                            // Follows the fallback live: shows the provider being tried right now
+                            selectedProvider = progress?.provider
+                                ?: viewModel.userSettingsController.selectedProvider,
                             onExpandProvidersRequest = { expandedProviders = true }
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         CircularProgressIndicator()
+                        if (progress != null && progress.total > 1) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = stringResource(R.string.provider_progress, progress.index, progress.total),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
 
                     is QueryStatus.Success -> SuccessContent(

@@ -193,8 +193,13 @@ class LyricsProviderService {
         includeRomanizationNetEase: Boolean = false,
         multiPersonWordByWord: Boolean = false,
         unsyncedFallbackMusixmatch: Boolean = true,
+        onAttempt: (ProviderChain.Progress) -> Unit = {},
     ): ProviderChain.Found<LyricsLookup>? =
-        ProviderChain.find(providers, isSynced = { ProviderChain.isSynced(it.lyrics) }) { provider ->
+        ProviderChain.find(
+            providers,
+            isSynced = { ProviderChain.isSynced(it.lyrics) },
+            onAttempt = onAttempt,
+        ) { provider ->
             val songInfo = getSongInfo(query, provider = provider) ?: return@find null
             val lyrics = getSyncedLyrics(
                 songInfo.songName.orEmpty(),

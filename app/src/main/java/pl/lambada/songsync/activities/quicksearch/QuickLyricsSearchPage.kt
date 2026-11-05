@@ -80,11 +80,25 @@ fun QuickLyricsSearchPage(
                     ) { animatedPageState ->
                         when (animatedPageState) {
                             is ScreenState.Loading -> {
-                                Box(
+                                Column(
                                     modifier = Modifier.fillMaxWidth(),
-                                    contentAlignment = Alignment.Center
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     CircularProgressIndicator()
+                                    // Follows the fallback live: the provider being tried right now
+                                    state.value.searchProgress?.let { progress ->
+                                        AnimatedContent(targetState = progress, label = "provider") {
+                                            Text(
+                                                text = stringResource(
+                                                    R.string.searching_provider,
+                                                    it.provider.displayName, it.index, it.total
+                                                ),
+                                                style = MaterialTheme.typography.labelMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                        }
+                                    }
                                 }
                             }
 

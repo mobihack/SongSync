@@ -12,6 +12,7 @@ import pl.lambada.songsync.data.UserSettingsController
 import pl.lambada.songsync.data.remote.lyrics_providers.LyricsProviderService
 import pl.lambada.songsync.domain.model.SongInfo
 import pl.lambada.songsync.util.NoTrackFoundException
+import pl.lambada.songsync.util.ProviderChain
 import pl.lambada.songsync.util.ResourceState
 import pl.lambada.songsync.util.ScreenState
 import pl.lambada.songsync.util.ext.getVersion
@@ -28,7 +29,9 @@ class QuickLyricsSearchViewModel(
         val song: Pair<String, String>? = null, // Pair of song title and artist's name
         val screenState: ScreenState<SongInfo> = ScreenState.Loading,
         val lyricsState: ResourceState<String> = ResourceState.Loading(),
-        val parsedLyrics: List<Pair<String, String>> = emptyList()
+        val parsedLyrics: List<Pair<String, String>> = emptyList(),
+        /** Which provider is being tried right now, for showing fallback progress. */
+        val searchProgress: ProviderChain.Progress? = null,
     )
 
     private fun fetchSongData(song: Pair<String, String>, context: Context) {
@@ -44,8 +47,10 @@ class QuickLyricsSearchViewModel(
                     includeRomanizationNetEase = userSettingsController.includeRomanization,
                     multiPersonWordByWord = userSettingsController.multiPersonWordByWord,
                     unsyncedFallbackMusixmatch = userSettingsController.unsyncedFallbackMusixmatch,
+                    onAttempt = { progress -> mutableState.update { it.copy(searchProgress = progress) } },
                 )
             }
+            mutableState.update { it.copy(searchProgress = null) }
 
             lookup.onFailure { exception ->
                 updateScreenState(ScreenState.Error(exception))

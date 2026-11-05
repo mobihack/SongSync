@@ -9,6 +9,9 @@ import java.net.UnknownHostException
 object ProviderChain {
     data class Found<T>(val provider: Providers, val value: T)
 
+    /** The provider being tried right now: number [index] (1-based) of [total]. */
+    data class Progress(val provider: Providers, val index: Int, val total: Int)
+
     /** Providers tried after the selected one: synced sources first, plain-text ones last. */
     private val fallbackOrder = listOf(
         Providers.LRCLIB,
@@ -40,13 +43,15 @@ object ProviderChain {
     suspend fun <T> find(
         providers: List<Providers>,
         isSynced: (T) -> Boolean,
+        onAttempt: (Progress) -> Unit = {},
         attempt: suspend (Providers) -> T?,
     ): Found<T>? {
         var plainFallback: Found<T>? = null
         var lastError: Exception? = null
         var anyAnswered = false
 
-        for (provider in providers) {
+        for ((i, provider) in providers.withIndex()) {
+            onAttempt(Progress(provider, index = i + 1, total = providers.size))
             val value = try {
                 attempt(provider).also { anyAnswered = true }
             } catch (e: UnknownHostException) {

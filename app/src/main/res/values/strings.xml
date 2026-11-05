@@ -117,6 +117,8 @@
     <string name="ignore">Ignore</string>
     <string name="internal_error">Internal error: %s</string>
     <string name="provider_fallback">Try other providers</string>
+    <string name="provider_progress">Provider %1$d of %2$d</string>
+    <string name="searching_provider">Searching %1$s… (%2$d/%3$d)</string>
     <string name="provider_fallback_summary">If the selected provider has no synced lyrics, search the other providers too</string>
     <string name="disable_marquee">Disable Marquee Text</string>
     <string name="disable_marquee_summary">Disable moving text animation in app</string>

@@ -1,5 +1,13 @@
 package pl.lambada.songsync.ui.screens.lyricsFetch.components
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
@@ -30,6 +38,17 @@ fun CloudProviderTitle(
             contentDescription = null,
             Modifier.padding(end = 5.dp)
         )
-        Text(text = selectedProvider.displayName)
+        // Animates as fallback moves from one provider to the next
+        AnimatedContent(
+            targetState = selectedProvider,
+            transitionSpec = {
+                (slideInVertically(tween(180)) { it / 2 } + fadeIn(tween(180))) togetherWith
+                    (slideOutVertically(tween(120)) { -it / 2 } + fadeOut(tween(120))) using
+                    SizeTransform(clip = false)
+            },
+            label = "provider",
+        ) { provider ->
+            Text(text = provider.displayName)
+        }
     }
 }

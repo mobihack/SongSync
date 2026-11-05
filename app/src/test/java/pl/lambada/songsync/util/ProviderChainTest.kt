@@ -37,6 +37,21 @@ class ProviderChainTest {
     }
 
     @Test
+    fun `reports each provider as it is tried, with its position`() = runTest {
+        val progress = mutableListOf<ProviderChain.Progress>()
+        ProviderChain.find(
+            listOf(Providers.LRCLIB, Providers.NETEASE, Providers.KUGOU),
+            isSynced = ProviderChain::isSynced,
+            onAttempt = { progress += it },
+        ) { provider -> if (provider == Providers.NETEASE) synced else null }
+
+        progress.shouldContainExactly(
+            ProviderChain.Progress(Providers.LRCLIB, index = 1, total = 3),
+            ProviderChain.Progress(Providers.NETEASE, index = 2, total = 3),
+        )
+    }
+
+    @Test
     fun `plain lyrics are kept as a fallback while looking for synced ones`() = runTest {
         val (found, tried) = run(
             listOf(Providers.GENIUS, Providers.LRCLIB),

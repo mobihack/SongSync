@@ -19,6 +19,7 @@ import pl.lambada.songsync.util.ext.getVersion
 import pl.lambada.songsync.util.generateLrcContent
 import pl.lambada.songsync.util.isLegacyFileAccessRequired
 import pl.lambada.songsync.util.NoTrackFoundException
+import pl.lambada.songsync.util.ProviderChain
 import pl.lambada.songsync.util.newLyricsFilePath
 import pl.lambada.songsync.util.saveToExternalPath
 import pl.lambada.songsync.util.showToast
@@ -43,6 +44,10 @@ class LyricsFetchViewModel(
     var lrcOffset by mutableIntStateOf(0)
 
     var lyricsFetchState by mutableStateOf<LyricsFetchState>(LyricsFetchState.NotSubmitted)
+
+    /** Which provider a fresh search is trying right now, for showing fallback progress. */
+    var searchProgress by mutableStateOf<ProviderChain.Progress?>(null)
+        private set
 
     /** The provider that supplied the current result; can differ from the selected one. */
     var activeProvider by mutableStateOf(userSettingsController.selectedProvider)
@@ -94,13 +99,16 @@ class LyricsFetchViewModel(
                         includeRomanizationNetEase = userSettingsController.includeRomanization,
                         multiPersonWordByWord = userSettingsController.multiPersonWordByWord,
                         unsyncedFallbackMusixmatch = userSettingsController.unsyncedFallbackMusixmatch,
+                        onAttempt = { searchProgress = it },
                     ) ?: throw NoTrackFoundException()
 
                     activeProvider = found.provider
+                    searchProgress = null
                     queryState = QueryStatus.Success(found.value.songInfo)
                     lyricsFetchState = LyricsFetchState.Success(found.value.lyrics)
                 }
             } catch (e: Exception) {
+                searchProgress = null
                 queryState = when (e) {
                     is UnknownHostException -> QueryStatus.NoConnection
                     else -> QueryStatus.Failed(e)
