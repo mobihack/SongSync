@@ -2,6 +2,8 @@
 
 package pl.lambada.songsync.ui.screens.home.components
 
+import pl.lambada.songsync.ui.components.FrostedBottomSheet
+import dev.chrisbanes.haze.HazeState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -30,9 +32,11 @@ fun FiltersSheet(
     onDismiss: () -> Unit,
     onHideLyricsChange: (Boolean) -> Unit,
     onOpenMusicFolders: () -> Unit,
+    hazeState: HazeState? = null,
 ) {
-    ModalBottomSheet(
+    FrostedBottomSheet(
         onDismissRequest = onDismiss,
+        hazeState = hazeState,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
     ) {
         Column(Modifier.padding(bottom = 24.dp).navigationBarsPadding()) {

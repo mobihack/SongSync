@@ -149,5 +149,6 @@ fun HomeOverflowMenu(
         selected = providerChoice,
         onChoose = onProviderChoice,
         onDismissRequest = { providersDialog = false },
+        hazeState = hazeState,
     )
 }

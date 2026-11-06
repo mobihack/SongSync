@@ -2,6 +2,7 @@
 
 package pl.lambada.songsync.ui.components
 
+import dev.chrisbanes.haze.HazeState
 import androidx.compose.material3.ListItemShapes
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.SegmentedListItem
@@ -50,6 +51,8 @@ fun ProvidersSheet(
     selected: ProviderChoice,
     onChoose: (ProviderChoice) -> Unit,
     onDismissRequest: () -> Unit,
+    /** What the sheet's frosting blurs: the screen it opens over. */
+    hazeState: HazeState? = null,
 ) {
     val sheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
@@ -57,7 +60,7 @@ fun ProvidersSheet(
     val dismiss: () -> Unit = {
         scope.launch { sheetState.hide() }.invokeOnCompletion { onDismissRequest() }
     }
-    ModalBottomSheet(onDismissRequest = onDismissRequest, sheetState = sheetState) {
+    FrostedBottomSheet(onDismissRequest = onDismissRequest, hazeState = hazeState, sheetState = sheetState) {
         Column(Modifier.verticalScroll(rememberScrollState()).padding(bottom = 32.dp).navigationBarsPadding()) {
             Text(
                 stringResource(R.string.provider),

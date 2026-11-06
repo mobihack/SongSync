@@ -94,6 +94,7 @@ fun SharedTransitionScope.LyricsFetchScreen(
         if (expandedProviders) ProvidersSheet(
             selected = viewModel.userSettingsController.providerChoice,
             onDismissRequest = { expandedProviders = false },
+            hazeState = hazeState,
             onChoose = {
                 viewModel.userSettingsController.choose(it)
                 if (viewModel.queryState != QueryStatus.NotSubmitted)

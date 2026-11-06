@@ -2,6 +2,8 @@
 
 package pl.lambada.songsync.ui.screens.home.components
 
+import pl.lambada.songsync.ui.components.FrostedBottomSheet
+import dev.chrisbanes.haze.HazeState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -52,9 +54,11 @@ fun SortSheet(
     onDismiss: () -> Unit,
     onSortByChange: (SortValues) -> Unit,
     onSortOrderChange: (SortOrders) -> Unit,
+    hazeState: HazeState? = null,
 ) {
-    ModalBottomSheet(
+    FrostedBottomSheet(
         onDismissRequest = onDismiss,
+        hazeState = hazeState,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
     ) {
         Column(
@@ -101,6 +105,10 @@ fun SortOrderToggle(order: SortOrders, onChange: (SortOrders) -> Unit, modifier:
                     SortOrders.entries.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
                     else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
                 },
+                // The default unchecked fill is the sheet's own frosted tint: lift it so it shows
+                colors = ToggleButtonDefaults.colors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                ),
                 modifier = Modifier
                     .weight(1f)
                     .semantics { role = Role.RadioButton },

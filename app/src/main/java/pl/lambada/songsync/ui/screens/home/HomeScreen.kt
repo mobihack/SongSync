@@ -1,5 +1,6 @@
 package pl.lambada.songsync.ui.screens.home
 
+import dev.chrisbanes.haze.HazeState
 import pl.lambada.songsync.ui.navigateOnce
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.spring
@@ -192,6 +193,7 @@ fun HomeScreen(
                     sharedTransitionScope = sharedTransitionScope,
                     animatedVisibilityScope = animatedVisibilityScope,
                     listState = listState,
+                    hazeState = hazeState,
                 )
         }
         // ⋮ menu in the bottom-start corner; the selection toolbar replaces it while selecting
@@ -298,6 +300,8 @@ fun HomeScreenLoaded(
     sharedTransitionScope: SharedTransitionScope,
     animatedVisibilityScope: AnimatedVisibilityScope,
     listState: LazyListState,
+    /** What the sheets opened from here frost over: the song list. */
+    hazeState: HazeState? = null,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -323,7 +327,8 @@ fun HomeScreenLoaded(
                     it
                 )
             },
-            onSortByChange = { viewModel.userSettingsController.updateSortBy(it) }
+            onSortByChange = { viewModel.userSettingsController.updateSortBy(it) },
+            hazeState = hazeState,
         )
     }
 
@@ -337,6 +342,7 @@ fun HomeScreenLoaded(
                 viewModel.showFilters = false
                 navController.navigate(ScreenMusicFolders)
             },
+            hazeState = hazeState,
         )
     }
 
