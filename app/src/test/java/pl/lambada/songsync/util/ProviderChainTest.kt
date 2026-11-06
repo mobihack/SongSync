@@ -5,6 +5,7 @@ import io.kotest.matchers.collections.shouldContainExactly
 import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import java.net.UnknownHostException
@@ -183,5 +184,40 @@ class ProviderChainTest {
         ProviderChain.isSynced("[ar:Someone]\n[00:01.00]Hi") shouldBe true
         ProviderChain.isSynced("[00:01.000]<00:01.000>Hi<00:01.500>") shouldBe true
         ProviderChain.isSynced("Just text\n[Chorus]") shouldBe false
+    }
+
+    @Test
+    fun `running out of time returns the plain lyrics found so far`() = runTest {
+        val found = ProviderChain.find(
+            listOf(Providers.GENIUS, Providers.LRCLIB, Providers.NETEASE),
+            isSynced = ProviderChain::isSynced,
+            timeoutMs = 1_000,
+        ) { provider ->
+            when (provider) {
+                Providers.GENIUS -> plain
+                else -> { delay(5_000); synced }
+            }
+        }
+        found shouldBe ProviderChain.Found(Providers.GENIUS, plain)
+    }
+
+    @Test
+    fun `running out of time with nothing found returns null`() = runTest {
+        val found = ProviderChain.find(
+            listOf(Providers.LRCLIB),
+            isSynced = ProviderChain::isSynced,
+            timeoutMs = 1_000,
+        ) { delay(5_000); synced }
+        found.shouldBeNull()
+    }
+
+    @Test
+    fun `a search that finishes in time is unaffected by the time limit`() = runTest {
+        val found = ProviderChain.find(
+            listOf(Providers.LRCLIB, Providers.NETEASE),
+            isSynced = ProviderChain::isSynced,
+            timeoutMs = 10_000,
+        ) { provider -> delay(1_000); if (provider == Providers.NETEASE) synced else null }
+        found shouldBe ProviderChain.Found(Providers.NETEASE, synced)
     }
 }

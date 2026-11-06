@@ -8,10 +8,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 import pl.lambada.songsync.data.UserSettingsController
 import pl.lambada.songsync.data.remote.lyrics_providers.LyricsProviderService
 import pl.lambada.songsync.domain.model.SongInfo
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Poweramp lyrics plugin (Poweramp build 948+).
@@ -43,6 +43,12 @@ class PowerampLyricsReceiver : BroadcastReceiver() {
             LyricsRequestLimiter.Decision.SEARCH -> Unit
             // Asked again (or flooded): answer at once, so Poweramp stops showing progress
             LyricsRequestLimiter.Decision.REPEAT -> {
+                // Still searching: that search answers this request too. Replying now would send
+                // "no lyrics" for a song that may well have some.
+                if (realId in searching) {
+                    Log.i(TAG, "Poweramp asked again for id=$realId; search still running")
+                    return
+                }
                 val stored = runCatching { PowerampLyricsStore.load(appContext, realId) }.getOrNull()
                 sendLyrics(appContext, realId, stored?.lyrics, stored?.provider?.let { "Lyrics from $it via SongSync+" })
                 return
@@ -57,11 +63,12 @@ class PowerampLyricsReceiver : BroadcastReceiver() {
         val rawPath = intent.getStringExtra(EXTRA_PATH)
         Log.i(TAG, "Poweramp asked for \"$title\" by \"${query.artistName}\" (id=$realId, path=$rawPath)")
         val pending = goAsync()
+        searching.add(realId)
         scope.launch {
             try {
                 val path = PowerampTrackPath.resolve(appContext, rawPath, title, query.artistName, query.durationMs)
                 Log.i(TAG, "Song file for \"$title\": $path")
-                val found = withTimeoutOrNull(SEARCH_TIMEOUT_MS) { findLyrics(appContext, query) }
+                val found = findLyrics(appContext, query)
                 Log.i(
                     TAG,
                     if (found == null) "No lyrics for \"$title\" (id=$realId)"
@@ -80,6 +87,7 @@ class PowerampLyricsReceiver : BroadcastReceiver() {
                     infoLine = found?.first?.let { "Lyrics from $it via SongSync+" },
                 )
             } finally {
+                searching.remove(realId)
                 pending.finish()
             }
         }
@@ -93,6 +101,8 @@ class PowerampLyricsReceiver : BroadcastReceiver() {
                 query,
                 settings.lookupProviders(),
                 options = settings.lyricsOptions,
+                // Out of time, plain lyrics already found are still sent
+                timeoutMs = SEARCH_TIMEOUT_MS,
             )
         }.onFailure { Log.w(TAG, "Lyrics search failed for \"${query.songName}\"", it) }
             .getOrNull()
@@ -112,6 +122,9 @@ class PowerampLyricsReceiver : BroadcastReceiver() {
     private companion object {
         /** Process-wide, so it holds across broadcasts (each gets a new receiver). */
         val limiter = LyricsRequestLimiter()
+
+        /** Tracks being searched right now, by Poweramp's id. */
+        val searching: MutableSet<Long> = ConcurrentHashMap.newKeySet()
 
         const val TAG = "PowerampLyrics"
 

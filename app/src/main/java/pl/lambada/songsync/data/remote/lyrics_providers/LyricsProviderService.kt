@@ -84,18 +84,21 @@ class LyricsProviderService {
 
     /**
      * Searches each of [providers] in turn (see [ProviderChain]) and returns the first match with
-     * synced lyrics, or plain lyrics if no provider has synced ones.
+     * synced lyrics, or plain lyrics if no provider has synced ones. See [ProviderChain.find] for
+     * [timeoutMs].
      */
     suspend fun findLyrics(
         query: SongInfo,
         providers: List<Providers>,
         options: LyricsOptions = LyricsOptions(),
         onAttempt: (ProviderChain.Progress) -> Unit = {},
+        timeoutMs: Long? = null,
     ): ProviderChain.Found<LyricsLookup>? =
         ProviderChain.find(
             providers,
             isSynced = { ProviderChain.isSynced(it.lyrics) },
             onAttempt = onAttempt,
+            timeoutMs = timeoutMs,
         ) { provider ->
             val songInfo = getSongInfo(query, provider = provider)
             val lyrics = getSyncedLyrics(songInfo, provider, options) ?: return@find null

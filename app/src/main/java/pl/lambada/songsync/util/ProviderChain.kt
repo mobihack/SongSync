@@ -1,5 +1,6 @@
 package pl.lambada.songsync.util
 
+import kotlinx.coroutines.withTimeoutOrNull
 import java.net.UnknownHostException
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -96,12 +97,33 @@ object ProviderChain {
      * plain one if none is synced. A provider that errors is skipped; being offline, cancellation or an empty
      * query stops the chain. With a single provider, or when every provider errored, the (last)
      * error is rethrown so callers can report it as before.
+     *
+     * @param timeoutMs (optional) when it runs out, the providers left are skipped and the plain
+     * result found so far (if any) is returned rather than nothing.
      */
     suspend fun <T> find(
         providers: List<Providers>,
         isSynced: (T) -> Boolean,
         onAttempt: (Progress) -> Unit = {},
+        timeoutMs: Long? = null,
         attempt: suspend (Providers) -> T?,
+    ): Found<T>? {
+        var plainFallback: Found<T>? = null
+        if (timeoutMs == null) return findIn(providers, isSynced, onAttempt, attempt) { plainFallback = it }
+        return withTimeoutOrNull(timeoutMs) {
+            // Wrapped, so a null "nothing found" can be told apart from running out of time
+            Result(findIn(providers, isSynced, onAttempt, attempt) { plainFallback = it })
+        }.let { finished -> if (finished != null) finished.value else plainFallback }
+    }
+
+    private class Result<T>(val value: T)
+
+    private suspend fun <T> findIn(
+        providers: List<Providers>,
+        isSynced: (T) -> Boolean,
+        onAttempt: (Progress) -> Unit,
+        attempt: suspend (Providers) -> T?,
+        onPlainFallback: (Found<T>) -> Unit,
     ): Found<T>? {
         var plainFallback: Found<T>? = null
         var lastError: Exception? = null
@@ -127,7 +149,7 @@ object ProviderChain {
             } ?: continue
 
             if (isSynced(value)) return Found(provider, value)
-            if (plainFallback == null) plainFallback = Found(provider, value)
+            if (plainFallback == null) plainFallback = Found<T>(provider, value).also(onPlainFallback)
         }
 
         plainFallback?.let { return it }
