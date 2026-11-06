@@ -219,6 +219,7 @@
     </plurals>
     <string name="poweramp_lyrics_not_found">இந்த வரிகள் இனி SongSync+ இல் இல்லை. Poweramp இல் மீண்டும் கோரி மீண்டும் முயலவும்.</string>
     <string name="poweramp_embed_failed">பாடல் கோப்பில் வரிகளை உட்பொதிக்க முடியவில்லை</string>
+    <string name="open_in_app">செயலியில் திற</string>
     <string name="poweramp">Poweramp</string>
     <string name="poweramp_rescan_after_save">சேமித்த பின் Poweramp ஐப் புதுப்பி</string>
     <string name="poweramp_rescan_after_save_description">Poweramp இன் பாடல் வரி இணைப்பிலிருந்து வரிகளைச் சேமித்த அல்லது உட்பொதித்த பின், மாற்றத்தை எடுத்துக்கொள்ள பாடலின் கோப்புறையை மீண்டும் வருடுமாறு Poweramp இடம் கேள்</string>

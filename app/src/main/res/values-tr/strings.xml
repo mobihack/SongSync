@@ -225,6 +225,7 @@
     </plurals>
     <string name="poweramp_lyrics_not_found">SongSync+ artık bu şarkı sözlerine sahip değil. Poweramp’te yeniden isteyip tekrar deneyin.</string>
     <string name="poweramp_embed_failed">Şarkı sözleri şarkı dosyasına gömülemedi</string>
+    <string name="open_in_app">Uygulamada aç</string>
     <string name="poweramp">Poweramp</string>
     <string name="poweramp_rescan_after_save">Kaydettikten sonra Poweramp’i yenile</string>
     <string name="poweramp_rescan_after_save_description">Poweramp’in şarkı sözü bağlantısından şarkı sözleri kaydedildikten veya gömüldükten sonra, değişikliği algılaması için Poweramp’ten şarkının klasörünü yeniden taramasını iste</string>

@@ -243,6 +243,7 @@
     </plurals>
     <string name="poweramp_lyrics_not_found">SongSync+ nu mai are aceste versuri. Cereți-le din nou în Poweramp și încercați iar.</string>
     <string name="poweramp_embed_failed">Versurile nu au putut fi încorporate în fișierul melodiei</string>
+    <string name="open_in_app">Deschide în aplicație</string>
     <string name="poweramp">Poweramp</string>
     <string name="poweramp_rescan_after_save">Reîmprospătare Poweramp după salvare</string>
     <string name="poweramp_rescan_after_save_description">După salvarea sau încorporarea versurilor din linkul de versuri al Poweramp, cere Poweramp să rescaneze folderul melodiei pentru a prelua modificarea</string>

@@ -219,6 +219,7 @@
     </plurals>
     <string name="poweramp_lyrics_not_found">SongSync+il pole enam neid laulusõnu. Küsi need Poweramp\'is uuesti ja proovi uuesti.</string>
     <string name="poweramp_embed_failed">Laulusõnu ei õnnestunud helifaili lõimida</string>
+    <string name="open_in_app">Ava rakenduses</string>
     <string name="poweramp">Poweramp</string>
     <string name="poweramp_rescan_after_save">Värskenda Poweramp\'i pärast salvestamist</string>
     <string name="poweramp_rescan_after_save_description">Kui laulusõnad on Poweramp\'i laulusõnade lingi kaudu salvestatud või lõimitud, palu Poweramp\'il loo kaust uuesti skannida, et muudatus kajastuks</string>

@@ -227,6 +227,7 @@
     </plurals>
     <string name="poweramp_lyrics_not_found">SongSync+ ไม่มีเนื้อเพลงนี้แล้ว โปรดขอเนื้อเพลงใหม่ใน Poweramp แล้วลองอีกครั้ง</string>
     <string name="poweramp_embed_failed">ไม่สามารถฝังเนื้อเพลงลงในไฟล์เพลงได้</string>
+    <string name="open_in_app">เปิดในแอป</string>
     <string name="poweramp">Poweramp</string>
     <string name="poweramp_rescan_after_save">รีเฟรช Poweramp หลังบันทึก</string>
     <string name="poweramp_rescan_after_save_description">หลังจากบันทึกหรือฝังเนื้อเพลงจากลิงก์เนื้อเพลงของ Poweramp ให้ Poweramp สแกนโฟลเดอร์ของเพลงใหม่เพื่อรับการเปลี่ยนแปลง</string>

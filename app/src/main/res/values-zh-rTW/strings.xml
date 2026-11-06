@@ -214,6 +214,7 @@
     </plurals>
     <string name="poweramp_lyrics_not_found">SongSync+ 已不再保有這些歌詞。請在 Poweramp 中重新要求後再試一次。</string>
     <string name="poweramp_embed_failed">無法將歌詞嵌入歌曲檔案</string>
+    <string name="open_in_app">在應用程式中開啟</string>
     <string name="poweramp">Poweramp</string>
     <string name="poweramp_rescan_after_save">儲存後重新整理 Poweramp</string>
     <string name="poweramp_rescan_after_save_description">從 Poweramp 的歌詞連結儲存或嵌入歌詞後，要求 Poweramp 重新掃描歌曲所在資料夾，以套用變更</string>

@@ -232,6 +232,7 @@
     </plurals>
     <string name="poweramp_lyrics_not_found">SongSync+ heeft deze songtekst niet meer. Vraag hem opnieuw aan in Poweramp en probeer het nog eens.</string>
     <string name="poweramp_embed_failed">Kan de songtekst niet in het muziekbestand insluiten</string>
+    <string name="open_in_app">Openen in app</string>
     <string name="poweramp">Poweramp</string>
     <string name="poweramp_rescan_after_save">Poweramp vernieuwen na opslaan</string>
     <string name="poweramp_rescan_after_save_description">Vraag Poweramp na het opslaan of insluiten van een songtekst via de songtekstlink van Poweramp om de map van het nummer opnieuw te scannen, zodat de wijziging zichtbaar wordt</string>

@@ -239,6 +239,7 @@
     </plurals>
     <string name="poweramp_lyrics_not_found">لم تعُد هذه الكلمات متوفرة في SongSync+. اطلبها مجدداً في Poweramp ثم أعِد المحاولة.</string>
     <string name="poweramp_embed_failed">تعذَّر دمج الكلمات في ملف الأغنية</string>
+    <string name="open_in_app">فتح في التطبيق</string>
     <string name="poweramp">Poweramp</string>
     <string name="poweramp_rescan_after_save">تحديث Poweramp بعد الحفظ</string>
     <string name="poweramp_rescan_after_save_description">بعد حفظ الكلمات أو دمجها من رابط الكلمات في Poweramp، اطلب من Poweramp إعادة فحص مجلد الأغنية ليلتقط التغيير</string>

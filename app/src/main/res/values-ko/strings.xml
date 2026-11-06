@@ -227,6 +227,7 @@
     </plurals>
     <string name="poweramp_lyrics_not_found">SongSync+에 더 이상 이 가사가 없습니다. Poweramp에서 다시 요청한 후 다시 시도하세요.</string>
     <string name="poweramp_embed_failed">곡 파일에 가사를 삽입하지 못했습니다</string>
+    <string name="open_in_app">앱에서 열기</string>
     <string name="poweramp">Poweramp</string>
     <string name="poweramp_rescan_after_save">저장 후 Poweramp 새로고침</string>
     <string name="poweramp_rescan_after_save_description">Poweramp의 가사 링크에서 가사를 저장하거나 삽입한 뒤, 변경 사항이 반영되도록 Poweramp에 곡 폴더를 다시 스캔하도록 요청합니다</string>

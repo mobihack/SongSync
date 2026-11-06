@@ -224,6 +224,7 @@
     </plurals>
     <string name="poweramp_lyrics_not_found">SongSync+ non ha più questi testi. Richiedili di nuovo in Poweramp e riprova.</string>
     <string name="poweramp_embed_failed">Impossibile incorporare i testi nel file del brano</string>
+    <string name="open_in_app">Apri nell\'app</string>
     <string name="poweramp">Poweramp</string>
     <string name="poweramp_rescan_after_save">Aggiorna Poweramp dopo il salvataggio</string>
     <string name="poweramp_rescan_after_save_description">Dopo aver salvato o incorporato i testi dal link dei testi di Poweramp, chiedi a Poweramp di riscansionare la cartella del brano per recepire la modifica</string>

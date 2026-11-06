@@ -215,6 +215,7 @@
     </plurals>
     <string name="poweramp_lyrics_not_found">SongSync+ tidak lagi memiliki lirik ini. Minta ulang di Poweramp dan coba lagi.</string>
     <string name="poweramp_embed_failed">Tidak dapat menyematkan lirik ke file lagu</string>
+    <string name="open_in_app">Buka di aplikasi</string>
     <string name="poweramp">Poweramp</string>
     <string name="poweramp_rescan_after_save">Segarkan Poweramp setelah menyimpan</string>
     <string name="poweramp_rescan_after_save_description">Setelah menyimpan atau menyematkan lirik dari tautan lirik Poweramp, minta Poweramp memindai ulang folder lagu agar perubahannya terbaca</string>

@@ -220,6 +220,7 @@
     </plurals>
     <string name="poweramp_lyrics_not_found">SongSync+ hat diese Liedtexte nicht mehr. Fordere sie in Poweramp erneut an und versuche es noch einmal.</string>
     <string name="poweramp_embed_failed">Liedtexte konnten nicht in die Lieddatei eingebettet werden</string>
+    <string name="open_in_app">In der App öffnen</string>
     <string name="poweramp">Poweramp</string>
     <string name="poweramp_rescan_after_save">Poweramp nach dem Speichern aktualisieren</string>
     <string name="poweramp_rescan_after_save_description">Nach dem Speichern oder Einbetten von Liedtexten über den Liedtext-Link in Poweramp den Ordner des Lieds von Poweramp neu einlesen lassen, damit die Änderung übernommen wird</string>

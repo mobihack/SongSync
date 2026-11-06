@@ -232,6 +232,7 @@
     </plurals>
     <string name="poweramp_lyrics_not_found">SongSync+ के पास अब ये बोल नहीं हैं। Poweramp में इन्हें फिर से माँगें और दोबारा प्रयास करें।</string>
     <string name="poweramp_embed_failed">बोल गीत की फ़ाइल में एम्बेड नहीं हो सके</string>
+    <string name="open_in_app">ऐप में खोलें</string>
     <string name="poweramp">Poweramp</string>
     <string name="poweramp_rescan_after_save">सहेजने के बाद Poweramp रीफ़्रेश करें</string>
     <string name="poweramp_rescan_after_save_description">Poweramp के बोल लिंक से बोल सहेजने या एम्बेड करने के बाद, Poweramp से गीत का फ़ोल्डर फिर से स्कैन करने को कहें ताकि बदलाव दिखे</string>

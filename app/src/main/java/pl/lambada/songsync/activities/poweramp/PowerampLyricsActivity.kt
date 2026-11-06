@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import pl.lambada.songsync.MainActivity
 import pl.lambada.songsync.R
 import pl.lambada.songsync.data.UserSettingsController
 import pl.lambada.songsync.domain.model.SongInfo
@@ -100,6 +101,7 @@ class PowerampLyricsActivity : AppCompatActivity() {
                         busy = busy,
                         onSave = { run { saveLrc(entry, settings) } },
                         onEmbed = { run { embed(entry, settings) } },
+                        onOpenInApp = { openInApp(entry) },
                     )
                 }
             }
@@ -114,6 +116,20 @@ class PowerampLyricsActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         recreate()
+    }
+
+    /** Opens the app's lyrics screen for this track, searching it again with the user's providers. */
+    private fun openInApp(entry: PowerampLyricsStore.Entry) {
+        startActivity(
+            MainActivity.openSongIntent(
+                this,
+                title = entry.title,
+                artist = entry.artist,
+                path = entry.path,
+                durationMs = intent.getIntExtra(EXTRA_DURATION_MS, 0).toLong(),
+            )
+        )
+        finish()
     }
 
     private fun realId(intent: Intent): Long? {
@@ -180,6 +196,7 @@ private fun PowerampLyricsSheet(
     busy: Boolean,
     onSave: () -> Unit,
     onEmbed: () -> Unit,
+    onOpenInApp: () -> Unit,
 ) {
     Column(
         Modifier
@@ -243,6 +260,12 @@ private fun PowerampLyricsSheet(
                 modifier = Modifier.weight(1f),
             ) { Text(androidx.compose.ui.res.stringResource(R.string.save_lrc_file)) }
         }
+
+        OutlinedButton(
+            onClick = onOpenInApp,
+            enabled = !busy,
+            modifier = Modifier.fillMaxWidth(),
+        ) { Text(androidx.compose.ui.res.stringResource(R.string.open_in_app)) }
     }
 }
 

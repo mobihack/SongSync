@@ -229,6 +229,7 @@
     </plurals>
     <string name="poweramp_lyrics_not_found">В SongSync+ больше нет этого текста. Запросите его в Poweramp повторно и попробуйте снова.</string>
     <string name="poweramp_embed_failed">Не удалось встроить текст в файл песни</string>
+    <string name="open_in_app">Открыть в приложении</string>
     <string name="poweramp">Poweramp</string>
     <string name="poweramp_rescan_after_save">Обновлять Poweramp после сохранения</string>
     <string name="poweramp_rescan_after_save_description">После сохранения или встраивания текста по ссылке в Poweramp просить Poweramp пересканировать папку песни, чтобы он увидел изменения</string>

@@ -214,6 +214,7 @@
     </plurals>
     <string name="poweramp_lyrics_not_found">SongSync+ にこの歌詞はもうありません。Poweramp で再度リクエストしてからもう一度お試しください。</string>
     <string name="poweramp_embed_failed">曲のファイルに歌詞を埋め込めませんでした</string>
+    <string name="open_in_app">アプリで開く</string>
     <string name="poweramp">Poweramp</string>
     <string name="poweramp_rescan_after_save">保存後に Poweramp を更新</string>
     <string name="poweramp_rescan_after_save_description">Poweramp の歌詞リンクから歌詞を保存または埋め込んだ後、Poweramp に曲のフォルダを再スキャンさせて変更を反映します</string>

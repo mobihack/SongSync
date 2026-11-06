@@ -9,6 +9,7 @@ import pl.lambada.songsync.util.networking.Ktor
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.os.Environment
 import androidx.activity.ComponentActivity
@@ -29,6 +30,7 @@ import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import pl.lambada.songsync.data.UserSettingsController
 import pl.lambada.songsync.data.remote.lyrics_providers.LyricsProviderService
+import pl.lambada.songsync.ui.LyricsFetchScreen
 import pl.lambada.songsync.ui.Navigator
 import pl.lambada.songsync.ui.components.dialogs.NoInternetDialog
 import pl.lambada.songsync.ui.theme.SongSyncTheme
@@ -40,6 +42,36 @@ import java.io.File
  */
 class MainActivity : ComponentActivity() {
     private val lyricsProviderService = LyricsProviderService()
+
+    companion object {
+        private const val EXTRA_SONG_TITLE = "songsync.songTitle"
+        private const val EXTRA_SONG_ARTIST = "songsync.songArtist"
+        private const val EXTRA_SONG_PATH = "songsync.songPath"
+        private const val EXTRA_SONG_DURATION_MS = "songsync.songDurationMs"
+
+        /**
+         * Opens the app on the lyrics screen for a song, which searches it right away. [path] null
+         * (a file that couldn't be found) opens it like the now-playing song: lyrics can be
+         * searched but not saved beside the file.
+         */
+        fun openSongIntent(context: Context, title: String, artist: String?, path: String?, durationMs: Long) =
+            Intent(context, MainActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                .putExtra(EXTRA_SONG_TITLE, title)
+                .putExtra(EXTRA_SONG_ARTIST, artist)
+                .putExtra(EXTRA_SONG_PATH, path)
+                .putExtra(EXTRA_SONG_DURATION_MS, durationMs)
+
+        private fun songToOpen(intent: Intent?): LyricsFetchScreen? {
+            val title = intent?.getStringExtra(EXTRA_SONG_TITLE)?.takeIf { it.isNotBlank() } ?: return null
+            return LyricsFetchScreen(
+                songName = title,
+                artists = intent.getStringExtra(EXTRA_SONG_ARTIST).orEmpty(),
+                filePath = intent.getStringExtra(EXTRA_SONG_PATH).orEmpty(),
+                durationMs = intent.getLongExtra(EXTRA_SONG_DURATION_MS, 0L),
+            )
+        }
+    }
 
     @SuppressLint("SuspiciousIndentation")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -87,6 +119,13 @@ class MainActivity : ComponentActivity() {
                         userSettingsController = userSettingsController,
                         lyricsProviderService = lyricsProviderService
                     )
+                }
+
+                // Opened for a song (Poweramp's lyrics sheet): its lyrics screen over home. Only on
+                // a fresh start; after a rotation the back stack already has it.
+                LaunchedEffect(Unit) {
+                    val song = songToOpen(intent) ?: return@LaunchedEffect
+                    if (savedInstanceState == null && userSettingsController.passedInit) navController.navigate(song)
                 }
             }
         }

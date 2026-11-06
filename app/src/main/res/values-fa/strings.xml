@@ -219,6 +219,7 @@
     </plurals>
     <string name="poweramp_lyrics_not_found">این ترانه‌ها دیگر در SongSync+ نیستند. دوباره در Poweramp درخواستشان کنید و دوباره امتحان کنید.</string>
     <string name="poweramp_embed_failed">جاسازی ترانه‌ها در پروندۀ آهنگ ممکن نشد</string>
+    <string name="open_in_app">باز کردن در برنامه</string>
     <string name="poweramp">Poweramp</string>
     <string name="poweramp_rescan_after_save">تازه‌سازی Poweramp پس از ذخیره</string>
     <string name="poweramp_rescan_after_save_description">پس از ذخیره یا جاسازی ترانه‌ها از پیوند ترانۀ Poweramp، از Poweramp خواسته شود پوشۀ آهنگ را دوباره پویش کند تا تغییر را ببیند</string>

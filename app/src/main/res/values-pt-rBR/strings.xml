@@ -230,6 +230,7 @@
     </plurals>
     <string name="poweramp_lyrics_not_found">O SongSync+ não tem mais essas letras. Solicite-as novamente no Poweramp e tente de novo.</string>
     <string name="poweramp_embed_failed">Não foi possível incorporar as letras no arquivo da música</string>
+    <string name="open_in_app">Abrir no app</string>
     <string name="poweramp">Poweramp</string>
     <string name="poweramp_rescan_after_save">Atualizar o Poweramp após salvar</string>
     <string name="poweramp_rescan_after_save_description">Depois de salvar ou incorporar letras pelo link de letras do Poweramp, pedir ao Poweramp para verificar novamente a pasta da música e detectar a alteração</string>

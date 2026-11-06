@@ -232,6 +232,7 @@
     </plurals>
     <string name="poweramp_lyrics_not_found">SongSync+ tekyalina bigambo bino. Ddamu obisabe mu Poweramp ogezeeko nate.</string>
     <string name="poweramp_embed_failed">Ebigambo tebisobodde kuteekebwa mu file y\'oluyimba</string>
+    <string name="open_in_app">Ggulawo mu app</string>
     <string name="poweramp">Poweramp</string>
     <string name="poweramp_rescan_after_save">Zzaamu Poweramp buggya ng\'omaze okutereka</string>
     <string name="poweramp_rescan_after_save_description">Ng\'omaze okutereka oba okuteeka ebigambo mu file okuva ku link ya Poweramp, saba Poweramp eddemu ekebere folder y\'oluyimba erabe enkyukakyuka</string>

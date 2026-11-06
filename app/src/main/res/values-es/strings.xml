@@ -230,6 +230,7 @@
     </plurals>
     <string name="poweramp_lyrics_not_found">SongSync+ ya no tiene esta letra. Vuelve a solicitarla en Poweramp e inténtalo de nuevo.</string>
     <string name="poweramp_embed_failed">No se pudo incrustar la letra en el archivo de la canción</string>
+    <string name="open_in_app">Abrir en la app</string>
     <string name="poweramp">Poweramp</string>
     <string name="poweramp_rescan_after_save">Actualizar Poweramp después de guardar</string>
     <string name="poweramp_rescan_after_save_description">Después de guardar o incrustar letras desde el enlace de letras de Poweramp, pedir a Poweramp que vuelva a escanear la carpeta de la canción para que detecte el cambio</string>

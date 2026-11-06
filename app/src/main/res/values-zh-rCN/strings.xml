@@ -215,6 +215,7 @@
     </plurals>
     <string name="poweramp_lyrics_not_found">SongSync+ 已不再保留这些歌词。请在 Poweramp 中重新请求后再试。</string>
     <string name="poweramp_embed_failed">无法将歌词嵌入歌曲文件</string>
+    <string name="open_in_app">在应用中打开</string>
     <string name="poweramp">Poweramp</string>
     <string name="poweramp_rescan_after_save">保存后刷新 Poweramp</string>
     <string name="poweramp_rescan_after_save_description">通过 Poweramp 的歌词链接保存或嵌入歌词后，让 Poweramp 重新扫描歌曲所在文件夹以载入更改</string>

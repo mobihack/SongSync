@@ -232,6 +232,7 @@
     </plurals>
     <string name="poweramp_lyrics_not_found">Wala na sa SongSync+ ang mga liriko na ito. Hilingin ulit ang mga ito sa Poweramp at subukan muli.</string>
     <string name="poweramp_embed_failed">Hindi ma-embed ang liriko sa file ng kanta</string>
+    <string name="open_in_app">Buksan sa app</string>
     <string name="poweramp">Poweramp</string>
     <string name="poweramp_rescan_after_save">I-refresh ang Poweramp pagkatapos mag-save</string>
     <string name="poweramp_rescan_after_save_description">Pagkatapos mag-save o mag-embed ng liriko mula sa lyrics link ng Poweramp, ipa-rescan sa Poweramp ang folder ng kanta para makita nito ang pagbabago</string>
