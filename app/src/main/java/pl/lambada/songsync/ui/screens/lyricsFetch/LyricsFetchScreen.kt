@@ -38,6 +38,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.AudioFile
 import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.DeleteOutline
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -130,7 +133,11 @@ fun SharedTransitionScope.LyricsFetchScreen(
     var expandedProviders by remember { mutableStateOf(false) }
     var timingOpen by rememberSaveable { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) { viewModel.loadInitialSongInfo(context) }
+    LaunchedEffect(Unit) {
+        viewModel.loadInitialSongInfo(context)
+        viewModel.refreshSavedLyrics(context)
+    }
+    var confirmRemove by remember { mutableStateOf(false) }
     LaunchedEffect(viewModel.queryState) {
         if (viewModel.queryState != QueryStatus.Pending) viewModel.headerCollapsed = true
     }
@@ -211,6 +218,10 @@ fun SharedTransitionScope.LyricsFetchScreen(
                     }
                 },
                 actions = {
+                    // Lyrics already saved for this song (.lrc or embedded) can be taken off here
+                    if (viewModel.hasSavedLyrics) IconButton(onClick = { confirmRemove = true }) {
+                        Icon(Icons.Outlined.DeleteOutline, contentDescription = stringResource(R.string.remove_saved_lyrics))
+                    }
                     if (shownLyrics != null) IconButton(onClick = {
                         clipboardManager.setText(AnnotatedString(shownLyrics))
                         showToast(context, context.getString(R.string.lyrics_copied_to_clipboard))
@@ -389,6 +400,22 @@ fun SharedTransitionScope.LyricsFetchScreen(
     }
 
     if (query !is QueryStatus.NotSubmitted) providerMenu()
+
+    if (confirmRemove) AlertDialog(
+        onDismissRequest = { confirmRemove = false },
+        icon = { Icon(Icons.Outlined.DeleteOutline, contentDescription = null) },
+        title = { Text(stringResource(R.string.remove_saved_lyrics_title)) },
+        text = { Text(stringResource(R.string.remove_saved_lyrics_body)) },
+        confirmButton = {
+            TextButton(onClick = {
+                confirmRemove = false
+                viewModel.removeSavedLyrics(context)
+            }) { Text(stringResource(R.string.remove)) }
+        },
+        dismissButton = {
+            TextButton(onClick = { confirmRemove = false }) { Text(stringResource(R.string.cancel)) }
+        },
+    )
 
     when (query) {
         is QueryStatus.Failed -> FailedDialogue(

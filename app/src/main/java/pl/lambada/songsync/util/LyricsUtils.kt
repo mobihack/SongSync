@@ -173,6 +173,58 @@ fun embedLyricsInFile(
     }
 }
 
+/** What [removeSavedLyrics] took away. */
+data class RemovedLyrics(val lrcFile: Boolean, val embedded: Boolean)
+
+/**
+ * Removes the lyrics saved for the song at [filePath]: the .lrc file beside it and any lyrics
+ * embedded in its tags. An .lrc on an SD card before Android 11 is deleted through the SD card
+ * folder the user granted ([sdCardPath]), as it was written. Reads and writes files, so call it
+ * off the main thread.
+ *
+ * @throws Exception when lyrics are there but couldn't be removed; the message says why
+ */
+fun removeSavedLyrics(context: Context, filePath: String, sdCardPath: String?): RemovedLyrics {
+    val lrc = filePath.toLrcFile()
+    val lrcRemoved = when {
+        lrc == null || !lrc.exists() -> false
+        lrc.delete() -> true
+        isLegacyFileAccessRequired(filePath) -> deleteFromExternalPath(context, filePath, lrc.name, sdCardPath)
+        else -> error("Couldn't delete ${lrc.name}")
+    }
+    return RemovedLyrics(lrcFile = lrcRemoved, embedded = removeEmbeddedLyrics(context, filePath))
+}
+
+/** Clears the lyrics tags of the song at [filePath]; false when it had none. */
+private fun removeEmbeddedLyrics(context: Context, filePath: String): Boolean {
+    // "rw", not "w": "w" may truncate the song file before its tags are read
+    val fd = getFileDescriptorFromPath(context, filePath, mode = "rw") ?: return false
+    return fd.use {
+        val properties = TagLib.getMetadata(it.dup().detachFd(), false)?.propertyMap ?: return false
+        val lyricsKeys = properties.keys.filter { key -> key.uppercase().substringBefore(':') in lyricsTags }
+        if (lyricsKeys.isEmpty()) return false
+        // An empty value removes the tag
+        lyricsKeys.forEach { key -> properties[key] = emptyArray() }
+        if (!TagLib.savePropertyMap(it.dup().detachFd(), propertyMap = properties)) {
+            error("Couldn't write the song's tags")
+        }
+        true
+    }
+}
+
+/** Deletes [fileName] beside the SD card song at [sourceFilePath]; see [saveToExternalPath]. */
+private fun deleteFromExternalPath(context: Context, sourceFilePath: String, fileName: String, sdCardPath: String?): Boolean {
+    val sdRoot = context.externalCacheDirs.getOrNull(1)?.absolutePath?.substringBefore("/Android/data")
+        ?: error("No SD card found")
+    if (sdCardPath.isNullOrEmpty()) error("Choose the SD card folder in settings first")
+    var folder = DocumentFile.fromTreeUri(context, Uri.parse(sdCardPath)) ?: error("Can't open the SD card folder")
+    for (name in sdCardFolders(sourceFilePath.toLrcFile()!!.absolutePath, sdRoot)) {
+        folder = folder.listFiles().firstOrNull { it.isDirectory && it.name == name } ?: return false
+    }
+    val file = folder.listFiles().firstOrNull { it.name == fileName } ?: return false
+    return file.delete() || error("Couldn't delete $fileName")
+}
+
 /**
  * Defines possible provider choices
  */

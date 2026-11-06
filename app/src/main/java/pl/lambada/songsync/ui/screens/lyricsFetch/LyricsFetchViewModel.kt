@@ -25,6 +25,7 @@ import pl.lambada.songsync.util.generateLrcContent
 import pl.lambada.songsync.util.NoTrackFoundException
 import pl.lambada.songsync.util.ProviderChain
 import pl.lambada.songsync.util.saveLrcFile
+import pl.lambada.songsync.util.savedLyricsOf
 import pl.lambada.songsync.util.showToast
 import java.net.UnknownHostException
 
@@ -73,6 +74,43 @@ class LyricsFetchViewModel(
      * ends, and for good, so later searches and a rotation don't bring it back.
      */
     var headerCollapsed by mutableStateOf(source == null)
+
+    /** The local song's file, without the now-playing card's ".nowplaying" key suffix. */
+    private val songPath = source?.filePath?.removeSuffix(".nowplaying")?.takeIf { it.isNotEmpty() }
+
+    /** The local song already has lyrics saved: an .lrc beside it, or embedded in its tags. */
+    var hasSavedLyrics by mutableStateOf(false)
+        private set
+
+    /** Checks the song's files for saved lyrics; on opening, and after saving or removing. */
+    fun refreshSavedLyrics(context: Context) {
+        val path = songPath ?: return
+        viewModelScope.launch {
+            hasSavedLyrics = withContext(ioDispatcher) { savedLyricsOf(context, path) != null }
+        }
+    }
+
+    /** Removes the song's .lrc file and embedded lyrics, and says which went. */
+    fun removeSavedLyrics(context: Context) {
+        val path = songPath ?: return
+        viewModelScope.launch {
+            runCatching {
+                withContext(ioDispatcher) { pl.lambada.songsync.util.removeSavedLyrics(context, path, userSettingsController.sdCardPath) }
+            }.onSuccess { removed ->
+                showToast(
+                    context,
+                    when {
+                        removed.lrcFile && removed.embedded -> R.string.lyrics_removed_both
+                        removed.lrcFile -> R.string.lyrics_removed_lrc
+                        else -> R.string.lyrics_removed_embedded
+                    }
+                )
+            }.onFailure {
+                showToast(context, context.getString(R.string.lyrics_remove_failed, it.message ?: context.getString(R.string.error)))
+            }
+            refreshSavedLyrics(context)
+        }
+    }
 
     /** Which provider a fresh search is trying right now, for showing fallback progress. */
     var searchProgress by mutableStateOf<ProviderChain.Progress?>(null)
@@ -153,7 +191,10 @@ class LyricsFetchViewModel(
                     saveLrcFile(context, filePath, song, lrcContent, userSettingsController.sdCardPath)
                 }
             }
-                .onSuccess { showToast(context, R.string.file_saved_to, it.absolutePath) }
+                .onSuccess {
+                    showToast(context, R.string.file_saved_to, it.absolutePath)
+                    refreshSavedLyrics(context)
+                }
                 .onFailure { showToast(context, it.message ?: context.getString(R.string.error)) }
         }
     }
@@ -198,6 +239,7 @@ class LyricsFetchViewModel(
                 context,
                 if (embedded) R.string.embedded_lyrics_in_file else R.string.poweramp_embed_failed
             )
+            if (embedded) refreshSavedLyrics(context)
         }
     }
 

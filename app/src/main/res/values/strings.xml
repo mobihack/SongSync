@@ -154,6 +154,14 @@
     <string name="lyrics_unsynced">Not synced</string>
     <string name="lyrics_length_mismatch">%1$s vs %2$s</string>
     <string name="looking_for_lyrics">Looking for lyrics…</string>
+    <string name="remove_saved_lyrics">Remove saved lyrics</string>
+    <string name="remove_saved_lyrics_title">Remove saved lyrics?</string>
+    <string name="remove_saved_lyrics_body">Deletes the .lrc file next to this song and any lyrics embedded in it. This can\'t be undone.</string>
+    <string name="remove">Remove</string>
+    <string name="lyrics_removed_lrc">Deleted the .lrc file</string>
+    <string name="lyrics_removed_embedded">Removed the embedded lyrics</string>
+    <string name="lyrics_removed_both">Deleted the .lrc file and the embedded lyrics</string>
+    <string name="lyrics_remove_failed">Couldn\'t remove the lyrics: %1$s</string>
     <string name="language_original">%1$s (Original)</string>
     <string name="song_path">Show song path</string>
     <string name="song_path_description">Show the path of a song file on song list</string>
