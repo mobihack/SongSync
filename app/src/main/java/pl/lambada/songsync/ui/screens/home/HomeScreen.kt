@@ -349,6 +349,7 @@ fun HomeScreenLoaded(
     if (isBatchDownload) {
         BatchDownloadLyrics(
             viewModel = viewModel,
+            hazeState = hazeState,
             onDone = { onBatchDownloadState(false) })
     }
 

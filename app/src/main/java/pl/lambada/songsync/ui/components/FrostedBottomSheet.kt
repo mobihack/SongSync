@@ -10,6 +10,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -43,6 +44,7 @@ fun FrostedBottomSheet(
     // the sheet up, so its clip and blur would stay where the sheet rests and hide the content
     Column(Modifier.fillMaxWidth().frosted(hazeState, BottomSheetDefaults.ExpandedShape)) {
         BottomSheetDefaults.DragHandle(Modifier.align(Alignment.CenterHorizontally))
-        content()
+        // Grouped rows on the frosting are lifted a step, or they'd match its tint
+        CompositionLocalProvider(LocalOnFrostedSurface provides true) { content() }
     }
 }

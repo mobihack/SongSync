@@ -2,6 +2,7 @@
 
 package pl.lambada.songsync.ui.components
 
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -36,11 +37,19 @@ fun listGroupColors(): ListItemColors = ListItemDefaults.segmentedColors(
     containerColor = listGroupContainerColor(),
 )
 
+/**
+ * True inside a frosted surface (a [FrostedBottomSheet]), whose tint is the usual row colour: rows
+ * there are drawn a step higher so they still stand out.
+ */
+val LocalOnFrostedSurface = staticCompositionLocalOf { false }
+
 /** Container colour of grouped rows; see [listGroupColors]. */
 @Composable
-fun listGroupContainerColor(): Color =
-    if (isSystemInDarkTheme()) MaterialTheme.colorScheme.surfaceContainerHigh
-    else MaterialTheme.colorScheme.surfaceContainer
+fun listGroupContainerColor(): Color = when {
+    LocalOnFrostedSurface.current -> MaterialTheme.colorScheme.surfaceBright
+    isSystemInDarkTheme() -> MaterialTheme.colorScheme.surfaceContainerHigh
+    else -> MaterialTheme.colorScheme.surfaceContainer
+}
 
 /**
  * Draws a hand-built row (one that isn't a `SegmentedListItem`, e.g. a draggable one) as row
