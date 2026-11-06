@@ -165,8 +165,18 @@ fun SharedTransitionScope.LyricsFetchScreen(
     val query = viewModel.queryState
     val lyrics = (viewModel.lyricsFetchState as? LyricsFetchState.Success)?.lyrics
         ?.takeIf { query is QueryStatus.Success }
-    val lines = remember(lyrics) { lyrics?.let(::parseLyricLines).orEmpty() }
-    val linesKey = lyrics?.hashCode() ?: 0
+    // A search for another result keeps the last lyrics on screen, faded, until new ones land:
+    // the list doesn't empty and refill on every Next result
+    var lastLyrics by rememberSaveable { mutableStateOf<String?>(null) }
+    LaunchedEffect(lyrics) { if (lyrics != null) lastLyrics = lyrics }
+    val searching = query == QueryStatus.Pending
+    val staleLyrics = if (lyrics == null && searching) lastLyrics else null
+    val listedLyrics = lyrics ?: staleLyrics
+    val lines = remember(listedLyrics) { listedLyrics?.let(::parseLyricLines).orEmpty() }
+    val linesKey = listedLyrics?.hashCode() ?: 0
+    // Edit and Copy stay in the top bar through a search once there's been a result, disabled,
+    // so the icons beside them don't shift
+    val hadResult = query is QueryStatus.Success || (searching && lastLyrics != null)
     val offset = viewModel.lrcOffset
     // Copied as shown: with the offset applied when it's written into the timestamps
     val shownLyrics = lyrics?.let { if (offset != 0 && settings.directlyModifyTimestamps) applyOffsetToLyrics(it, offset) else it }
@@ -227,10 +237,9 @@ fun SharedTransitionScope.LyricsFetchScreen(
                 },
                 title = {},
                 actions = {
-                    // Lyrics already saved for this song (.lrc or embedded) can be taken off here
                     // Edit search, once there's a result to edit it from
-                    if (query is QueryStatus.Success) WithTooltip(stringResource(R.string.edit), below = true) {
-                        IconButton(onClick = {
+                    if (hadResult) WithTooltip(stringResource(R.string.edit), below = true) {
+                        IconButton(enabled = query is QueryStatus.Success, onClick = {
                             viewModel.lrcOffset = 0
                             viewModel.queryState = QueryStatus.NotSubmitted
                         }) {
@@ -241,14 +250,15 @@ fun SharedTransitionScope.LyricsFetchScreen(
                             )
                         }
                     }
+                    // Lyrics already saved for this song (.lrc or embedded) can be taken off here
                     if (viewModel.hasSavedLyrics) WithTooltip(stringResource(R.string.remove_saved_lyrics), below = true) {
                         IconButton(onClick = { confirmRemove = true }) {
                             Icon(Icons.Outlined.DeleteOutline, contentDescription = stringResource(R.string.remove_saved_lyrics))
                         }
                     }
-                    if (shownLyrics != null) WithTooltip(stringResource(R.string.copy_lyrics_to_clipboard), below = true) {
-                        IconButton(onClick = {
-                            clipboardManager.setText(AnnotatedString(shownLyrics))
+                    if (hadResult) WithTooltip(stringResource(R.string.copy_lyrics_to_clipboard), below = true) {
+                        IconButton(enabled = shownLyrics != null, onClick = {
+                            clipboardManager.setText(AnnotatedString(shownLyrics ?: return@IconButton))
                             showToast(context, context.getString(R.string.lyrics_copied_to_clipboard))
                         }) {
                             Icon(
@@ -316,6 +326,20 @@ fun SharedTransitionScope.LyricsFetchScreen(
                                 marquee = !settings.disableMarquee,
                                 modifier = Modifier.padding(top = 14.dp).animateItem(),
                             )
+                        }
+                        if (staleLyrics != null) {
+                            lyricsItems(
+                                state = LyricsFetchState.Success(staleLyrics),
+                                lyrics = staleLyrics,
+                                linesKey = linesKey,
+                                lines = lines,
+                                offsetMs = offset,
+                                activeLine = { -1 },
+                                playing = false,
+                                onLineClick = null,
+                                stale = true,
+                            )
+                            if (songPath != null) item(key = "path") { FilePath(songPath) }
                         }
                     }
 
@@ -488,6 +512,8 @@ private fun androidx.compose.foundation.lazy.LazyListScope.lyricsItems(
     activeLine: () -> Int,
     playing: Boolean,
     onLineClick: ((LyricLine) -> Unit)?,
+    /** The last result's lyrics, shown faded while the next search runs. */
+    stale: Boolean = false,
 ) {
     when {
         state is LyricsFetchState.Pending -> item(key = "lyricsLoading") {
@@ -503,11 +529,14 @@ private fun androidx.compose.foundation.lazy.LazyListScope.lyricsItems(
         lyrics == null -> Unit
         // Plain lyrics: nothing to time, so just the text
         lines.isEmpty() -> item(key = "plainLyrics") {
+            val alpha by animateFloatAsState(if (stale) StaleAlpha else 1f, tween(150, easing = EaseOutStrong), label = "plainLyrics")
             SelectionContainer {
                 Text(
                     lyrics,
                     style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(top = 16.dp),
+                    modifier = Modifier
+                        .padding(top = 16.dp)
+                        .graphicsLayer { this.alpha = alpha },
                 )
             }
         }
@@ -517,11 +546,12 @@ private fun androidx.compose.foundation.lazy.LazyListScope.lyricsItems(
                 offsetMs = offsetMs,
                 active = { activeLine() == index },
                 dimmed = playing,
+                stale = stale,
                 onClick = onLineClick?.let { { it(line) } },
                 modifier = Modifier
                     .padding(top = if (index == 0) 14.dp else 0.dp)
-                    // After the header has started settling, not all at once with it
-                    .animateItem(fadeInSpec = tween(220, delayMillis = 120, easing = EaseOutStrong), fadeOutSpec = null),
+                    // Just after the match card changes, not at the same moment
+                    .animateItem(fadeInSpec = tween(200, delayMillis = 60, easing = EaseOutStrong), fadeOutSpec = null),
             )
         }
     }
@@ -539,17 +569,22 @@ private fun LyricLineRow(
     dimmed: Boolean,
     onClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
+    stale: Boolean = false,
 ) {
     val lit = active()
     val alpha by animateFloatAsState(
-        targetValue = if (!dimmed || lit) 1f else 0.5f,
-        animationSpec = tween(200),
+        targetValue = when {
+            stale -> StaleAlpha
+            !dimmed || lit -> 1f
+            else -> 0.5f
+        },
+        animationSpec = tween(if (stale) 150 else 200, easing = EaseOutStrong),
         label = "lyricLine",
     )
     // Lights up in step with the text's alpha, not a frame before it
     val stampColor by animateColorAsState(
         targetValue = if (lit) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
-        animationSpec = tween(200),
+        animationSpec = tween(200, easing = EaseOutStrong),
         label = "lyricStamp",
     )
     Row(
@@ -624,6 +659,9 @@ private class FollowState {
     var scrolling = false
     var manualAt = 0L
 }
+
+/** The last result's lyrics while the next search runs: there, but clearly not the answer. */
+private const val StaleAlpha = 0.4f
 
 /** How long following waits after the user scrolls the lyrics by hand. */
 private const val FollowPauseMs = 3_000L
