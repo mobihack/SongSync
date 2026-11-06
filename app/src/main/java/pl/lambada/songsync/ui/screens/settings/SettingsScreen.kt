@@ -157,7 +157,7 @@ fun SettingsScreen(
                             stringResource(R.string.about_songsync),
                             stringResource(R.string.app_version, context.getVersion()),
                             shapes = it,
-                            tertiary = true,
+                            filled = true,
                         ) { open(SettingsSection.ABOUT) }
                     }
                 }

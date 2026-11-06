@@ -18,7 +18,6 @@ import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -33,19 +32,12 @@ fun SettingsHubRow(
     title: String,
     summary: String,
     shapes: ListItemShapes = ListItemDefaults.segmentedShapes(index = 0, count = 1),
-    /** Secondary categories (About) use the tertiary role so they read apart from the rest. */
-    tertiary: Boolean = false,
+    /** About: its icon filled with the primary colour, like the search button, to stand apart. */
+    filled: Boolean = false,
     onClick: () -> Unit,
 ) {
-    val container: Color
-    val content: Color
-    if (tertiary) {
-        container = MaterialTheme.colorScheme.tertiaryContainer
-        content = MaterialTheme.colorScheme.onTertiaryContainer
-    } else {
-        container = MaterialTheme.colorScheme.primaryContainer
-        content = MaterialTheme.colorScheme.onPrimaryContainer
-    }
+    val container = if (filled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.primaryContainer
+    val content = if (filled) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onPrimaryContainer
     SegmentedListItem(
         onClick = onClick,
         shapes = shapes,
