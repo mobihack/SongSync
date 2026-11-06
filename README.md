@@ -25,11 +25,14 @@ SongSync+ is a fork of [SongSync](https://github.com/Lambada10/SongSync). It ins
 ### Screenshots
 
 <p>
-  <img src="screenshots/screenshot1.png" alt="Home: the song playing now above your library" width="19%">
-  <img src="screenshots/screenshot2.png" alt="Lyrics found for a song, with save and embed buttons" width="19%">
-  <img src="screenshots/screenshot3.png" alt="Batch download in progress" width="19%">
-  <img src="screenshots/screenshot4.png" alt="Poweramp showing lyrics provided by SongSync+" width="19%">
-  <img src="screenshots/screenshot5.png" alt="Saving Poweramp's lyrics as an .lrc file or into the song" width="19%">
+  <img src="screenshots/screenshot1.png" alt="Home: the song playing now above your library" width="24%">
+  <img src="screenshots/screenshot2.png" alt="A song with its matched lyrics, ready to save" width="24%">
+  <img src="screenshots/screenshot3.png" alt="Playing the song to check the lyrics' timing, with the offset panel open" width="24%">
+  <img src="screenshots/screenshot4.png" alt="Batch download in progress" width="24%">
+  <img src="screenshots/screenshot5.png" alt="Settings" width="24%">
+  <img src="screenshots/screenshot6.png" alt="Choosing lyrics providers and the order they're tried in" width="24%">
+  <img src="screenshots/screenshot7.png" alt="Poweramp showing lyrics provided by SongSync+" width="24%">
+  <img src="screenshots/screenshot8.png" alt="Saving Poweramp's lyrics as an .lrc file or into the song" width="24%">
 </p>
 
 ### Installation
