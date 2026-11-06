@@ -255,12 +255,6 @@ fun TimingPanel(
                     onStep = { onSetOffset(offsetMs + 100) },
                 )
             }
-            Text(
-                stringResource(R.string.lyrics_timing_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = 10.dp),
-            )
             TextButton(
                 onClick = { onSetOffset(0) },
                 enabled = offsetMs != 0,
