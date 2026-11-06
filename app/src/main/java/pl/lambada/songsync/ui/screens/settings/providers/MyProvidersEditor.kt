@@ -135,7 +135,7 @@ class MyProvidersEditorState internal constructor(
         scope.launch { settleOffset.snapTo(0f) }
         dragging = provider
         dragOffset = 0f
-        haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        haptics.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
         // Scrolls while the row is held near an edge, so it can go past the rows on screen
         autoScrollJob?.cancel()
         autoScrollJob = scope.launch {
@@ -169,7 +169,8 @@ class MyProvidersEditorState internal constructor(
         // Glide from where the row was let go instead of snapping into its slot.
         // Undispatched, so the offset is in place before the next frame draws.
         val from = dragOffset
-        val dropped = dragging
+        val dropped = dragging ?: return
+        haptics.performHapticFeedback(HapticFeedbackType.GestureEnd)
         settling = dropped
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
             settleOffset.snapTo(from)
@@ -202,12 +203,12 @@ class MyProvidersEditorState internal constructor(
             next != null && centre > next.offset + next.size / 2f -> {
                 list = list.toMutableList().apply { add(index + 1, removeAt(index)) }
                 dragOffset -= next.size
-                haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
             }
             prev != null && centre < prev.offset + prev.size / 2f -> {
                 list = list.toMutableList().apply { add(index - 1, removeAt(index)) }
                 dragOffset += prev.size
-                haptics.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
             }
         }
     }

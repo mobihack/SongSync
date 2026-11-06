@@ -202,7 +202,9 @@ class LyricsFetchViewModel(
         song: SongInfo,
         filePath: String?,
         context: Context,
-        generatedUsingString: String
+        generatedUsingString: String,
+        /** Called with whether the file was saved, after the toast. */
+        onResult: (Boolean) -> Unit = {},
     ) {
         val lrcContent = generateLrcContent(song, lyrics, generatedUsingString, lrcOffset, userSettingsController.directlyModifyTimestamps)
 
@@ -214,9 +216,13 @@ class LyricsFetchViewModel(
             }
                 .onSuccess {
                     showToast(context, R.string.file_saved_to, it.absolutePath)
+                    onResult(true)
                     refreshSavedLyrics(context)
                 }
-                .onFailure { showToast(context, it.message ?: context.getString(R.string.error)) }
+                .onFailure {
+                    showToast(context, it.message ?: context.getString(R.string.error))
+                    onResult(false)
+                }
         }
     }
 
@@ -224,12 +230,15 @@ class LyricsFetchViewModel(
         lyrics: String,
         filePath: String?,
         context: Context,
-        song: SongInfo
+        song: SongInfo,
+        /** Called with whether the lyrics were embedded, after the toast. */
+        onResult: (Boolean) -> Unit = {},
     ) {
         val lrcContent = generateLrcContent(song, lyrics, context.getString(R.string.generated_using), lrcOffset, userSettingsController.directlyModifyTimestamps)
 
         if (filePath.isNullOrEmpty()) {
             showToast(context, R.string.embed_non_local_song_error)
+            onResult(false)
             return
         }
 
@@ -241,6 +250,7 @@ class LyricsFetchViewModel(
                 context,
                 if (embedded) R.string.embedded_lyrics_in_file else R.string.poweramp_embed_failed
             )
+            onResult(embedded)
             if (embedded) refreshSavedLyrics(context)
         }
     }

@@ -55,7 +55,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -114,6 +116,7 @@ fun SongItem(
     disableMarquee: Boolean = true,
     showPath: Boolean,
 ) {
+    val haptics = LocalHapticFeedback.current
     val context = LocalContext.current
     val coverPx = with(LocalDensity.current) { CoverSize.roundToPx() }
     // Decode album art at row size; full-size embedded art is often 1000px+ per image.
@@ -164,9 +167,11 @@ fun SongItem(
             }
             .combinedClickable(
                 onClick = {
-                    if (quickSelect)
+                    if (quickSelect) {
+                        // Long press already gives its own haptic; a tap in selection mode doesn't
+                        haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
                         onSelectionChanged(!selected)
-                    else
+                    } else
                         onNavigateToSongRequest()
                 },
                 onLongClick = { onSelectionChanged(!selected) }

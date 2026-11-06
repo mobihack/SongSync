@@ -78,6 +78,8 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -142,6 +144,10 @@ fun SharedTransitionScope.LyricsFetchScreen(
     val listState = rememberLazyListState()
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
+    val haptics = LocalHapticFeedback.current
+    val resultHaptic = { ok: Boolean ->
+        haptics.performHapticFeedback(if (ok) HapticFeedbackType.Confirm else HapticFeedbackType.Reject)
+    }
     val scope = rememberCoroutineScope()
     val source = viewModel.source
     val settings = viewModel.userSettingsController
@@ -259,6 +265,7 @@ fun SharedTransitionScope.LyricsFetchScreen(
                     if (hadResult) WithTooltip(stringResource(R.string.copy_lyrics_to_clipboard), below = true) {
                         IconButton(enabled = shownLyrics != null, onClick = {
                             clipboardManager.setText(AnnotatedString(shownLyrics ?: return@IconButton))
+                            haptics.performHapticFeedback(HapticFeedbackType.Confirm)
                             showToast(context, context.getString(R.string.lyrics_copied_to_clipboard))
                         }) {
                             Icon(
@@ -356,6 +363,7 @@ fun SharedTransitionScope.LyricsFetchScreen(
                                 onProviderClick = { expandedProviders = true },
                                 onNextResult = if (viewModel.canShowNextResult()) {
                                     {
+                                        haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
                                         viewModel.lrcOffset = 0
                                         viewModel.loadSongInfo(context, true)
                                     }
@@ -382,7 +390,10 @@ fun SharedTransitionScope.LyricsFetchScreen(
                             activeLine = { activeLine },
                             playing = playing,
                             onLineClick = player?.let { p ->
-                                { line: LyricLine -> scope.launch { p.play(fromMs = line.timeMs + viewModel.lrcOffset) } }
+                                { line: LyricLine ->
+                                    haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
+                                    scope.launch { p.play(fromMs = line.timeMs + viewModel.lrcOffset) }
+                                }
                             },
                         )
                         if (songPath != null) item(key = "path") { FilePath(songPath) }
@@ -451,7 +462,7 @@ fun SharedTransitionScope.LyricsFetchScreen(
                         onEmbed = if (songPath != null) {
                             {
                                 timingOpen = false
-                                lyrics?.let { viewModel.embedLyrics(it, songPath, context, query.songOrNull()!!) }
+                                lyrics?.let { viewModel.embedLyrics(it, songPath, context, query.songOrNull()!!, onResult = resultHaptic) }
                             }
                         } else null,
                         onSave = {
@@ -459,6 +470,7 @@ fun SharedTransitionScope.LyricsFetchScreen(
                             lyrics?.let {
                                 viewModel.saveLyricsToFile(
                                     it, query.songOrNull()!!, songPath, context, context.getString(R.string.generated_using),
+                                    onResult = resultHaptic,
                                 )
                             }
                         },

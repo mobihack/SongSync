@@ -59,7 +59,8 @@ fun Modifier.repeatingClickable(
     maxDelayMillis: Long = 1000,
     minDelayMillis: Long = 5,
     delayDecayFactor: Float = .20f,
-    onClick: () -> Unit
+    /** [repeat] is false for the click on press, true for the ones that follow while held. */
+    onClick: (repeat: Boolean) -> Unit
 ): Modifier = this.then(
     composed {
         val currentClickListener by rememberUpdatedState(onClick)
@@ -75,8 +76,10 @@ fun Modifier.repeatingClickable(
                         // Send the press through the interaction source
                         interactionSource.emit(downPress)
                         var currentDelayMillis = maxDelayMillis
+                        var repeat = false
                         while (enabled && down.pressed) {
-                            currentClickListener()
+                            currentClickListener(repeat)
+                            repeat = true
                             delay(currentDelayMillis)
                             val nextMillis = currentDelayMillis - (currentDelayMillis * delayDecayFactor)
                             currentDelayMillis = nextMillis.toLong().coerceAtLeast(minDelayMillis)

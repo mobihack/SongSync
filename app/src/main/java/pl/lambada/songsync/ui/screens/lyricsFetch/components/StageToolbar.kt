@@ -9,6 +9,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import pl.lambada.songsync.util.ui.EaseOutStrong
+import android.os.SystemClock
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -49,6 +50,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.awaitEachGesture
@@ -112,9 +115,13 @@ fun StageToolbar(
             }
             .padding(8.dp),
     ) {
+        val haptics = LocalHapticFeedback.current
         if (playing != null) WithTooltip(stringResource(if (playing) R.string.pause_song else R.string.play_song)) {
             FilledIconButton(
-                onClick = onPlayToggle,
+                onClick = {
+                    haptics.performHapticFeedback(if (playing) HapticFeedbackType.ToggleOff else HapticFeedbackType.ToggleOn)
+                    onPlayToggle()
+                },
                 enabled = enabled,
                 shapes = IconButtonDefaults.shapes(),
                 colors = IconButtonDefaults.filledIconButtonColors(
@@ -219,6 +226,13 @@ fun TimingPanel(
     hazeState: HazeState? = null,
 ) {
     val shape = RoundedCornerShape(24.dp)
+    val haptics = LocalHapticFeedback.current
+    val stepHaptics = remember { StepHaptics() }
+    val step = { delta: Int, repeat: Boolean ->
+        val next = offsetMs + delta
+        stepHaptics.feedback(next, repeat)?.let(haptics::performHapticFeedback)
+        onSetOffset(next)
+    }
     // Frosted like the toolbar under it, so the footer reads as one layer over the lyrics
     Surface(
         shape = shape,
@@ -245,7 +259,7 @@ fun TimingPanel(
                 StepButton(
                     icon = { Icon(Icons.Filled.Remove, contentDescription = stringResource(R.string.offset_decrease)) },
                     label = stringResource(R.string.lyrics_timing_earlier),
-                    onStep = { onSetOffset(offsetMs - 100) },
+                    onStep = { repeat -> step(-100, repeat) },
                 )
                 Text(
                     formatOffset(offsetMs),
@@ -257,11 +271,14 @@ fun TimingPanel(
                 StepButton(
                     icon = { Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.offset_increase)) },
                     label = stringResource(R.string.lyrics_timing_later),
-                    onStep = { onSetOffset(offsetMs + 100) },
+                    onStep = { repeat -> step(100, repeat) },
                 )
             }
             TextButton(
-                onClick = { onSetOffset(0) },
+                onClick = {
+                    haptics.performHapticFeedback(HapticFeedbackType.Confirm)
+                    onSetOffset(0)
+                },
                 enabled = offsetMs != 0,
                 modifier = Modifier.align(Alignment.End),
             ) {
@@ -271,8 +288,35 @@ fun TimingPanel(
     }
 }
 
+/**
+ * Which haptic a step of the offset gets. A tap ticks firmly; holding thumps once as it starts
+ * repeating, then ticks lightly, no closer than [MinGapMs] apart so the fast end of the repeat
+ * doesn't become a buzz. Whole seconds (and zero) always tick firmly, to be felt passing.
+ */
+private class StepHaptics {
+    private var holding = false
+    private var lastAt = 0L
+
+    fun feedback(offsetMs: Int, repeat: Boolean): HapticFeedbackType? {
+        val now = SystemClock.uptimeMillis()
+        val type = when {
+            !repeat -> HapticFeedbackType.SegmentTick.also { holding = false }
+            !holding -> HapticFeedbackType.LongPress.also { holding = true }
+            offsetMs % 1000 == 0 -> HapticFeedbackType.SegmentTick
+            now - lastAt >= MinGapMs -> HapticFeedbackType.SegmentFrequentTick
+            else -> return null
+        }
+        lastAt = now
+        return type
+    }
+
+    private companion object {
+        const val MinGapMs = 50L
+    }
+}
+
 @Composable
-private fun StepButton(icon: @Composable () -> Unit, label: String, onStep: () -> Unit) {
+private fun StepButton(icon: @Composable () -> Unit, label: String, onStep: (repeat: Boolean) -> Unit) {
     val interaction = remember { MutableInteractionSource() }
     // The label says which way the lines move; the button keeps its own spoken name
     Column(horizontalAlignment = Alignment.CenterHorizontally) {

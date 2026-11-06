@@ -68,7 +68,11 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -306,6 +310,13 @@ fun HomeScreenLoaded(
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val refreshState = rememberPullToRefreshState()
+    val haptics = LocalHapticFeedback.current
+    // A tick as the pull passes the point where letting go refreshes
+    LaunchedEffect(refreshState) {
+        snapshotFlow { refreshState.distanceFraction >= 1f }
+            .distinctUntilChanged()
+            .collect { past -> if (past && !viewModel.isRefreshing) haptics.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate) }
+    }
 
     // Give the tapped row its shared-element modifiers first, then navigate on the next frame
     // so the transition finds a matching element in the list.

@@ -6,7 +6,9 @@ import pl.lambada.songsync.ui.components.connectedButtonShapes
 import pl.lambada.songsync.ui.components.ConnectedButtonRow
 import androidx.compose.material3.FilledTonalButton
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
+import android.view.HapticFeedbackConstants
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -163,23 +165,43 @@ class PowerampLyricsActivity : AppCompatActivity() {
             .onSuccess {
                 if (settings.powerampRescanAfterSave) entry.path?.let { path -> PowerampApi.rescanFolderOf(this, path) }
                 showToast(this, R.string.file_saved_to, it)
+                resultHaptic(true)
                 finish()
             }
-            .onFailure { showToast(this, it.message ?: getString(R.string.error)) }
+            .onFailure {
+                showToast(this, it.message ?: getString(R.string.error))
+                resultHaptic(false)
+            }
     }
 
     private suspend fun embed(entry: PowerampLyricsStore.Entry, settings: UserSettingsController) {
-        val path = entry.path ?: return showToast(this, R.string.embed_non_local_song_error)
+        val path = entry.path ?: run {
+            showToast(this, R.string.embed_non_local_song_error)
+            resultHaptic(false)
+            return
+        }
         val embedded = withContext(Dispatchers.IO) {
             embedLyricsInFile(this@PowerampLyricsActivity, path, lrcContent(entry, settings))
         }
         if (embedded) {
             if (settings.powerampRescanAfterSave) PowerampApi.rescanFolderOf(this, path)
             showToast(this, R.string.embedded_lyrics_in_file)
+            resultHaptic(true)
             finish()
         } else {
             showToast(this, R.string.poweramp_embed_failed)
+            resultHaptic(false)
         }
+    }
+
+    /** Confirm / reject; before Android 11, which has neither, a click / a longer buzz. */
+    private fun resultHaptic(ok: Boolean) {
+        val constant = when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.R ->
+                if (ok) HapticFeedbackConstants.CONFIRM else HapticFeedbackConstants.REJECT
+            else -> if (ok) HapticFeedbackConstants.VIRTUAL_KEY else HapticFeedbackConstants.LONG_PRESS
+        }
+        window.decorView.performHapticFeedback(constant)
     }
 
     private companion object {

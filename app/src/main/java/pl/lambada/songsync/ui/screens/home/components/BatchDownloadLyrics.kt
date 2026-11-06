@@ -31,7 +31,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
+import kotlinx.coroutines.flow.drop
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -61,6 +66,21 @@ fun BatchDownloadLyrics(viewModel: HomeViewModel, hazeState: HazeState?, onDone:
     val counts = viewModel.batchCounts
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val haptics = LocalHapticFeedback.current
+
+    // Felt when the run ends. Skips the state the sheet opens in, so reopening after a
+    // rotation doesn't repeat it.
+    LaunchedEffect(viewModel) {
+        snapshotFlow { viewModel.batchUiState }.drop(1).collect { state ->
+            when (state) {
+                UiState.Done -> haptics.performHapticFeedback(
+                    if (viewModel.batchCounts.failed > 0) HapticFeedbackType.Reject else HapticFeedbackType.Confirm
+                )
+                UiState.RateLimited -> haptics.performHapticFeedback(HapticFeedbackType.Reject)
+                else -> Unit
+            }
+        }
+    }
 
     val running by rememberUpdatedState(viewModel.batchUiState == UiState.Pending)
     val sheetState = rememberModalBottomSheetState(
