@@ -51,11 +51,16 @@ class LRCLibAPI(private val client: HttpClient = Ktor.clientFor(Providers.LRCLIB
             strict = false,
         ).getOrNull(offset) ?: return null
 
+        val durationMs = song.duration?.let { (it * 1000).toLong() }?.takeIf { it > 0 }
         return SongInfo(
             songName = song.trackName,
             artistName = song.artistName,
             lrcLibID = song.id,
-            durationMs = song.duration?.let { (it * 1000).toLong() }?.takeIf { it > 0 }
+            durationMs = durationMs,
+            // Only trusted for the requested song itself, not a loosely ranked "(Instrumental)" version
+            instrumental = song.instrumental == true && SearchMatching.isSameSong(
+                query.songName, query.artistName, song.trackName, song.artistName, query.durationMs, durationMs,
+            ),
         )
     }
 

@@ -120,4 +120,19 @@ class LRCLibAPITest {
         val http = FakeHttp { respondJson("[${track(1, "夜に駆ける", "YOASOBI")}]") }
         LRCLibAPI(http.client).getSongInfo(SongInfo("Yoru ni Kakeru", "YOASOBI"))!!.lrcLibID shouldBe 1
     }
+
+    private fun instrumentalTrack(id: Int, title: String, artist: String) =
+        track(id, title, artist, synced = null).replace("\"instrumental\":false", "\"instrumental\":true")
+
+    @Test
+    fun `an instrumental entry for the requested song is marked instrumental`() = runTest {
+        val http = FakeHttp { respondJson("[${instrumentalTrack(1, "Bohemian Rhapsody", "Queen")}]") }
+        LRCLibAPI(http.client).getSongInfo(query)!!.instrumental shouldBe true
+    }
+
+    @Test
+    fun `an instrumental version of another title is not taken as the song being instrumental`() = runTest {
+        val http = FakeHttp { respondJson("[${instrumentalTrack(1, "Bohemian Rhapsody (Instrumental)", "Queen")}]") }
+        LRCLibAPI(http.client).getSongInfo(query)!!.instrumental shouldBe false
+    }
 }

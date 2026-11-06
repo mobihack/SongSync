@@ -88,6 +88,23 @@ object SearchMatching {
         return 0.8 * textScore + 0.2 * durationScore
     }
 
+    /**
+     * Whether the candidate is surely the requested song, not just the best of the results: the same
+     * title once normalized (so "Song (Instrumental)" isn't "Song"), a close artist and, when both
+     * are known, a duration within [DURATION_TOLERANCE_MS].
+     */
+    fun isSameSong(
+        title: String?,
+        artist: String?,
+        candidateTitle: String?,
+        candidateArtist: String?,
+        durationMs: Long? = null,
+        candidateDurationMs: Long? = null,
+    ): Boolean =
+        normalize(title.orEmpty()).isNotEmpty() &&
+            normalize(title.orEmpty()) == normalize(candidateTitle.orEmpty()) &&
+            score(title, artist, candidateTitle, candidateArtist, durationMs, candidateDurationMs) >= SAME_SONG_SCORE
+
     private fun splitArtists(artists: String?): List<String> =
         artists.orEmpty().split(artistSeparators).map { normalize(it) }.filter { it.isNotEmpty() }
 
@@ -110,5 +127,6 @@ object SearchMatching {
 
     private const val MIN_TITLE_SCORE = 0.5
     private const val MIN_SCORE = 0.55
+    private const val SAME_SONG_SCORE = 0.8
     private const val DURATION_TOLERANCE_MS = 10_000L
 }

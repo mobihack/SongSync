@@ -6,6 +6,7 @@ import pl.lambada.songsync.data.remote.lyrics_providers.others.MusixmatchAPI
 import pl.lambada.songsync.data.remote.lyrics_providers.spotify.SpotifyAPI
 import pl.lambada.songsync.domain.model.SongInfo
 import pl.lambada.songsync.util.EmptyQueryException
+import pl.lambada.songsync.util.InstrumentalException
 import pl.lambada.songsync.util.InternalErrorException
 import pl.lambada.songsync.util.LyricsCleanup
 import pl.lambada.songsync.util.NoTrackFoundException
@@ -101,6 +102,7 @@ class LyricsProviderService {
             timeoutMs = timeoutMs,
         ) { provider ->
             val songInfo = getSongInfo(query, provider = provider)
+            if (songInfo.instrumental) throw InstrumentalException()
             val lyrics = getSyncedLyrics(songInfo, provider, options) ?: return@find null
             LyricsLookup(songInfo, lyrics)
         }

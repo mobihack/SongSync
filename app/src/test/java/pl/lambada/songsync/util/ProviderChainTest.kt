@@ -220,4 +220,18 @@ class ProviderChainTest {
         ) { provider -> delay(1_000); if (provider == Providers.NETEASE) synced else null }
         found shouldBe ProviderChain.Found(Providers.NETEASE, synced)
     }
+
+    @Test
+    fun `an instrumental answer ends the search with nothing found`() = runTest {
+        val (found, tried) = run(
+            listOf(Providers.GENIUS, Providers.LRCLIB, Providers.NETEASE),
+            mapOf(
+                Providers.GENIUS to { plain },
+                Providers.LRCLIB to { throw InstrumentalException() },
+                Providers.NETEASE to { synced },
+            ),
+        )
+        found.shouldBeNull()
+        tried.shouldContainExactly(Providers.GENIUS, Providers.LRCLIB)
+    }
 }

@@ -22,18 +22,32 @@ object LyricsCleanup {
         RegexOption.IGNORE_CASE
     )
 
+    /**
+     * What some providers return instead of lyrics: "纯音乐，请欣赏" ("instrumental, please enjoy"),
+     * "此歌曲为没有填词的纯音乐，请您欣赏", "暂无歌词" ("no lyrics yet"), a lone "Instrumental".
+     */
+    private val placeholder = Regex(
+        """^((此歌曲为没有填词的)?(纯音乐|純音樂)[，,、\s]*(请|請)?(您)?(欣赏|欣賞)?|暂无歌词|暫無歌詞|""" +
+            """[\[(（♪*\s]*instrumental[\])）♪*\s]*)[!！。.~～]*$""",
+        RegexOption.IGNORE_CASE
+    )
+
+    /** @return the lyrics without noise lines, or null if nothing but noise or a placeholder is left. */
     fun clean(lyrics: String?): String? {
         if (lyrics == null) return null
-        return lyrics.lines()
-            .filterNot { isNoise(it) }
+        val kept = lyrics.lines().filterNot { isNoise(it) }
+        if (kept.map { textOf(it) }.filter { it.isNotEmpty() }.all { placeholder.matches(it) }) return null
+        return kept
             .joinToString("\n")
             .replace(Regex("""\n{3,}"""), "\n\n")
             .trim()
             .takeIf { it.isNotEmpty() }
     }
 
+    private fun textOf(line: String) = line.replace(timestamps, "").replace(wordStamps, "").trim()
+
     private fun isNoise(line: String): Boolean {
-        val text = line.replace(timestamps, "").replace(wordStamps, "").trim()
+        val text = textOf(line)
         if (text.isEmpty()) return false
         return (text.startsWith("{") && text.endsWith("}")) ||
             credit.containsMatchIn(text) ||

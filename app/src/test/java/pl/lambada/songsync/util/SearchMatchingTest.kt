@@ -145,4 +145,24 @@ class SearchMatchingTest {
         val cover = SearchMatching.score("Hallelujah", "Leonard Cohen", "Hallelujah", "Jeff Buckley")
         original shouldBeGreaterThan cover
     }
+
+    @Test
+    fun `isSameSong accepts the requested song itself`() {
+        SearchMatching.isSameSong(
+            "Red Door", "Philipp Johann Thimm & Jamal Dilmen",
+            "Red Door", "Philipp Johann Thimm & Jamal Dilmen",
+            durationMs = 223_500, candidateDurationMs = 223_000,
+        ) shouldBe true
+    }
+
+    @Test
+    fun `isSameSong rejects a tagged version of the song`() {
+        SearchMatching.isSameSong("Hello", "Adele", "Hello (Instrumental)", "Adele") shouldBe false
+    }
+
+    @Test
+    fun `isSameSong rejects another artist or a different length`() {
+        SearchMatching.isSameSong("Red Door", "Philipp Johann Thimm", "Red Door", "Young Trap") shouldBe false
+        SearchMatching.isSameSong("Hello", "Adele", "Hello", "Adele", durationMs = 295_000, candidateDurationMs = 180_000) shouldBe false
+    }
 }

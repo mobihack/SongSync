@@ -96,7 +96,8 @@ object ProviderChain {
      * Calls [attempt] for each provider in turn and returns the first synced result, or the first
      * plain one if none is synced. A provider that errors is skipped; being offline, cancellation or an empty
      * query stops the chain. With a single provider, or when every provider errored, the (last)
-     * error is rethrown so callers can report it as before.
+     * error is rethrown so callers can report it as before. An [InstrumentalException] ends the
+     * search with nothing found.
      *
      * @param timeoutMs (optional) when it runs out, the providers left are skipped and the plain
      * result found so far (if any) is returned rather than nothing.
@@ -143,6 +144,9 @@ object ProviderChain {
                 null
             } catch (e: EmptyQueryException) {
                 throw e
+            } catch (e: InstrumentalException) {
+                // No lyrics anywhere: anything found so far is for another song
+                return null
             } catch (e: Exception) {
                 lastError = e
                 null

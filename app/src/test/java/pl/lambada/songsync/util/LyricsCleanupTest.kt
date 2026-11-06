@@ -89,4 +89,23 @@ class LyricsCleanupTest {
     fun `null stays null`() {
         LyricsCleanup.clean(null).shouldBeNull()
     }
+
+    @Test
+    fun `an instrumental placeholder is no lyrics`() {
+        LyricsCleanup.clean("[00:00.00]纯音乐，请欣赏").shouldBeNull()
+        LyricsCleanup.clean("[00:00.00]此歌曲为没有填词的纯音乐，请您欣赏").shouldBeNull()
+        LyricsCleanup.clean("暂无歌词").shouldBeNull()
+        LyricsCleanup.clean("[00:01.00]♪ Instrumental ♪").shouldBeNull()
+    }
+
+    @Test
+    fun `a placeholder after credits is still no lyrics`() {
+        LyricsCleanup.clean("[00:00.00] 作曲 : Someone\n[00:01.00]纯音乐，请欣赏").shouldBeNull()
+    }
+
+    @Test
+    fun `real lyrics that mention the word instrumental are kept`() {
+        LyricsCleanup.clean("[00:01.00]Instrumental\n[00:05.00]Then the words begin") shouldBe
+            "[00:01.00]Instrumental\n[00:05.00]Then the words begin"
+    }
 }
