@@ -234,4 +234,80 @@ class ProviderChainTest {
         found.shouldBeNull()
         tried.shouldContainExactly(Providers.GENIUS, Providers.LRCLIB)
     }
+
+    /** Pages through fake results: [results] maps each provider to its result list. */
+    private suspend fun next(
+        providers: List<Providers>,
+        current: Providers,
+        offset: Int,
+        results: Map<Providers, List<String>>,
+        skipCurrent: Boolean = false,
+    ): Pair<ProviderChain.Page<String>?, List<Pair<Providers, Int>>> {
+        val asked = mutableListOf<Pair<Providers, Int>>()
+        val page = ProviderChain.next(providers, current, offset, skipCurrent) { provider, at ->
+            asked += provider to at
+            results[provider]?.getOrNull(at)
+        }
+        return page to asked
+    }
+
+    private val order = listOf(Providers.LRCLIB, Providers.NETEASE, Providers.KUGOU)
+
+    @Test
+    fun `next gives the same provider's next result while it has one`() = runTest {
+        val (page, asked) = next(order, Providers.LRCLIB, 0, mapOf(Providers.LRCLIB to listOf("a", "b")))
+        page shouldBe ProviderChain.Page(Providers.LRCLIB, 1, "b")
+        asked.shouldContainExactly(Providers.LRCLIB to 1)
+    }
+
+    @Test
+    fun `once a provider runs out, next moves to the following one from its first result`() = runTest {
+        val (page, asked) = next(
+            order, Providers.LRCLIB, 1,
+            mapOf(Providers.LRCLIB to listOf("a", "b"), Providers.NETEASE to emptyList(), Providers.KUGOU to listOf("k")),
+        )
+        page shouldBe ProviderChain.Page(Providers.KUGOU, 0, "k")
+        asked.shouldContainExactly(Providers.LRCLIB to 2, Providers.NETEASE to 0, Providers.KUGOU to 0)
+    }
+
+    @Test
+    fun `next follows the given order, so a custom order is walked as the user set it`() = runTest {
+        val custom = listOf(Providers.KUGOU, Providers.LRCLIB, Providers.NETEASE)
+        val (page, _) = next(
+            custom, Providers.KUGOU, 0,
+            mapOf(Providers.LRCLIB to listOf("l"), Providers.NETEASE to listOf("n")),
+        )
+        page shouldBe ProviderChain.Page(Providers.LRCLIB, 0, "l")
+    }
+
+    @Test
+    fun `next is null once the last provider has run out`() = runTest {
+        val (page, _) = next(order, Providers.KUGOU, 0, mapOf(Providers.KUGOU to listOf("k")))
+        page.shouldBeNull()
+    }
+
+    @Test
+    fun `a provider with one result per search is skipped straight past`() = runTest {
+        val (page, asked) = next(
+            order, Providers.LRCLIB, 0, mapOf(Providers.NETEASE to listOf("n")), skipCurrent = true,
+        )
+        page shouldBe ProviderChain.Page(Providers.NETEASE, 0, "n")
+        asked.shouldContainExactly(Providers.NETEASE to 0)
+    }
+
+    @Test
+    fun `a provider that errors is skipped, and being offline stops next`() = runTest {
+        val page = ProviderChain.next(order, Providers.LRCLIB, 0) { provider, _ ->
+            when (provider) {
+                Providers.LRCLIB -> throw InternalErrorException("boom")
+                Providers.NETEASE -> "n"
+                else -> null
+            }
+        }
+        page shouldBe ProviderChain.Page(Providers.NETEASE, 0, "n")
+
+        shouldThrow<UnknownHostException> {
+            ProviderChain.next(order, Providers.LRCLIB, 0) { _, _ -> throw UnknownHostException() }
+        }
+    }
 }

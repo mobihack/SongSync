@@ -316,7 +316,7 @@ fun SharedTransitionScope.LyricsFetchScreen(
                                 localDurationMs = source?.durationMs,
                                 localArtist = source?.artists,
                                 onProviderClick = { expandedProviders = true },
-                                onNextResult = if (viewModel.activeProvider != Providers.MUSIXMATCH) {
+                                onNextResult = if (viewModel.canShowNextResult()) {
                                     {
                                         viewModel.lrcOffset = 0
                                         viewModel.loadSongInfo(context, true)

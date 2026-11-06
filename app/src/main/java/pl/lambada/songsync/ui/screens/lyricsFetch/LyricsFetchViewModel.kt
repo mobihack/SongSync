@@ -24,6 +24,7 @@ import pl.lambada.songsync.util.ext.getVersion
 import pl.lambada.songsync.util.generateLrcContent
 import pl.lambada.songsync.util.NoTrackFoundException
 import pl.lambada.songsync.util.ProviderChain
+import pl.lambada.songsync.util.Providers
 import pl.lambada.songsync.util.saveLrcFile
 import pl.lambada.songsync.util.savedLyricsOf
 import pl.lambada.songsync.util.showToast
@@ -123,6 +124,17 @@ class LyricsFetchViewModel(
     /** Providers this song's search will try, in order. */
     fun lookupProviders() = userSettingsController.lookupProviders()
 
+    /** Next result has somewhere to go: more of this provider's results, or a provider after it. */
+    fun canShowNextResult(): Boolean {
+        if (pagesResults(activeProvider)) return true
+        val providers = lookupProviders()
+        val index = providers.indexOf(activeProvider)
+        return index >= 0 && index < providers.lastIndex
+    }
+
+    /** Musixmatch's search gives one result: there's no next one to ask it for. */
+    private fun pagesResults(provider: Providers) = provider != Providers.MUSIXMATCH
+
     private fun buildQuery() = SongInfo(
         querySongName,
         queryArtistName,
@@ -139,14 +151,24 @@ class LyricsFetchViewModel(
                 lyricsFetchState = LyricsFetchState.NotSubmitted
 
                 if (tryingAgain) {
-                    // Next result from the provider that answered last time
-                    queryOffset += 1
-                    val result = lyricsProviderService
-                        .getSongInfo(query = buildQuery(), offset = queryOffset, provider = activeProvider)
-                        ?: error("Error fetching lyrics for the song.")
+                    // The next result: this provider's next one, and once it has no more, the
+                    // providers after it in the search order (auto or the user's own)
+                    val query = buildQuery()
+                    val page = ProviderChain.next(
+                        providers = lookupProviders(),
+                        current = activeProvider,
+                        offset = queryOffset,
+                        skipCurrent = !pagesResults(activeProvider),
+                        onAttempt = { searchProgress = it },
+                    ) { provider, offset ->
+                        lyricsProviderService.getSongInfo(query = query, offset = offset, provider = provider)
+                    } ?: throw NoTrackFoundException()
 
-                    queryState = QueryStatus.Success(result)
-                    loadLyrics(result)
+                    activeProvider = page.provider
+                    queryOffset = page.offset
+                    searchProgress = null
+                    queryState = QueryStatus.Success(page.value)
+                    loadLyrics(page.value)
                 } else {
                     // Fresh search: providers in the order the provider mode gives
                     queryOffset = 0

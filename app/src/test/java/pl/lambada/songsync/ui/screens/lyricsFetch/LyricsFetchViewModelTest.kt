@@ -131,4 +131,39 @@ class LyricsFetchViewModelTest {
 
         (vm.queryState as QueryStatus.Failed).exception::class shouldBe pl.lambada.songsync.util.NoTrackFoundException::class
     }
+
+    @Test
+    fun `next result moves on to the next provider once the first has no more`() = test {
+        val (first, second) = settings.lookupProviders().take(2)
+        coEvery { service.findLyrics(any(), any(), any(), any()) } returns
+            ProviderChain.Found(first, LyricsLookup(SongInfo("3005", "Childish Gambino"), "[00:01.00]Hi"))
+        coEvery { service.getSongInfo(any(), 1, first) } throws pl.lambada.songsync.util.NoTrackFoundException()
+        coEvery { service.getSongInfo(any(), 0, second) } returns SongInfo("3005 (Live)", "Childish Gambino")
+        coEvery { service.getSyncedLyrics(any(), second, any()) } returns "[00:02.00]Live"
+        val vm = viewModel()
+
+        vm.loadSongInfo(context)
+        advanceUntilIdle()
+        vm.loadSongInfo(context, tryingAgain = true)
+        advanceUntilIdle()
+
+        vm.activeProvider shouldBe second
+        (vm.queryState as QueryStatus.Success).song.songName shouldBe "3005 (Live)"
+        vm.lyricsFetchState shouldBe LyricsFetchState.Success("[00:02.00]Live")
+    }
+
+    @Test
+    fun `next result past the last provider is reported as no results`() = test {
+        settings.choose(pl.lambada.songsync.util.ProviderChoice.Only(Providers.LRCLIB))
+        coEvery { service.findLyrics(any(), any(), any(), any()) } returns found("[00:01.00]Hi")
+        coEvery { service.getSongInfo(any(), 1, Providers.LRCLIB) } throws pl.lambada.songsync.util.NoTrackFoundException()
+        val vm = viewModel()
+
+        vm.loadSongInfo(context)
+        advanceUntilIdle()
+        vm.loadSongInfo(context, tryingAgain = true)
+        advanceUntilIdle()
+
+        (vm.queryState as QueryStatus.Failed).exception::class shouldBe pl.lambada.songsync.util.NoTrackFoundException::class
+    }
 }
