@@ -14,7 +14,7 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import pl.lambada.songsync.R
 import pl.lambada.songsync.ui.screens.home.components.HomeSearchBar
-import pl.lambada.songsync.ui.screens.lyricsFetch.components.LyricsSuccessContent
+import pl.lambada.songsync.ui.screens.lyricsFetch.components.TimingPanel
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
@@ -30,10 +30,7 @@ class LyricsAccessibilityTest {
         var offset = 0
         compose.setContent {
             MaterialTheme {
-                LyricsSuccessContent(
-                    lyrics = "[00:01.00]Hi", offset = offset, onSetOffset = { offset = it },
-                    onSaveLyrics = {}, onEmbedLyrics = {}, onCopyLyrics = {},
-                )
+                TimingPanel(offsetMs = offset, onSetOffset = { offset = it })
             }
         }
 

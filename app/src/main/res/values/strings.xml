@@ -144,6 +144,16 @@
     <string name="offset">Offset</string>
     <string name="offset_decrease">Decrease offset by 0.1 seconds</string>
     <string name="offset_increase">Increase offset by 0.1 seconds</string>
+    <string name="lyrics_timing">Timing</string>
+    <string name="lyrics_timing_hold">Hold to step faster</string>
+    <string name="lyrics_timing_hint">− shows lines earlier, + later. Play the song to check it while you adjust.</string>
+    <string name="lyrics_timing_reset">Reset</string>
+    <string name="play_song">Play song</string>
+    <string name="pause_song">Pause song</string>
+    <string name="lyrics_synced">Synced</string>
+    <string name="lyrics_unsynced">Not synced</string>
+    <string name="lyrics_length_mismatch">%1$s vs %2$s</string>
+    <string name="looking_for_lyrics">Looking for lyrics…</string>
     <string name="language_original">%1$s (Original)</string>
     <string name="song_path">Show song path</string>
     <string name="song_path_description">Show the path of a song file on song list</string>

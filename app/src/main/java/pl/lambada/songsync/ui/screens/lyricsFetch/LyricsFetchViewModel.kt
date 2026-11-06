@@ -68,6 +68,12 @@ class LyricsFetchViewModel(
 
     var lyricsFetchState by mutableStateOf<LyricsFetchState>(LyricsFetchState.NotSubmitted)
 
+    /**
+     * The local song's large header has settled into its compact row: once the first search
+     * ends, and for good, so later searches and a rotation don't bring it back.
+     */
+    var headerCollapsed by mutableStateOf(source == null)
+
     /** Which provider a fresh search is trying right now, for showing fallback progress. */
     var searchProgress by mutableStateOf<ProviderChain.Progress?>(null)
         private set

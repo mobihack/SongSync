@@ -359,12 +359,45 @@ fun applyOffsetToLyrics(lyrics: String, offset: Int): String {
     }
 }
 
+/** One timed line of LRC lyrics: when it starts, and its text without word tags. */
+data class LyricLine(val timeMs: Long, val text: String)
+
+/**
+ * Splits LRC [lyrics] into timed lines, in time order. A line with several timestamps gives one
+ * line for each; word-by-word tags and "v1:"/"v2:" speaker marks are left out of the text. Lines
+ * without a timestamp are skipped, so plain (unsynced) lyrics give an empty list.
+ */
+fun parseLyricLines(lyrics: String): List<LyricLine> = parseTimedLyrics(lyrics).map { (time, _, text) ->
+    LyricLine(time, text)
+}
+
 /**
  * Splits LRC [lyrics] into (timestamp, text) pairs for display, in time order. Timestamps come out
- * as "mm:ss.mmm". A line with several timestamps gives one pair for each; word-by-word tags and
- * "v1:"/"v2:" speaker marks are left out of the text. Lines without a timestamp are skipped.
+ * as "mm:ss.mmm". See [parseLyricLines] for which lines are kept.
  */
-fun parseLyrics(lyrics: String): List<Pair<String, String>> {
+fun parseLyrics(lyrics: String): List<Pair<String, String>> = parseTimedLyrics(lyrics).map { (_, stamp, text) ->
+    stamp to text
+}
+
+/**
+ * The line showing at [positionMs] once every line is shifted by [offsetMs] (later when positive),
+ * or -1 before the first one.
+ */
+fun activeLineIndex(lines: List<LyricLine>, positionMs: Long, offsetMs: Int): Int {
+    var low = 0
+    var high = lines.lastIndex
+    var found = -1
+    while (low <= high) {
+        val mid = (low + high) ushr 1
+        if (lines[mid].timeMs + offsetMs <= positionMs) {
+            found = mid
+            low = mid + 1
+        } else high = mid - 1
+    }
+    return found
+}
+
+private fun parseTimedLyrics(lyrics: String): List<Triple<Long, String, String>> {
     val leadingTags = Regex("""^((?:\[\d+:\d+(?:[.:]\d+)?])+)(.*)$""")
     val tag = Regex("""\[(\d+):(\d+)(?:[.:](\d+))?]""")
     val wordTag = Regex("""<\d+:\d+(?:[.:]\d+)?>""")
@@ -380,8 +413,8 @@ fun parseLyrics(lyrics: String): List<Pair<String, String>> {
             // ".34" is hundredths, ".345" milliseconds
             val millis = fraction.padEnd(3, '0').take(3)
             val time = minute.toInt() * 60_000L + second.toInt() * 1000L + millis.toInt()
-            time to ("${minute.padStart(2, '0')}:${second.padStart(2, '0')}.$millis" to text)
+            Triple(time, "${minute.padStart(2, '0')}:${second.padStart(2, '0')}.$millis", text)
         }.toList()
-    }.sortedBy { it.first }.map { it.second }
+    }.sortedBy { it.first }
 }
 

@@ -136,32 +136,28 @@ private data class Track(val title: String, val artist: String, val filePath: St
 private val CoverBleedX = 34.dp
 private val CoverBleedY = 30.dp
 /**
- * The cover on the lyrics screen's song card ([pl.lambada.songsync.ui.components.SongCard]):
- * 72dp, its start corners rounded by 30px and its end corners square.
+ * The lyrics screen's cover ([pl.lambada.songsync.ui.screens.lyricsFetch.components.StageHeader])
+ * as it opens: a rounded square, its corners a fifth of its side (StageCoverShape).
  */
-private val LyricsCoverSize = 72.dp
-private const val LyricsCoverCornerPx = 30f
+private const val LyricsCoverCornerFraction = 0.2f
 
-/** Cookie → the lyrics card's cover shape, in a 0..1 box. */
+/** Cookie → the lyrics screen's cover shape, in a 0..1 box. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
-private fun coverMorph(cornerFraction: Float): Morph {
-    val round = CornerRounding(cornerFraction)
-    return Morph(
-        MaterialShapes.Cookie9Sided.normalized(),
-        RoundedPolygon.rectangle(
-            width = 1f, height = 1f, centerX = 0.5f, centerY = 0.5f,
-            // Vertex order: bottom-end, bottom-start, top-start, top-end
-            perVertexRounding = listOf(CornerRounding.Unrounded, round, round, CornerRounding.Unrounded),
-        ),
-    )
-}
+private fun coverMorph(cornerFraction: Float): Morph = Morph(
+    MaterialShapes.Cookie9Sided.normalized(),
+    RoundedPolygon.rectangle(
+        width = 1f, height = 1f, centerX = 0.5f, centerY = 0.5f,
+        rounding = CornerRounding(cornerFraction),
+    ),
+)
 
 /**
  * The cover's clip, at rest and through the shared-element transition to the lyrics screen.
- * Progress comes from the cover's own size as it shrinks from [restPx] to [endPx]: the cookie
- * morphs into the lyrics card's rounded square, its turn unwinds, and the crop that matches the
- * card's edges opens up. Without that crop, the parts hidden past the card's edge would pop
- * into view the moment the cover leaves the card.
+ * Through the transition, [progress] (0 on this card, 1 on the lyrics screen) drives it: the
+ * cookie morphs into the lyrics screen's rounded square, its turn unwinds, and the crop that
+ * matches the card's edges opens up. Without that crop, the parts hidden past the card's edge
+ * would pop into view the moment the cover leaves the card. Progress follows the transition's
+ * time, not the cover's size: the lyrics screen's cover is about as large as this one.
  */
 private data class CoverClipShape(
     val morph: Morph,
@@ -170,8 +166,8 @@ private data class CoverClipShape(
     /** In the shared transition: morph and crop. Otherwise the card's own clip does the crop. */
     val transitioning: Boolean,
     val angle: Float,
+    val progress: Float,
     val restPx: Float,
-    val endPx: Float,
     val bleedXPx: Float,
     val bleedYPx: Float,
     /** The card's corner, which trims the cover's bottom-end at rest. */
@@ -185,7 +181,6 @@ private data class CoverClipShape(
             path.transform(cache.matrix)
             return Outline.Generic(path.asComposePath())
         }
-        val progress = ((restPx - size.width) / (restPx - endPx)).coerceIn(0f, 1f)
         val path = android.graphics.Path()
         morph.toPath(progress, path)
         // 9 lobes: any turn looks the same as one within ±20°, so unwind the short way
@@ -212,6 +207,19 @@ private data class CoverClipShape(
         path.op(crop, android.graphics.Path.Op.INTERSECT)
         return Outline.Generic(path.asComposePath())
     }
+}
+
+/**
+ * How far the home screen is through leaving for the lyrics screen: 0 here, 1 there. Read from
+ * the transition's play time each frame, so it runs both ways (back runs it from 1 to 0).
+ */
+private fun transitionProgress(scope: AnimatedVisibilityScope): Float {
+    val transition = scope.transition
+    val total = transition.totalDurationNanos
+    if (total <= 0L) return 0f
+    val fraction = (transition.playTimeNanos.toFloat() / total).coerceIn(0f, 1f)
+    // Leaving home: 0 → 1. Coming back: the screen enters, from the lyrics side
+    return if (transition.targetState == EnterExitState.PostExit) fraction else 1f - fraction
 }
 
 /** The unturned cookie at the last size it was asked for, and a reusable matrix. */
@@ -264,8 +272,7 @@ fun NowPlayingCard(
         ImageRequest.Builder(context).data(imgUri).size(coverPx).build()
     }
     val coverRestPx = with(density) { coverSize.toPx() }
-    val lyricsCoverPx = with(density) { LyricsCoverSize.toPx() }
-    val morph = remember(lyricsCoverPx) { coverMorph(LyricsCoverCornerPx / lyricsCoverPx) }
+    val morph = remember { coverMorph(LyricsCoverCornerFraction) }
     val bleedXPx = with(density) { CoverBleedX.toPx() }
     val bleedYPx = with(density) { CoverBleedY.toPx() }
     val cardCornerPx = with(density) { CardCorner.toPx() }
@@ -337,7 +344,7 @@ fun NowPlayingCard(
                     // Clipped here, inside the shared bounds, so the same shape follows the cover
                     // as it travels and resizes
                     .graphicsLayer {
-                        shape = CoverClipShape(morph, cookieCache, transitioning, angle.value, coverRestPx, lyricsCoverPx, bleedXPx, bleedYPx, cardCornerPx)
+                        shape = CoverClipShape(morph, cookieCache, transitioning, angle.value, transitionProgress(animatedVisibilityScope), coverRestPx, bleedXPx, bleedYPx, cardCornerPx)
                         clip = true
                     }
                     .background(MaterialTheme.colorScheme.secondaryContainer),
