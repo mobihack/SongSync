@@ -2,6 +2,7 @@
 
 package pl.lambada.songsync.ui.screens.lyricsFetch.components
 
+import pl.lambada.songsync.ui.components.WithTooltip
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
@@ -94,37 +95,45 @@ fun StageToolbar(
             .pointerInput(Unit) {}
             .padding(8.dp),
     ) {
-        if (playing != null) FilledIconButton(
-            onClick = onPlayToggle,
-            shapes = IconButtonDefaults.shapes(),
-            colors = IconButtonDefaults.filledIconButtonColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-            ),
-            modifier = Modifier.size(48.dp),
-        ) {
-            Icon(
-                if (playing) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                contentDescription = stringResource(if (playing) R.string.pause_song else R.string.play_song),
-            )
+        if (playing != null) WithTooltip(stringResource(if (playing) R.string.pause_song else R.string.play_song)) {
+            FilledIconButton(
+                onClick = onPlayToggle,
+                shapes = IconButtonDefaults.shapes(),
+                colors = IconButtonDefaults.filledIconButtonColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                ),
+                modifier = Modifier.size(48.dp),
+            ) {
+                Icon(
+                    if (playing) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                    contentDescription = stringResource(if (playing) R.string.pause_song else R.string.play_song),
+                )
+            }
         }
 
-        TimingButton(offsetMs, timingOpen, onTimingToggle)
+        WithTooltip(stringResource(R.string.lyrics_timing)) {
+            TimingButton(offsetMs, timingOpen, onTimingToggle)
+        }
 
         Spacer(Modifier.weight(1f))
 
-        if (onEmbed != null) IconButton(onClick = onEmbed, modifier = Modifier.size(48.dp)) {
-            Icon(Icons.Outlined.AudioFile, contentDescription = stringResource(R.string.embed_lyrics_in_file))
+        if (onEmbed != null) WithTooltip(stringResource(R.string.embed_lyrics_in_file)) {
+            IconButton(onClick = onEmbed, modifier = Modifier.size(48.dp)) {
+                Icon(Icons.Outlined.AudioFile, contentDescription = stringResource(R.string.embed_lyrics_in_file))
+            }
         }
-        Button(
-            onClick = onSave,
-            shapes = ButtonDefaults.shapes(),
-            contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
-            modifier = Modifier.heightIn(min = 48.dp),
-        ) {
-            Icon(Icons.Filled.Download, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
-            Spacer(Modifier.width(ButtonDefaults.IconSpacing))
-            Text(stringResource(R.string.save))
+        WithTooltip(stringResource(R.string.save_lrc_file)) {
+            Button(
+                onClick = onSave,
+                shapes = ButtonDefaults.shapes(),
+                contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
+                modifier = Modifier.heightIn(min = 48.dp),
+            ) {
+                Icon(Icons.Filled.Download, contentDescription = null, modifier = Modifier.size(ButtonDefaults.IconSize))
+                Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+                Text(stringResource(R.string.save))
+            }
         }
     }
 }

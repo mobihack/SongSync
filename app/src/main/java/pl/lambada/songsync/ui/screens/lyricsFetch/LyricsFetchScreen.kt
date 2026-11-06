@@ -2,6 +2,7 @@
 
 package pl.lambada.songsync.ui.screens.lyricsFetch
 
+import pl.lambada.songsync.ui.components.WithTooltip
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
@@ -202,8 +203,10 @@ fun SharedTransitionScope.LyricsFetchScreen(
                 modifier = Modifier.frostedTopBar(hazeState, scrollBehavior),
                 colors = frostedTopBarColors(),
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack(navController.graph.startDestinationId, false) }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                    WithTooltip(stringResource(R.string.back), below = true) {
+                        IconButton(onClick = { navController.popBackStack(navController.graph.startDestinationId, false) }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back))
+                        }
                     }
                 },
                 title = {
@@ -219,14 +222,18 @@ fun SharedTransitionScope.LyricsFetchScreen(
                 },
                 actions = {
                     // Lyrics already saved for this song (.lrc or embedded) can be taken off here
-                    if (viewModel.hasSavedLyrics) IconButton(onClick = { confirmRemove = true }) {
-                        Icon(Icons.Outlined.DeleteOutline, contentDescription = stringResource(R.string.remove_saved_lyrics))
+                    if (viewModel.hasSavedLyrics) WithTooltip(stringResource(R.string.remove_saved_lyrics), below = true) {
+                        IconButton(onClick = { confirmRemove = true }) {
+                            Icon(Icons.Outlined.DeleteOutline, contentDescription = stringResource(R.string.remove_saved_lyrics))
+                        }
                     }
-                    if (shownLyrics != null) IconButton(onClick = {
-                        clipboardManager.setText(AnnotatedString(shownLyrics))
-                        showToast(context, context.getString(R.string.lyrics_copied_to_clipboard))
-                    }) {
-                        Icon(Icons.Outlined.ContentCopy, contentDescription = stringResource(R.string.copy_lyrics_to_clipboard))
+                    if (shownLyrics != null) WithTooltip(stringResource(R.string.copy_lyrics_to_clipboard), below = true) {
+                        IconButton(onClick = {
+                            clipboardManager.setText(AnnotatedString(shownLyrics))
+                            showToast(context, context.getString(R.string.lyrics_copied_to_clipboard))
+                        }) {
+                            Icon(Icons.Outlined.ContentCopy, contentDescription = stringResource(R.string.copy_lyrics_to_clipboard))
+                        }
                     }
                 },
                 scrollBehavior = scrollBehavior,

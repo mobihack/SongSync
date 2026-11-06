@@ -1,5 +1,6 @@
 package pl.lambada.songsync.ui.screens.lyricsFetch.components
 
+import pl.lambada.songsync.ui.components.WithTooltip
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -164,11 +165,15 @@ fun MatchRow(
             }
 
             if (state is MatchRowState.Found) {
-                if (onNextResult != null) IconButton(onClick = onNextResult) {
-                    Icon(Icons.Filled.SkipNext, contentDescription = stringResource(R.string.try_again))
+                if (onNextResult != null) WithTooltip(stringResource(R.string.try_again)) {
+                    IconButton(onClick = onNextResult) {
+                        Icon(Icons.Filled.SkipNext, contentDescription = stringResource(R.string.try_again))
+                    }
                 }
-                IconButton(onClick = onEdit) {
-                    Icon(Icons.Outlined.Edit, contentDescription = stringResource(R.string.edit))
+                WithTooltip(stringResource(R.string.edit)) {
+                    IconButton(onClick = onEdit) {
+                        Icon(Icons.Outlined.Edit, contentDescription = stringResource(R.string.edit))
+                    }
                 }
             }
         }
