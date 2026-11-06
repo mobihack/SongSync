@@ -58,6 +58,7 @@ import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
@@ -238,6 +239,7 @@ fun TimingPanel(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 StepButton(
                     icon = { Icon(Icons.Filled.Remove, contentDescription = stringResource(R.string.offset_decrease)) },
+                    label = stringResource(R.string.lyrics_timing_earlier),
                     onStep = { onSetOffset(offsetMs - 100) },
                 )
                 Text(
@@ -249,6 +251,7 @@ fun TimingPanel(
                 )
                 StepButton(
                     icon = { Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.offset_increase)) },
+                    label = stringResource(R.string.lyrics_timing_later),
                     onStep = { onSetOffset(offsetMs + 100) },
                 )
             }
@@ -270,16 +273,27 @@ fun TimingPanel(
 }
 
 @Composable
-private fun StepButton(icon: @Composable () -> Unit, onStep: () -> Unit) {
+private fun StepButton(icon: @Composable () -> Unit, label: String, onStep: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
-    FilledTonalIconButton(
-        onClick = { /* handled by repeatingClickable */ },
-        shapes = IconButtonDefaults.shapes(),
-        // Shared with repeatingClickable so holding the button still morphs its shape
-        interactionSource = interaction,
-        modifier = Modifier
-            .size(48.dp)
-            .repeatingClickable(interactionSource = interaction, enabled = true, maxDelayMillis = 500, onClick = onStep),
-        content = icon,
-    )
+    // The label says which way the lines move; the button keeps its own spoken name
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        FilledTonalIconButton(
+            onClick = { /* handled by repeatingClickable */ },
+            shapes = IconButtonDefaults.shapes(),
+            // Shared with repeatingClickable so holding the button still morphs its shape
+            interactionSource = interaction,
+            modifier = Modifier
+                .size(48.dp)
+                .repeatingClickable(interactionSource = interaction, enabled = true, maxDelayMillis = 500, onClick = onStep),
+            content = icon,
+        )
+        Text(
+            label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier
+                .padding(top = 4.dp)
+                .clearAndSetSemantics { },
+        )
+    }
 }
