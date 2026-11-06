@@ -370,16 +370,37 @@ class HomeViewModel(
                 onProgressUpdate = { success, noLyrics, failed ->
                     batchCounts = BatchCounts(success, noLyrics, failed)
                 },
-                onDownloadComplete = { batchUiState = UiState.Done },
-                onRateLimitReached = { batchUiState = UiState.RateLimited },
+                // The list updates while the result shows, not only once it's closed
+                onDownloadComplete = {
+                    batchUiState = UiState.Done
+                    afterBatch()
+                },
+                onRateLimitReached = {
+                    batchUiState = UiState.RateLimited
+                    afterBatch()
+                },
             )
         }
     }
 
-    /** Stops the running batch download, if any, and resets the dialog for next time. */
+    /**
+     * Once a batch has run (finished, stopped by a rate limit, or cancelled partway): filter the
+     * list again, so "no lyrics only" drops the songs that now have lyrics, and clear the
+     * selection, which would otherwise count songs that just left the list.
+     */
+    private fun afterBatch() {
+        filterSongs()
+        selectedSongs.clear()
+    }
+
+    /**
+     * Stops the running batch download, if any, and resets the sheet for next time. Cancelled
+     * partway, the list is updated here ([afterBatch]); closed before starting, the selection stays.
+     */
     fun closeBatchDownload() {
         batchJob?.cancel()
         batchJob = null
+        if (batchUiState == UiState.Pending) afterBatch()
         batchUiState = UiState.Warning
         batchCounts = BatchCounts()
     }

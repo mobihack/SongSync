@@ -148,4 +148,55 @@ class HomeViewModelFilterTest {
         vm.batchUiState shouldBe UiState.Warning
         vm.batchCounts.done shouldBe 0
     }
+
+    @Test
+    fun `a batch cancelled partway filters the list again and clears the selection`() = runTest(dispatcher) {
+        val first = File(rock, "first.mp3").apply { writeText("") }
+        val second = File(rock, "second.mp3").apply { writeText("") }
+        settings.updateHideLyrics(true)
+        val vm = viewModel()
+        vm.loadSongs(context(first, second), SortValues.TITLE, SortOrders.ASCENDING)
+        settle()
+        vm.titles() shouldBe listOf("first", "second")
+        vm.selectedSongs.addAll(listOf(first.path, second.path))
+
+        // The batch saved lyrics for the first song
+        File(rock, "first.lrc").writeText("[00:01.00]x")
+        vm.batchUiState = UiState.Pending
+        vm.closeBatchDownload()
+        settle()
+
+        vm.titles() shouldBe listOf("second")
+        vm.selectedSongs.shouldBeEmpty()
+    }
+
+    @Test
+    fun `closing a batch before it starts keeps the selection`() = runTest(dispatcher) {
+        val vm = viewModel()
+        vm.selectedSongs.add("/music/a.mp3")
+
+        vm.closeBatchDownload()
+
+        vm.selectedSongs shouldBe listOf("/music/a.mp3")
+    }
+
+    @Test
+    fun `a finished batch updates the list without waiting for the sheet to close`() = runTest(dispatcher) {
+        val song = File(rock, "song.mp3").apply { writeText("") }
+        File(rock, "song.lrc").writeText("[00:01.00]x") // already has lyrics once the batch is done
+        val vm = viewModel()
+        vm.loadSongs(context(song), SortValues.TITLE, SortOrders.ASCENDING)
+        settle()
+        vm.titles() shouldBe listOf("song")
+        vm.selectedSongs.add(song.path)
+
+        settings.updateHideLyrics(true)
+        // The mocked providers find nothing, so the batch goes straight to Done
+        vm.batchDownloadLyrics(mockk(relaxed = true))
+        settle()
+
+        vm.batchUiState shouldBe UiState.Done
+        vm.titles() shouldBe emptyList()
+        vm.selectedSongs.shouldBeEmpty()
+    }
 }
