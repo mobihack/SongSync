@@ -1,5 +1,13 @@
 package pl.lambada.songsync.ui.screens.home.components
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.geometry.toRect
+import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.graphics.Outline
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.Alignment
@@ -60,13 +68,31 @@ import pl.lambada.songsync.R
 import pl.lambada.songsync.domain.model.Song
 import pl.lambada.songsync.ui.components.AnimatedText
 
-private val CoverShape = RoundedCornerShape(20f)
-/** [CoverShape]'s corner as a percentage of the cover, the start of the morph to a circle. */
+/** The cover's corner as a percentage of the cover, the start of the morph to a circle. */
 private const val CoverCornerPercent = 12
 /** Side inset of the selected row's pill. */
 private val SelectedPillInset = 8.dp
 private val checkScrim = Color.Black.copy(alpha = 0.45f)
 private val CoverSize = 56.dp
+/** The cover's corner in the row. */
+private const val CoverCornerPx = 20f
+/** The lyrics screen cover's corner, as a fraction of its side (its StageCoverShape, 20%). */
+private const val LyricsCoverCornerFraction = 0.20f
+
+/**
+ * The cover's rounding as it grows into the lyrics screen's cover: [CoverCornerPx] at rest,
+ * turning into that cover's proportional corner by the time it's a quarter larger. So it lands
+ * with the same rounding as the cover fading in over it, instead of switching at the end; and
+ * coming back from the compact header (a little larger than this), it starts from that one's.
+ */
+private data class GrowingCoverShape(val restPx: Float) : Shape {
+    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
+        val side = size.minDimension
+        val grown = if (restPx > 0f) ((side - restPx) / (restPx * 0.25f)).coerceIn(0f, 1f) else 0f
+        val radius = CoverCornerPx + (side * LyricsCoverCornerFraction - CoverCornerPx) * grown
+        return Outline.Rounded(RoundRect(size.toRect(), CornerRadius(radius)))
+    }
+}
 
 /**
  * @param sharedElementsEnabled whether this row takes part in the shared-element transition to
@@ -151,8 +177,14 @@ fun SongItem(
             Row(
                 modifier = Modifier.fillMaxHeight(if (showPath) 0.7f else 1f),
             ) {
+                // The cover's size in the row, where the transition's growth is measured from
+                var coverRestPx by remember { mutableFloatStateOf(0f) }
+                val growingShape = remember(coverRestPx) { GrowingCoverShape(coverRestPx) }
                 Box(
-                    modifier = Modifier.fillMaxHeight().aspectRatio(1f),
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .aspectRatio(1f)
+                        .onSizeChanged { coverRestPx = it.width.toFloat() },
                     contentAlignment = Alignment.Center,
                 ) {
                     AsyncImage(
@@ -168,13 +200,13 @@ fun SongItem(
                                 key = "cover$filePath",
                                 sharedTransitionScope = sharedTransitionScope,
                                 animatedVisibilityScope = animatedVisibilityScope,
-                                overlayClip = CoverShape,
+                                overlayClip = growingShape,
                                 homeSideCover = true,
                             )
                             .fillMaxSize()
                             .graphicsLayer {
                                 // Rounds into a circle as the song is selected
-                                shape = if (selectionAlpha == 0f) CoverShape
+                                shape = if (selectionAlpha == 0f) growingShape
                                 else RoundedCornerShape(
                                     percent = (CoverCornerPercent + (50 - CoverCornerPercent) * selectionAlpha)
                                         .toInt().coerceIn(0, 50)
