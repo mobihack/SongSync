@@ -1,5 +1,24 @@
 package pl.lambada.songsync.ui.screens.home.components
 
+import pl.lambada.songsync.ui.components.frosted
+import dev.chrisbanes.haze.rememberHazeState
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.HazeState
+import pl.lambada.songsync.util.savedLyricsOf
+import pl.lambada.songsync.util.SavedLyrics
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import androidx.compose.runtime.produceState
+import androidx.compose.material.icons.filled.CheckCircle
+import kotlin.math.sin
+import kotlin.math.cos
+import kotlin.math.PI
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.foundation.layout.BoxScope
+import pl.lambada.songsync.ui.components.FrostedTintAlpha
 import android.net.Uri
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.AnimatedContent
@@ -288,7 +307,9 @@ fun NowPlayingCard(
         onClick = onClick,
         interactionSource = interactionSource,
         shape = CardShape,
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        // Frosted like the ⋮ button: its tint, here over soft colour glows (FrostedGlow) since the
+        // card has nothing behind it to blur
+        color = MaterialTheme.colorScheme.surface,
         contentColor = MaterialTheme.colorScheme.onSurface,
         modifier = modifier
             .padding(horizontal = 16.dp, vertical = 4.dp)
@@ -296,6 +317,10 @@ fun NowPlayingCard(
             .height(cardHeight),
     ) {
         Box(Modifier.fillMaxSize()) {
+            // The glows are what the Get lyrics pill frosts over
+            val cardHaze = rememberHazeState()
+            FrostedGlow(moving = isPlaying && !reduceMotion, hazeState = cardHaze)
+
             // Drawn first, so the title can run over it
             Box(
                 modifier = Modifier
@@ -397,32 +422,114 @@ fun NowPlayingCard(
                 }
             }
 
-            // Not its own button: the whole card is the target, this just says what it does
+            // Not its own button: the whole card is the target, this just says what it does: get
+            // lyrics, or that the song already has some (tapping still opens its lyrics screen)
+            val saved by produceState<SavedLyrics?>(null, filePath) {
+                // The card's path carries ".nowplaying" (a distinct shared-transition key); the file doesn't
+                value = withContext(Dispatchers.IO) { savedLyricsOf(context, filePath.removeSuffix(".nowplaying")) }
+            }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .padding(16.dp)
                     .height(56.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.secondaryContainer)
+                    // Frosted like the floating controls, in their accent tint, over the glows
+                    .frosted(cardHaze, CircleShape, MaterialTheme.colorScheme.secondaryContainer)
                     .padding(start = 18.dp, end = 24.dp),
             ) {
-                Icon(
-                    imageVector = Icons.Filled.MusicNote,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                )
-                Spacer(Modifier.width(8.dp))
-                Text(
-                    text = stringResource(R.string.get_lyrics),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
-                )
+                val pillFade = MaterialTheme.motionScheme.fastEffectsSpec<Float>()
+                AnimatedContent(
+                    targetState = saved,
+                    transitionSpec = {
+                        fadeIn(pillFade) togetherWith fadeOut(pillFade) using SizeTransform(clip = false)
+                    },
+                    label = "lyricsPill",
+                ) { state ->
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = if (state == null) Icons.Filled.MusicNote else Icons.Filled.CheckCircle,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(
+                                when (state) {
+                                    null -> R.string.get_lyrics
+                                    SavedLyrics.LRC_FILE -> R.string.lyrics_saved
+                                    SavedLyrics.EMBEDDED -> R.string.lyrics_embedded
+                                }
+                            ),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        )
+                    }
+                }
             }
         }
     }
 }
+
+/**
+ * The card's frosted background: two soft glows in the theme's accent colours, top-start and
+ * behind the cover, under the floating controls' tint at the same opacity ([FrostedTintAlpha]),
+ * so the frosting has colour to show. While [moving] (a song playing) they drift slowly around
+ * those spots; paused, they hold where they are.
+ */
+@Composable
+private fun BoxScope.FrostedGlow(moving: Boolean, hazeState: HazeState) {
+    val colors = MaterialTheme.colorScheme
+    val tint = colors.surfaceContainer.copy(alpha = FrostedTintAlpha)
+    // One lap of the drift, 0..2π; read only while drawing, so a frame redraws without recomposing
+    val phase = remember { Animatable(0f) }
+    LaunchedEffect(moving) {
+        if (!moving) return@LaunchedEffect
+        while (isActive) {
+            val remaining = TwoPi - phase.value
+            phase.animateTo(TwoPi, tween((GlowLapMillis * remaining / TwoPi).toInt(), easing = LinearEasing))
+            phase.snapTo(0f)
+        }
+    }
+    Box(
+        Modifier
+            .matchParentSize()
+            .hazeSource(hazeState)
+            .drawBehind {
+                val t = phase.value
+                // Loops of different shapes, so the two glows never move in step
+                drawRect(
+                    Brush.radialGradient(
+                        listOf(colors.primary.copy(alpha = GlowAlpha), Color.Transparent),
+                        center = Offset(
+                            size.width * (0.15f + 0.15f * cos(t)),
+                            size.height * (0.15f + 0.2f * sin(t)),
+                        ),
+                        radius = size.maxDimension * 0.55f,
+                    )
+                )
+                drawRect(
+                    Brush.radialGradient(
+                        listOf(colors.tertiary.copy(alpha = GlowAlpha), Color.Transparent),
+                        center = Offset(
+                            size.width * (0.55f - 0.2f * sin(t)),
+                            size.height * (0.85f + 0.15f * cos(2 * t)),
+                        ),
+                        radius = size.maxDimension * 0.6f,
+                    )
+                )
+                drawRect(tint)
+            }
+    )
+}
+
+private const val TwoPi = (2 * PI).toFloat()
+
+/** One lap of the glows' drift: slow enough to feel ambient, not busy. */
+private const val GlowLapMillis = 16_000
+
+/** How strong the glows are under the tint: enough to show the frosting, not to colour the card. */
+private const val GlowAlpha = 0.8f
 
 /** The art on screen, and what it is of: the image uri, or null for the placeholder. */
 private class ShownArt(val source: Any?, val painter: Painter)

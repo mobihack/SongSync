@@ -112,6 +112,34 @@ fun getFileDescriptorFromPath(
     }
 }
 
+/** Where a song file's lyrics already are. */
+enum class SavedLyrics { LRC_FILE, EMBEDDED }
+
+/** Tags that hold lyrics in a song file, as TagLib names them. */
+private val lyricsTags = setOf("LYRICS", "UNSYNCEDLYRICS", "SYNCEDLYRICS")
+
+/**
+ * Whether the song at [filePath] already has lyrics: an .lrc file beside it (checked first, it's
+ * cheap) or lyrics embedded in its tags. Null when it has neither, or the file can't be read.
+ * Reads the file, so call it off the main thread.
+ */
+fun savedLyricsOf(context: Context, filePath: String?): SavedLyrics? {
+    if (filePath.isNullOrEmpty()) return null
+    if (filePath.toLrcFile()?.exists() == true) return SavedLyrics.LRC_FILE
+    return try {
+        getFileDescriptorFromPath(context, filePath)?.use { fd ->
+            val tags = TagLib.getMetadata(fd.dup().detachFd(), false)?.propertyMap ?: return null
+            val embedded = tags.any { (key, values) ->
+                key.uppercase().substringBefore(':') in lyricsTags && values.any { it.isNotBlank() }
+            }
+            if (embedded) SavedLyrics.EMBEDDED else null
+        }
+    } catch (e: Exception) {
+        Log.w("LyricsUtils", "Couldn't read the tags of $filePath: ${e.message}")
+        null
+    }
+}
+
 fun embedLyricsInFile(
     context: Context,
     filePath: String,
