@@ -47,6 +47,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.AudioFile
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.DeleteOutline
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -111,6 +112,13 @@ import pl.lambada.songsync.util.parseLyricLines
 import pl.lambada.songsync.util.showToast
 import pl.lambada.songsync.util.ui.EaseOutStrong
 
+/**
+ * Top bar icons, sized so they look the same size: the edit and copy glyphs fill more of their box
+ * than the trash can does, so they're drawn a little smaller than the standard 24dp.
+ */
+private val EditIconSize = 22.dp
+private val CopyIconSize = 20.dp
+
 /** Room under the list for the floating toolbar. */
 private val ToolbarClearance = 104.dp
 /** Where the line being sung sits while it follows playback: this far down the list. */
@@ -149,9 +157,6 @@ fun SharedTransitionScope.LyricsFetchScreen(
         viewModel.refreshSavedLyrics(context)
     }
     var confirmRemove by remember { mutableStateOf(false) }
-    LaunchedEffect(viewModel.queryState) {
-        if (viewModel.queryState != QueryStatus.Pending) viewModel.headerCollapsed = true
-    }
 
     val songPath = source?.filePath?.removeSuffix(".nowplaying")?.takeIf { it.isNotEmpty() }
     val player = rememberLyricsPreviewPlayer(songPath)
@@ -220,19 +225,22 @@ fun SharedTransitionScope.LyricsFetchScreen(
                         }
                     }
                 },
-                title = {
-                    // The song's title, once the header has scrolled away
-                    val scrolledPast by remember { derivedStateOf { listState.firstVisibleItemIndex > 0 } }
-                    AnimatedVisibility(
-                        visible = source != null && scrolledPast,
-                        enter = fadeIn(MaterialTheme.motionScheme.fastEffectsSpec()),
-                        exit = fadeOut(MaterialTheme.motionScheme.fastEffectsSpec()),
-                    ) {
-                        Text(source?.songName.orEmpty(), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    }
-                },
+                title = {},
                 actions = {
                     // Lyrics already saved for this song (.lrc or embedded) can be taken off here
+                    // Edit search, once there's a result to edit it from
+                    if (query is QueryStatus.Success) WithTooltip(stringResource(R.string.edit), below = true) {
+                        IconButton(onClick = {
+                            viewModel.lrcOffset = 0
+                            viewModel.queryState = QueryStatus.NotSubmitted
+                        }) {
+                            Icon(
+                                Icons.Outlined.Edit,
+                                contentDescription = stringResource(R.string.edit),
+                                modifier = Modifier.size(EditIconSize),
+                            )
+                        }
+                    }
                     if (viewModel.hasSavedLyrics) WithTooltip(stringResource(R.string.remove_saved_lyrics), below = true) {
                         IconButton(onClick = { confirmRemove = true }) {
                             Icon(Icons.Outlined.DeleteOutline, contentDescription = stringResource(R.string.remove_saved_lyrics))
@@ -243,7 +251,11 @@ fun SharedTransitionScope.LyricsFetchScreen(
                             clipboardManager.setText(AnnotatedString(shownLyrics))
                             showToast(context, context.getString(R.string.lyrics_copied_to_clipboard))
                         }) {
-                            Icon(Icons.Outlined.ContentCopy, contentDescription = stringResource(R.string.copy_lyrics_to_clipboard))
+                            Icon(
+                                Icons.Outlined.ContentCopy,
+                                contentDescription = stringResource(R.string.copy_lyrics_to_clipboard),
+                                modifier = Modifier.size(CopyIconSize),
+                            )
                         }
                     }
                 },
@@ -267,9 +279,7 @@ fun SharedTransitionScope.LyricsFetchScreen(
                 if (source != null) item(key = "header") {
                     StageHeader(
                         song = source,
-                        collapsed = viewModel.headerCollapsed,
                         animatedVisibilityScope = animatedVisibilityScope,
-                        disableMarquee = settings.disableMarquee,
                         modifier = Modifier.padding(horizontal = 4.dp),
                     )
                 }
@@ -289,10 +299,13 @@ fun SharedTransitionScope.LyricsFetchScreen(
                         )
                     }
 
-                    QueryStatus.Pending -> if (viewModel.headerCollapsed) {
+                    // Searching shows in the match row's place, so a result lands without a jump
+                    QueryStatus.Pending -> {
                         item(key = "match") {
                             MatchRow(
                                 state = MatchRowState.Searching(
+                                    query = listOf(viewModel.querySongName, viewModel.queryArtistName)
+                                        .filter { it.isNotBlank() }.joinToString(" · "),
                                     provider = viewModel.searchProgress?.provider ?: viewModel.lookupProviders().first(),
                                     progress = viewModel.searchProgress,
                                 ),
@@ -300,18 +313,10 @@ fun SharedTransitionScope.LyricsFetchScreen(
                                 localArtist = source?.artists,
                                 onProviderClick = { expandedProviders = true },
                                 onNextResult = null,
-                                onEdit = {},
+                                marquee = !settings.disableMarquee,
                                 modifier = Modifier.padding(top = 14.dp).animateItem(),
                             )
                         }
-                    } else item(key = "searching") {
-                        // The first search, under the large cover
-                        SearchingIndicator(
-                            provider = viewModel.searchProgress?.provider ?: viewModel.lookupProviders().first(),
-                            index = viewModel.searchProgress?.index,
-                            total = viewModel.searchProgress?.total,
-                            modifier = Modifier.animateItem(),
-                        )
                     }
 
                     is QueryStatus.Success -> {
@@ -331,10 +336,7 @@ fun SharedTransitionScope.LyricsFetchScreen(
                                         viewModel.loadSongInfo(context, true)
                                     }
                                 } else null,
-                                onEdit = {
-                                    viewModel.lrcOffset = 0
-                                    viewModel.queryState = QueryStatus.NotSubmitted
-                                },
+                                marquee = !settings.disableMarquee,
                                 modifier = Modifier.padding(top = 14.dp).animateItem(),
                             )
                         }
@@ -631,24 +633,6 @@ private val TimingPanelOrigin = TransformOrigin(0.30f, 1f)
 
 private fun lineKey(linesKey: Int, index: Int) = "line$linesKey-$index"
 
-
-@Composable
-private fun SearchingIndicator(provider: Providers, index: Int?, total: Int?, modifier: Modifier = Modifier) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier.fillMaxWidth().padding(top = 32.dp),
-    ) {
-        LoadingIndicator()
-        Spacer(Modifier.height(8.dp))
-        Text(
-            text = if (index != null && total != null && total > 1) {
-                provider.displayName + " · " + stringResource(R.string.provider_progress, index, total)
-            } else provider.displayName,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
 
 @Composable
 private fun FilePath(path: String) {

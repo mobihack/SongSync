@@ -1,5 +1,6 @@
 package pl.lambada.songsync.ui.screens.lyricsFetch.components
 
+import pl.lambada.songsync.ui.components.AnimatedText
 import pl.lambada.songsync.ui.components.WithTooltip
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.SizeTransform
@@ -21,8 +22,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -58,138 +59,166 @@ private val MatchOk = Color(0xFF6DD58C)
 
 /** What the match row shows. */
 sealed interface MatchRowState {
-    /** Searching, with the provider being tried now. */
-    data class Searching(val provider: Providers, val progress: ProviderChain.Progress?) : MatchRowState
+    /** Searching for [query] (title and artist), with the provider being tried now. */
+    data class Searching(val query: String, val provider: Providers, val progress: ProviderChain.Progress?) : MatchRowState
 
     /** The song a provider found, with whether its lyrics are synced. */
     data class Found(val song: SongInfo, val provider: Providers, val synced: Boolean?) : MatchRowState
 }
 
 /**
- * The song a provider matched, under the local song: its cover and title, the provider (tap to
- * choose another) and whether its length matches the file's. Next result and Edit search sit at
- * its end, so a wrong match is fixed right where it shows.
+ * The song a provider matched, under the local song: a card with its cover, title and artist, and
+ * Next result at its end, so a wrong match is fixed right where it shows. Under the card, a
+ * caption says where it came from (tap the provider to choose another) and whether it fits the
+ * file: synced or not, or a warning when its length differs from the file's.
  */
 @Composable
 fun MatchRow(
     state: MatchRowState,
     /** The local file's length, to compare against; null when unknown. */
     localDurationMs: Long?,
-    /** The local file's artist: the match's artist is shown only when it differs. */
+    /** The local file's artist; used when the match has none. */
     localArtist: String?,
     onProviderClick: () -> Unit,
     onNextResult: (() -> Unit)?,
-    onEdit: () -> Unit,
+    /** Scroll the title when it doesn't fit, unless marquee is turned off in settings. */
+    marquee: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val context = LocalContext.current
-    Surface(
-        shape = RoundedCornerShape(18.dp),
-        color = listGroupContainerColor(),
-        modifier = modifier.fillMaxWidth(),
-    ) {
-        // Searching → found is a short crossfade, not a swap in one frame
-        AnimatedContent(
-            targetState = state,
-            contentKey = { it::class },
-            transitionSpec = { fadeIn(tween(150)) togetherWith fadeOut(tween(150)) using SizeTransform(clip = false) },
-            label = "matchRow",
-        ) { state ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier
-                    .heightIn(min = 64.dp)
-                    .padding(start = 10.dp, end = 4.dp, top = 10.dp, bottom = 10.dp),
-            ) {
-                Box(
-                    Modifier
-                        .size(MatchCoverSize)
-                        .clip(MatchCoverShape)
-                        .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+    Column(modifier.fillMaxWidth()) {
+        Surface(
+            shape = RoundedCornerShape(18.dp),
+            color = listGroupContainerColor(),
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            // Searching → found is a short crossfade, not a swap in one frame
+            AnimatedContent(
+                targetState = state,
+                contentKey = { it::class },
+                transitionSpec = { fadeIn(tween(150)) togetherWith fadeOut(tween(150)) using SizeTransform(clip = false) },
+                label = "matchRow",
+            ) { state ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier
+                        .heightIn(min = 64.dp)
+                        .padding(start = 10.dp, end = 4.dp, top = 10.dp, bottom = 10.dp),
                 ) {
-                    if (state is MatchRowState.Found) AsyncImage(
-                        model = state.song.albumCoverLink,
-                        imageLoader = context.imageLoader,
-                        contentDescription = stringResource(R.string.album_cover),
-                        placeholder = painterResource(R.drawable.ic_song),
-                        error = painterResource(R.drawable.ic_song),
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.size(MatchCoverSize),
-                    )
-                }
+                    Box(
+                        Modifier
+                            .size(MatchCoverSize)
+                            .clip(MatchCoverShape)
+                            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                    ) {
+                        if (state is MatchRowState.Found) AsyncImage(
+                            model = state.song.albumCoverLink,
+                            imageLoader = context.imageLoader,
+                            contentDescription = stringResource(R.string.album_cover),
+                            placeholder = painterResource(R.drawable.ic_song),
+                            error = painterResource(R.drawable.ic_song),
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.size(MatchCoverSize),
+                        )
+                    }
 
-                Column(Modifier.weight(1f)) {
-                    when (state) {
-                        is MatchRowState.Searching -> {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                CircularProgressIndicator(Modifier.size(12.dp), strokeWidth = 2.dp)
-                                ProviderLabel(state.provider, onProviderClick)
-                                state.progress?.takeIf { it.total > 1 }?.let {
-                                    Label("· " + stringResource(R.string.provider_progress, it.index, it.total))
-                                }
-                            }
-                            Text(
-                                stringResource(R.string.looking_for_lyrics),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(top = 3.dp),
-                            )
-                        }
-
-                        is MatchRowState.Found -> {
-                            val found = state.song.durationMs
-                            val mismatch = found != null && localDurationMs != null &&
-                                abs(found - localDurationMs) > LengthToleranceMs
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                Box(
-                                    Modifier
-                                        .size(8.dp)
-                                        .background(if (mismatch) MaterialTheme.colorScheme.error else MatchOk, CircleShape)
+                    Column(Modifier.weight(1f)) {
+                        when (state) {
+                            // Two lines, like a result, so the card keeps its height when one lands
+                            is MatchRowState.Searching -> {
+                                AnimatedText(
+                                    animate = false,
+                                    text = stringResource(R.string.looking_for_lyrics),
+                                    fontSize = MaterialTheme.typography.bodyLarge.fontSize,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
-                                ProviderLabel(state.provider, onProviderClick)
-                                when {
-                                    mismatch -> Label(
-                                        "· " + stringResource(
-                                            R.string.lyrics_length_mismatch,
-                                            formatDuration(found!!),
-                                            formatDuration(localDurationMs!!),
-                                        ),
-                                        color = MaterialTheme.colorScheme.error,
-                                    )
-                                    state.synced != null -> Label(
-                                        "· " + stringResource(if (state.synced) R.string.lyrics_synced else R.string.lyrics_unsynced)
-                                    )
-                                }
+                                AnimatedText(
+                                    animate = false,
+                                    text = state.query,
+                                    fontSize = MaterialTheme.typography.bodyMedium.fontSize,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(top = 2.dp),
+                                )
                             }
-                            val title = state.song.songName ?: stringResource(R.string.unknown)
-                            val artist = state.song.artistName
-                            val showArtist = artist != null && !artist.equals(localArtist, ignoreCase = true)
-                            Text(
-                                if (showArtist) "$title · $artist" else title,
-                                style = MaterialTheme.typography.bodyLarge,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.padding(top = 3.dp),
-                            )
-                        }
-                    }
-                }
 
-                if (state is MatchRowState.Found) {
-                    if (onNextResult != null) WithTooltip(stringResource(R.string.try_again)) {
-                        IconButton(onClick = onNextResult) {
-                            Icon(Icons.Filled.SkipNext, contentDescription = stringResource(R.string.try_again))
+                            is MatchRowState.Found -> {
+                                AnimatedText(
+                                    animate = marquee,
+                                    text = state.song.songName ?: stringResource(R.string.unknown),
+                                    fontSize = MaterialTheme.typography.bodyLarge.fontSize,
+                                )
+                                AnimatedText(
+                                    animate = marquee,
+                                    text = state.song.artistName ?: localArtist ?: stringResource(R.string.unknown),
+                                    fontSize = MaterialTheme.typography.bodyMedium.fontSize,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.padding(top = 2.dp),
+                                )
+                            }
                         }
                     }
-                    WithTooltip(stringResource(R.string.edit)) {
-                        IconButton(onClick = onEdit) {
-                            Icon(Icons.Outlined.Edit, contentDescription = stringResource(R.string.edit))
+
+                    if (state is MatchRowState.Found && onNextResult != null) {
+                        WithTooltip(stringResource(R.string.try_again)) {
+                            IconButton(onClick = onNextResult) {
+                                Icon(Icons.Filled.SkipNext, contentDescription = stringResource(R.string.try_again))
+                            }
                         }
                     }
                 }
             }
         }
+
+        // Where the match came from, and whether it fits the file
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
+        ) {
+            when (state) {
+                is MatchRowState.Searching -> {
+                    CircularProgressIndicator(Modifier.size(12.dp), strokeWidth = 2.dp)
+                    ProviderLabel(state.provider, onProviderClick)
+                    state.progress?.takeIf { it.total > 1 }?.let {
+                        Label("· " + stringResource(R.string.provider_progress, it.index, it.total))
+                    }
+                }
+
+                is MatchRowState.Found -> {
+                    val found = state.song.durationMs
+                    val mismatch = found != null && localDurationMs != null &&
+                        abs(found - localDurationMs) > LengthToleranceMs
+                    Box(
+                        Modifier
+                            .size(8.dp)
+                            .background(if (mismatch) MaterialTheme.colorScheme.error else MatchOk, CircleShape)
+                    )
+                    ProviderLabel(state.provider, onProviderClick)
+                    when {
+                        mismatch -> Label(
+                            "· " + stringResource(
+                                R.string.lyrics_length_mismatch,
+                                formatDuration(found!!),
+                                formatDuration(localDurationMs!!),
+                            ),
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                        state.synced != null -> Label(
+                            "· " + stringResource(if (state.synced) R.string.lyrics_synced else R.string.lyrics_unsynced)
+                        )
+                    }
+                }
+            }
+        }
+
+        // Sets the match apart from the lyrics under it
+        HorizontalDivider(
+            color = MaterialTheme.colorScheme.outlineVariant,
+            modifier = Modifier.padding(top = 12.dp),
+        )
     }
 }
 
