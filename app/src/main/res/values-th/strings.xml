@@ -151,8 +151,6 @@
     <string name="date_added">วันที่เพิ่ม</string>
     <string name="date_modified">วันที่แก้ไข</string>
     <string name="translation">การแปล</string>
-    <string name="help_us_translate">ช่วยเราแปลแอปเป็นภาษาของคุณ!</string>
-    <string name="translation_website">เปิด Weblate</string>
     <string name="showing_lyrics_for">กำลังแสดงเนื้อเพลงของ</string>
     <string name="by">โดย</string>
     <string name="accept">ยอมรับ</string>

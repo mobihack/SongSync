@@ -91,8 +91,6 @@
     <string name="invert_selection">Inverser la sélection</string>
     <string name="no_lyrics">Pas de paroles : %1$d</string>
     <string name="showing_lyrics_for">Affichage des paroles de</string>
-    <string name="translation_website">Ouvrir Weblate</string>
-    <string name="help_us_translate">Aidez-nous à traduire l\'application dans votre langue !</string>
     <string name="translation">Traduction</string>
     <string name="date_modified">Date de modification</string>
     <string name="date_added">Date d\'ajout</string>

@@ -43,8 +43,6 @@
     <string name="song_name_not_provided">Loo nimi on puudu</string>
     <string name="date_modified">Muutmise kuupäev</string>
     <string name="translation">Tõlked</string>
-    <string name="help_us_translate">Aita meil seda rakendust tõlkida oma keelde!</string>
-    <string name="translation_website">Ava Weblate\'i tõlkeliides</string>
     <string name="showing_lyrics_for">Näitame laulusõnu loole</string>
     <string name="by">teenusest</string>
     <string name="accept">Nõustu</string>

@@ -122,8 +122,6 @@
     <string name="date_added">Data aggiunta</string>
     <string name="date_modified">Data modificata</string>
     <string name="translation">Traduzione</string>
-    <string name="help_us_translate">Aiutaci a tradurre l\'app nella tua lingua!</string>
-    <string name="translation_website">Apri Weblate</string>
     <string name="ok">Ok</string>
     <string name="downloading_lyrics">Scarica testo</string>
     <string name="no_internet_connection">Nessuna connessione internet</string>

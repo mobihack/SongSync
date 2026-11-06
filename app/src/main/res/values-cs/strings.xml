@@ -54,8 +54,6 @@
     <string name="translation">Překlad</string>
     <string name="date_added">Datum přidání</string>
     <string name="date_modified">Datum změny</string>
-    <string name="help_us_translate">Pomožte nám přeložit tuto aplikaci do vašeho jazyka!</string>
-    <string name="translation_website">Otevřít Weblate</string>
     <string name="init_screen_title">Vítej v SongSync+!</string>
     <string name="app_version">Verze aplikace: %1$s</string>
     <string name="you_need_internet_connection">Potřebujete přístup ke internetu pro používání této aplikace.</string>

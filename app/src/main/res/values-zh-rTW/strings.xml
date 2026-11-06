@@ -119,7 +119,6 @@
     <string name="bugs_or_suggestions_contact_us">出現錯誤？ 有什麼建議？ 想做出貢獻嗎？ 請隨時透過我的 Telegram 群組與我聯繫。</string>
     <string name="create_issue">您也可以在 GitHub 上建立問題（連結如上）。</string>
     <string name="sort">分類</string>
-    <string name="translation_website">打開weblate網站</string>
     <string name="about">關於</string>
     <string name="local_song">本地歌曲</string>
     <string name="back">返回</string>
@@ -134,7 +133,6 @@
     <string name="artist">藝術家</string>
     <string name="disable_marquee_summary">禁用應用程式中的移動文字動畫</string>
     <string name="include_translation_summary">從網易雲音樂獲取歌詞時包括歌詞翻譯</string>
-    <string name="help_us_translate">幫助我們將應用程式翻譯成您的語言!</string>
     <string name="ascending">升序</string>
     <string name="descending">降序</string>
     <string name="show_notification_permission">顯示通知(可選)</string>

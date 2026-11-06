@@ -145,8 +145,6 @@
     <string name="date_added">Ekleme tarihi</string>
     <string name="date_modified">Değiştirilme tarihi</string>
     <string name="translation">Çeviri</string>
-    <string name="help_us_translate">Uygulamayı dilinize çevirmemize yardım edin!</string>
-    <string name="translation_website">Weblate’i Aç</string>
     <string name="showing_lyrics_for">Şarkı sözleri gösteriliyor:</string>
     <string name="by">tarafından</string>
     <string name="accept">Kabul et</string>

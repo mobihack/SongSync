@@ -141,8 +141,6 @@
     <string name="multi_person_word_by_word">Lời bài hát từng từ nhiều người</string>
     <string name="date_modified">Ngày chỉnh sửa</string>
     <string name="translation">Dịch thuật</string>
-    <string name="help_us_translate">Hãy giúp chúng tôi dịch ứng dụng sang ngôn ngữ của bạn!</string>
-    <string name="translation_website">Mở Weblate</string>
     <string name="get_involved">Tham gia</string>
     <string name="search_lyrics">Tìm lời bài hát</string>
     <string name="more">Tùy chọn khác</string>

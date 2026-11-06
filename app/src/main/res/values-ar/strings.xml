@@ -142,8 +142,6 @@
     <string name="date_added">تاريخ الإضافة</string>
     <string name="date_modified">تاريخ التعديل</string>
     <string name="translation">الترجمة</string>
-    <string name="translation_website">افتح وِب‌ليت</string>
-    <string name="help_us_translate">ساعِدنا بترجمة البرنامج إلى لغتك!</string>
     <string name="init_screen_description">لتبدأ، اِمنَح البرنامج الأذونات التالية:</string>
     <string name="all_files_access_description">يلزم لحفظ ملفات LRC في مسار الأغنية دون فتح مُحدِّد الملفات كل مرة</string>
     <string name="pure_black_theme_summary">استعمل سمة سوداء صافيةً عند تفعيل الوضع المُظلِم</string>

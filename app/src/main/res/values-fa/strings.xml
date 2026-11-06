@@ -93,8 +93,6 @@
     <string name="date_added">تاریخ افزوده شدن</string>
     <string name="date_modified">تاریخ اصلاح شدن</string>
     <string name="translation">ترجمه</string>
-    <string name="help_us_translate">به ما در ترجمۀ برنامه به زبان خود کمک کنید!</string>
-    <string name="translation_website">باز کردن Weblate</string>
     <string name="batch_download_lyrics">بارگیری دسته‌ای ترانه‌ها</string>
     <string name="error">خطا</string>
     <string name="downloading_lyrics">درحال بارگیری ترانه‌ها</string>

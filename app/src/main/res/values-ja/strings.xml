@@ -137,8 +137,6 @@
     <string name="offset_mode_summary">オフセット LRC タグを使用する代わりに歌詞のタイムスタンプを直接的に変更します</string>
     <string name="settings">設定</string>
     <string name="date_modified">変更した日時</string>
-    <string name="help_us_translate">アプリをあなたの母国語に翻訳してくれませんか！</string>
-    <string name="translation_website">Weblate を開く</string>
     <string name="showing_lyrics_for">歌詞を表示</string>
     <string name="by">-</string>
     <string name="accept">同意</string>

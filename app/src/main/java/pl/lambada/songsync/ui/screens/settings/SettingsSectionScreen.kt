@@ -48,7 +48,6 @@ import pl.lambada.songsync.ui.screens.settings.components.ShowPathSwitch
 import pl.lambada.songsync.ui.screens.settings.components.SubScreenTopBar
 import pl.lambada.songsync.ui.screens.settings.components.SupportSection
 import pl.lambada.songsync.ui.screens.settings.components.SyncedLyricsSwitch
-import pl.lambada.songsync.ui.screens.settings.components.TranslationSection
 import pl.lambada.songsync.ui.screens.settings.components.TranslationSwitch
 import pl.lambada.songsync.ui.screens.settings.components.UpdateAvailableDialog
 import pl.lambada.songsync.ui.screens.settings.folders.folderModeSummary
@@ -242,7 +241,6 @@ private fun LazyListScope.about(viewModel: SettingsViewModel) {
         ListGroup {
             row { ExternalLinkSection(url = "https://github.com/mobihack/SongSync", uriHandler = uriHandler, shapes = it) }
             row { SupportSection(uriHandler = uriHandler, shapes = it) }
-            row { TranslationSection(uriHandler = uriHandler, shapes = it) }
         }
     }
     item { SettingsHeadLabel(stringResource(R.string.contributors)) }

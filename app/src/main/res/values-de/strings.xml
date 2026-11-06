@@ -138,8 +138,6 @@
     <string name="open_website">Webseite öffnen</string>
     <string name="syncedlyrics_py">Synchronisierte-Liedtexte (für Netease-Header und LrcLib)</string>
     <string name="thanks_to">Dank an</string>
-    <string name="translation_website">Weblate öffnen</string>
-    <string name="help_us_translate">Hilf uns, die App in deine Sprache zu übersetzen!</string>
     <string name="date_modified">Änderungsdatum</string>
     <string name="select_language">Sprache wählen</string>
     <string name="multi_person_word_by_word_summary2">Mehrere-Personen-Format verwenden, wenn Liedtexte von unterstützten Anbieter abgerufen werden</string>
