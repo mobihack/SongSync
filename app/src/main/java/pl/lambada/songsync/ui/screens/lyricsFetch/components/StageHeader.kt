@@ -77,7 +77,7 @@ fun SharedTransitionScope.StageHeader(
     val progress by animateFloatAsState(
         targetValue = if (collapsed) 1f else 0f,
         // No overshoot: the cover lands in its slot instead of bouncing past it
-        animationSpec = if (animate) spring(dampingRatio = 1f, stiffness = Spring.StiffnessMediumLow) else snap(),
+        animationSpec = if (animate) spring(dampingRatio = 1f, stiffness = Spring.StiffnessMedium) else snap(),
         label = "stageHeader",
     )
     val artist = song.artists.ifBlank { stringResource(R.string.unknown) }

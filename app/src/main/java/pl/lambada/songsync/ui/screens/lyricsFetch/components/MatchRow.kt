@@ -2,6 +2,11 @@ package pl.lambada.songsync.ui.screens.lyricsFetch.components
 
 import pl.lambada.songsync.ui.components.WithTooltip
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -83,96 +88,104 @@ fun MatchRow(
         color = listGroupContainerColor(),
         modifier = modifier.fillMaxWidth(),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier
-                .heightIn(min = 64.dp)
-                .padding(start = 10.dp, end = 4.dp, top = 10.dp, bottom = 10.dp),
-        ) {
-            Box(
-                Modifier
-                    .size(MatchCoverSize)
-                    .clip(MatchCoverShape)
-                    .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+        // Searching → found is a short crossfade, not a swap in one frame
+        AnimatedContent(
+            targetState = state,
+            contentKey = { it::class },
+            transitionSpec = { fadeIn(tween(150)) togetherWith fadeOut(tween(150)) using SizeTransform(clip = false) },
+            label = "matchRow",
+        ) { state ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier
+                    .heightIn(min = 64.dp)
+                    .padding(start = 10.dp, end = 4.dp, top = 10.dp, bottom = 10.dp),
             ) {
-                if (state is MatchRowState.Found) AsyncImage(
-                    model = state.song.albumCoverLink,
-                    imageLoader = context.imageLoader,
-                    contentDescription = stringResource(R.string.album_cover),
-                    placeholder = painterResource(R.drawable.ic_song),
-                    error = painterResource(R.drawable.ic_song),
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.size(MatchCoverSize),
-                )
-            }
+                Box(
+                    Modifier
+                        .size(MatchCoverSize)
+                        .clip(MatchCoverShape)
+                        .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                ) {
+                    if (state is MatchRowState.Found) AsyncImage(
+                        model = state.song.albumCoverLink,
+                        imageLoader = context.imageLoader,
+                        contentDescription = stringResource(R.string.album_cover),
+                        placeholder = painterResource(R.drawable.ic_song),
+                        error = painterResource(R.drawable.ic_song),
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.size(MatchCoverSize),
+                    )
+                }
 
-            Column(Modifier.weight(1f)) {
-                when (state) {
-                    is MatchRowState.Searching -> {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            CircularProgressIndicator(Modifier.size(12.dp), strokeWidth = 2.dp)
-                            ProviderLabel(state.provider, onProviderClick)
-                            state.progress?.takeIf { it.total > 1 }?.let {
-                                Label("· " + stringResource(R.string.provider_progress, it.index, it.total))
+                Column(Modifier.weight(1f)) {
+                    when (state) {
+                        is MatchRowState.Searching -> {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                CircularProgressIndicator(Modifier.size(12.dp), strokeWidth = 2.dp)
+                                ProviderLabel(state.provider, onProviderClick)
+                                state.progress?.takeIf { it.total > 1 }?.let {
+                                    Label("· " + stringResource(R.string.provider_progress, it.index, it.total))
+                                }
                             }
-                        }
-                        Text(
-                            stringResource(R.string.looking_for_lyrics),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 3.dp),
-                        )
-                    }
-
-                    is MatchRowState.Found -> {
-                        val found = state.song.durationMs
-                        val mismatch = found != null && localDurationMs != null &&
-                            abs(found - localDurationMs) > LengthToleranceMs
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Box(
-                                Modifier
-                                    .size(8.dp)
-                                    .background(if (mismatch) MaterialTheme.colorScheme.error else MatchOk, CircleShape)
+                            Text(
+                                stringResource(R.string.looking_for_lyrics),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(top = 3.dp),
                             )
-                            ProviderLabel(state.provider, onProviderClick)
-                            when {
-                                mismatch -> Label(
-                                    "· " + stringResource(
-                                        R.string.lyrics_length_mismatch,
-                                        formatDuration(found!!),
-                                        formatDuration(localDurationMs!!),
-                                    ),
-                                    color = MaterialTheme.colorScheme.error,
-                                )
-                                state.synced != null -> Label(
-                                    "· " + stringResource(if (state.synced) R.string.lyrics_synced else R.string.lyrics_unsynced)
-                                )
-                            }
                         }
-                        val title = state.song.songName ?: stringResource(R.string.unknown)
-                        val artist = state.song.artistName
-                        val showArtist = artist != null && !artist.equals(localArtist, ignoreCase = true)
-                        Text(
-                            if (showArtist) "$title · $artist" else title,
-                            style = MaterialTheme.typography.bodyLarge,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.padding(top = 3.dp),
-                        )
-                    }
-                }
-            }
 
-            if (state is MatchRowState.Found) {
-                if (onNextResult != null) WithTooltip(stringResource(R.string.try_again)) {
-                    IconButton(onClick = onNextResult) {
-                        Icon(Icons.Filled.SkipNext, contentDescription = stringResource(R.string.try_again))
+                        is MatchRowState.Found -> {
+                            val found = state.song.durationMs
+                            val mismatch = found != null && localDurationMs != null &&
+                                abs(found - localDurationMs) > LengthToleranceMs
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Box(
+                                    Modifier
+                                        .size(8.dp)
+                                        .background(if (mismatch) MaterialTheme.colorScheme.error else MatchOk, CircleShape)
+                                )
+                                ProviderLabel(state.provider, onProviderClick)
+                                when {
+                                    mismatch -> Label(
+                                        "· " + stringResource(
+                                            R.string.lyrics_length_mismatch,
+                                            formatDuration(found!!),
+                                            formatDuration(localDurationMs!!),
+                                        ),
+                                        color = MaterialTheme.colorScheme.error,
+                                    )
+                                    state.synced != null -> Label(
+                                        "· " + stringResource(if (state.synced) R.string.lyrics_synced else R.string.lyrics_unsynced)
+                                    )
+                                }
+                            }
+                            val title = state.song.songName ?: stringResource(R.string.unknown)
+                            val artist = state.song.artistName
+                            val showArtist = artist != null && !artist.equals(localArtist, ignoreCase = true)
+                            Text(
+                                if (showArtist) "$title · $artist" else title,
+                                style = MaterialTheme.typography.bodyLarge,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.padding(top = 3.dp),
+                            )
+                        }
                     }
                 }
-                WithTooltip(stringResource(R.string.edit)) {
-                    IconButton(onClick = onEdit) {
-                        Icon(Icons.Outlined.Edit, contentDescription = stringResource(R.string.edit))
+
+                if (state is MatchRowState.Found) {
+                    if (onNextResult != null) WithTooltip(stringResource(R.string.try_again)) {
+                        IconButton(onClick = onNextResult) {
+                            Icon(Icons.Filled.SkipNext, contentDescription = stringResource(R.string.try_again))
+                        }
+                    }
+                    WithTooltip(stringResource(R.string.edit)) {
+                        IconButton(onClick = onEdit) {
+                            Icon(Icons.Outlined.Edit, contentDescription = stringResource(R.string.edit))
+                        }
                     }
                 }
             }

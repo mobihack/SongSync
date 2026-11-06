@@ -1,5 +1,8 @@
 package pl.lambada.songsync.ui.screens.home.components
 
+import androidx.compose.animation.core.Spring
+import kotlin.math.sqrt
+import kotlin.math.exp
 import pl.lambada.songsync.ui.components.frosted
 import dev.chrisbanes.haze.rememberHazeState
 import dev.chrisbanes.haze.hazeSource
@@ -210,17 +213,22 @@ private data class CoverClipShape(
 }
 
 /**
- * How far the home screen is through leaving for the lyrics screen: 0 here, 1 there. Read from
- * the transition's play time each frame, so it runs both ways (back runs it from 1 to 0).
+ * How far the cover is on its way to the lyrics screen: 0 on this card, 1 there. Follows the
+ * shared bounds' own motion, the default spring (no bounce, medium-low stiffness), at the
+ * transition's play time, so the shape lands as the cover does. Runs both ways: back runs 1 to 0.
  */
 private fun transitionProgress(scope: AnimatedVisibilityScope): Float {
     val transition = scope.transition
-    val total = transition.totalDurationNanos
-    if (total <= 0L) return 0f
-    val fraction = (transition.playTimeNanos.toFloat() / total).coerceIn(0f, 1f)
+    val seconds = transition.playTimeNanos / 1_000_000_000f
+    // A critically damped spring's progress: 1 − (1 + ωt)·e^(−ωt), with ω = √stiffness
+    val omegaT = BoundsSpringOmega * seconds
+    val fraction = (1f - (1f + omegaT) * exp(-omegaT)).coerceIn(0f, 1f)
     // Leaving home: 0 → 1. Coming back: the screen enters, from the lyrics side
     return if (transition.targetState == EnterExitState.PostExit) fraction else 1f - fraction
 }
+
+/** √ of the shared bounds' default spring stiffness (Spring.StiffnessMediumLow). */
+private val BoundsSpringOmega = sqrt(Spring.StiffnessMediumLow)
 
 /** The unturned cookie at the last size it was asked for, and a reusable matrix. */
 private class CookiePathCache {

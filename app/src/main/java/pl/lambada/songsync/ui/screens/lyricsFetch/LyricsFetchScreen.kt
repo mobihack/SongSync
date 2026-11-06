@@ -12,7 +12,12 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.scaleIn
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.runtime.snapshotFlow
+import android.os.SystemClock
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.animateScrollBy
@@ -135,6 +140,9 @@ fun SharedTransitionScope.LyricsFetchScreen(
 
     var expandedProviders by remember { mutableStateOf(false) }
     var timingOpen by rememberSaveable { mutableStateOf(false) }
+    // The toolbar arrives with the first lyrics and then stays, disabled while a search runs, so
+    // Next result doesn't make it blink out and back
+    var footerShown by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.loadInitialSongInfo(context)
@@ -153,6 +161,7 @@ fun SharedTransitionScope.LyricsFetchScreen(
     val lyrics = (viewModel.lyricsFetchState as? LyricsFetchState.Success)?.lyrics
         ?.takeIf { query is QueryStatus.Success }
     val lines = remember(lyrics) { lyrics?.let(::parseLyricLines).orEmpty() }
+    val linesKey = lyrics?.hashCode() ?: 0
     val offset = viewModel.lrcOffset
     // Copied as shown: with the offset applied when it's written into the timestamps
     val shownLyrics = lyrics?.let { if (offset != 0 && settings.directlyModifyTimestamps) applyOffsetToLyrics(it, offset) else it }
@@ -162,7 +171,7 @@ fun SharedTransitionScope.LyricsFetchScreen(
         if (lyrics == null) {
             player?.pause()
             timingOpen = false
-        }
+        } else footerShown = true
     }
 
     var positionMs by remember { mutableLongStateOf(0L) }
@@ -341,6 +350,7 @@ fun SharedTransitionScope.LyricsFetchScreen(
                         lyricsItems(
                             state = viewModel.lyricsFetchState,
                             lyrics = lyrics,
+                            linesKey = linesKey,
                             lines = lines,
                             offsetMs = offset,
                             activeLine = { activeLine },
@@ -359,7 +369,7 @@ fun SharedTransitionScope.LyricsFetchScreen(
             // Items before the first line: header, match row, languages
             val firstLineIndex = (if (source != null) 1 else 0) + 1 +
                 (if (query.songOrNull()?.availableLanguages?.isNotEmpty() == true) 1 else 0)
-            FollowPlayback(listState, firstLineIndex, lines.size, activeLine = { activeLine }, playing = playing)
+            FollowPlayback(listState, firstLineIndex, lines.size, linesKey, activeLine = { activeLine }, playing = playing)
 
             // While the timing panel is open, a tap anywhere else closes it instead of reaching
             // the lyrics
@@ -370,53 +380,64 @@ fun SharedTransitionScope.LyricsFetchScreen(
             )
 
             // Floating toolbar, with the timing panel opening above it
-            if (lyrics != null) Column(
-                Modifier
-                    .align(Alignment.BottomStart)
-                    .navigationBarsPadding()
-                    .padding(horizontal = 12.dp, vertical = 16.dp),
+            AnimatedVisibility(
+                visible = footerShown && (query is QueryStatus.Success || query == QueryStatus.Pending),
+                enter = fadeIn(tween(200, easing = EaseOutStrong)) +
+                    slideInVertically(tween(250, easing = EaseOutStrong)) { it / 4 },
+                exit = fadeOut(tween(150)) + slideOutVertically(tween(150)) { it / 4 },
+                modifier = Modifier.align(Alignment.BottomStart),
             ) {
-                AnimatedVisibility(
-                    visible = timingOpen,
-                    // Grows from the timing button, below-left of the panel
-                    enter = fadeIn(tween(150)) + scaleIn(tween(200, easing = EaseOutStrong), initialScale = 0.94f, transformOrigin = TransformOrigin(0.25f, 1f)),
-                    exit = fadeOut(tween(120)) + scaleOut(tween(120), targetScale = 0.97f, transformOrigin = TransformOrigin(0.25f, 1f)),
+                Column(
+                    Modifier
+                        .navigationBarsPadding()
+                        .padding(horizontal = 12.dp, vertical = 16.dp),
                 ) {
-                    TimingPanel(
-                        offsetMs = offset,
-                        onSetOffset = { viewModel.lrcOffset = it },
+                    AnimatedVisibility(
+                        visible = timingOpen,
+                        // Grows from the timing button, below-left of the panel
+                        enter = fadeIn(tween(150, easing = EaseOutStrong)) + scaleIn(tween(200, easing = EaseOutStrong), initialScale = 0.94f, transformOrigin = TimingPanelOrigin),
+                        exit = fadeOut(tween(120)) + scaleOut(tween(120), targetScale = 0.97f, transformOrigin = TimingPanelOrigin),
+                    ) {
+                        TimingPanel(
+                            offsetMs = offset,
+                            onSetOffset = { viewModel.lrcOffset = it },
+                            hazeState = hazeState,
+                            modifier = Modifier.padding(bottom = 12.dp),
+                        )
+                    }
+                    StageToolbar(
                         hazeState = hazeState,
-                        modifier = Modifier.padding(bottom = 12.dp),
+                        // Kept through a search (disabled), left out for plain lyrics: nothing to time
+                        playing = if (player != null && (lines.isNotEmpty() || lyrics == null)) playing else null,
+                        enabled = lyrics != null,
+                        onPlayToggle = {
+                            if (playing) player?.pause()
+                            else scope.launch {
+                                // From the first line when starting over, so there's no long intro to sit through
+                                val restart = player!!.positionMs == 0L
+                                player.play(fromMs = if (restart) (lines.first().timeMs + offset - 1500).coerceAtLeast(0) else null)
+                            }
+                        },
+                        offsetMs = offset,
+                        timingOpen = timingOpen,
+                        onTimingToggle = { timingOpen = !timingOpen },
+                        onBackgroundTap = { timingOpen = false },
+                        onEmbed = if (songPath != null) {
+                            {
+                                timingOpen = false
+                                lyrics?.let { viewModel.embedLyrics(it, songPath, context, query.songOrNull()!!) }
+                            }
+                        } else null,
+                        onSave = {
+                            timingOpen = false
+                            lyrics?.let {
+                                viewModel.saveLyricsToFile(
+                                    it, query.songOrNull()!!, songPath, context, context.getString(R.string.generated_using),
+                                )
+                            }
+                        },
                     )
                 }
-                StageToolbar(
-                    hazeState = hazeState,
-                    playing = if (player != null && lines.isNotEmpty()) playing else null,
-                    onPlayToggle = {
-                        if (playing) player?.pause()
-                        else scope.launch {
-                            // From the first line when starting over, so there's no long intro to sit through
-                            val restart = player!!.positionMs == 0L
-                            player.play(fromMs = if (restart) (lines.first().timeMs + offset - 1500).coerceAtLeast(0) else null)
-                        }
-                    },
-                    offsetMs = offset,
-                    timingOpen = timingOpen,
-                    onTimingToggle = { timingOpen = !timingOpen },
-                    onBackgroundTap = { timingOpen = false },
-                    onEmbed = if (songPath != null) {
-                        {
-                            timingOpen = false
-                            viewModel.embedLyrics(lyrics, songPath, context, query.songOrNull()!!)
-                        }
-                    } else null,
-                    onSave = {
-                        timingOpen = false
-                        viewModel.saveLyricsToFile(
-                            lyrics, query.songOrNull()!!, songPath, context, context.getString(R.string.generated_using),
-                        )
-                    },
-                )
             }
         }
     }
@@ -458,6 +479,8 @@ private fun QueryStatus.songOrNull() = (this as? QueryStatus.Success)?.song
 private fun androidx.compose.foundation.lazy.LazyListScope.lyricsItems(
     state: LyricsFetchState,
     lyrics: String?,
+    /** Changes with the lyrics, so another result's lines are new items that fade in. */
+    linesKey: Int,
     lines: List<LyricLine>,
     offsetMs: Int,
     activeLine: () -> Int,
@@ -486,14 +509,17 @@ private fun androidx.compose.foundation.lazy.LazyListScope.lyricsItems(
                 )
             }
         }
-        else -> itemsIndexed(lines, key = { index, _ -> "line$index" }) { index, line ->
+        else -> itemsIndexed(lines, key = { index, _ -> lineKey(linesKey, index) }) { index, line ->
             LyricLineRow(
                 line = line,
                 offsetMs = offsetMs,
                 active = { activeLine() == index },
                 dimmed = playing,
                 onClick = onLineClick?.let { { it(line) } },
-                modifier = Modifier.padding(top = if (index == 0) 14.dp else 0.dp),
+                modifier = Modifier
+                    .padding(top = if (index == 0) 14.dp else 0.dp)
+                    // After the header has started settling, not all at once with it
+                    .animateItem(fadeInSpec = tween(220, delayMillis = 120, easing = EaseOutStrong), fadeOutSpec = null),
             )
         }
     }
@@ -518,6 +544,12 @@ private fun LyricLineRow(
         animationSpec = tween(200),
         label = "lyricLine",
     )
+    // Lights up in step with the text's alpha, not a frame before it
+    val stampColor by animateColorAsState(
+        targetValue = if (lit) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+        animationSpec = tween(200),
+        label = "lyricStamp",
+    )
     Row(
         verticalAlignment = Alignment.Top,
         modifier = modifier
@@ -530,7 +562,7 @@ private fun LyricLineRow(
         Text(
             formatTimestamp(line.timeMs + offsetMs),
             style = MaterialTheme.typography.labelSmall.copy(fontFeatureSettings = "tnum"),
-            color = if (lit) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+            color = stampColor,
             modifier = Modifier.width(60.dp).padding(top = 6.dp),
         )
         Text(
@@ -544,25 +576,61 @@ private fun LyricLineRow(
 
 /** Keeps the sung line in view while the song plays, unless the list is being scrolled by hand. */
 @Composable
-private fun FollowPlayback(listState: LazyListState, firstLineIndex: Int, lineCount: Int, activeLine: () -> Int, playing: Boolean) {
+private fun FollowPlayback(
+    listState: LazyListState,
+    firstLineIndex: Int,
+    lineCount: Int,
+    linesKey: Int,
+    activeLine: () -> Int,
+    playing: Boolean,
+) {
     val animate = rememberSystemAnimationsEnabled()
     val currentActiveLine by rememberUpdatedState(activeLine)
     val target by remember { derivedStateOf { currentActiveLine() } }
+    // When the user last scrolled by hand; following waits a moment after it
+    val follow = remember { FollowState() }
+    LaunchedEffect(listState) {
+        snapshotFlow { listState.isScrollInProgress }.collect { scrolling ->
+            if (scrolling && !follow.scrolling) follow.manualAt = SystemClock.uptimeMillis()
+        }
+    }
     LaunchedEffect(target, playing) {
-        if (!playing || target < 0 || target >= lineCount || listState.isScrollInProgress) return@LaunchedEffect
-        val key = "line$target"
+        if (!playing || target < 0 || target >= lineCount) return@LaunchedEffect
+        if (listState.isScrollInProgress && !follow.scrolling) return@LaunchedEffect
+        if (SystemClock.uptimeMillis() - follow.manualAt < FollowPauseMs) return@LaunchedEffect
+        val key = lineKey(linesKey, target)
         val anchor = (listState.layoutInfo.viewportSize.height * FollowAnchor).toInt()
         val item = listState.layoutInfo.visibleItemsInfo.firstOrNull { it.key == key }
-        if (item != null) {
-            val delta = (item.offset - anchor).toFloat()
-            if (animate) listState.animateScrollBy(delta, tween(450, easing = EaseOutStrong)) else listState.scrollBy(delta)
-        } else {
-            // Off screen (scrolled away by hand): jump there, then settle at the anchor
-            listState.scrollToItem(firstLineIndex + target)
-            listState.scrollBy(-anchor.toFloat())
+        follow.scrolling = true
+        try {
+            if (item != null) {
+                val delta = (item.offset - anchor).toFloat()
+                if (animate) listState.animateScrollBy(delta, tween(350, easing = EaseOutStrong)) else listState.scrollBy(delta)
+            } else {
+                // Off screen (scrolled away by hand): jump there, then settle at the anchor
+                listState.scrollToItem(firstLineIndex + target)
+                listState.scrollBy(-anchor.toFloat())
+            }
+        } finally {
+            follow.scrolling = false
         }
     }
 }
+
+/** Follow-playback bookkeeping: its own scrolls are told apart from the user's. */
+private class FollowState {
+    var scrolling = false
+    var manualAt = 0L
+}
+
+/** How long following waits after the user scrolls the lyrics by hand. */
+private const val FollowPauseMs = 3_000L
+
+/** Where the timing panel grows from: the timing button, about 30% across the panel's bottom. */
+private val TimingPanelOrigin = TransformOrigin(0.30f, 1f)
+
+private fun lineKey(linesKey: Int, index: Int) = "line$linesKey-$index"
+
 
 @Composable
 private fun SearchingIndicator(provider: Providers, index: Int?, total: Int?, modifier: Modifier = Modifier) {

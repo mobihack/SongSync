@@ -6,10 +6,9 @@ import pl.lambada.songsync.ui.components.WithTooltip
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
+import pl.lambada.songsync.util.ui.EaseOutStrong
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -90,6 +89,8 @@ fun StageToolbar(
     onEmbed: (() -> Unit)?,
     onSave: () -> Unit,
     modifier: Modifier = Modifier,
+    /** False while a search runs: the toolbar stays, its buttons wait for the lyrics. */
+    enabled: Boolean = true,
     /** A tap on the toolbar itself, between its buttons. */
     onBackgroundTap: () -> Unit = {},
 ) {
@@ -114,6 +115,7 @@ fun StageToolbar(
         if (playing != null) WithTooltip(stringResource(if (playing) R.string.pause_song else R.string.play_song)) {
             FilledIconButton(
                 onClick = onPlayToggle,
+                enabled = enabled,
                 shapes = IconButtonDefaults.shapes(),
                 colors = IconButtonDefaults.filledIconButtonColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -129,19 +131,20 @@ fun StageToolbar(
         }
 
         WithTooltip(stringResource(R.string.lyrics_timing)) {
-            TimingButton(offsetMs, timingOpen, onTimingToggle)
+            TimingButton(offsetMs, timingOpen, onTimingToggle, enabled)
         }
 
         Spacer(Modifier.weight(1f))
 
         if (onEmbed != null) WithTooltip(stringResource(R.string.embed_lyrics_in_file)) {
-            IconButton(onClick = onEmbed, modifier = Modifier.size(48.dp)) {
+            IconButton(onClick = onEmbed, enabled = enabled, modifier = Modifier.size(48.dp)) {
                 Icon(Icons.Outlined.AudioFile, contentDescription = stringResource(R.string.embed_lyrics_in_file))
             }
         }
         WithTooltip(stringResource(R.string.save_lrc_file)) {
             Button(
                 onClick = onSave,
+                enabled = enabled,
                 shapes = ButtonDefaults.shapes(),
                 contentPadding = ButtonDefaults.ButtonWithIconContentPadding,
                 modifier = Modifier.heightIn(min = 48.dp),
@@ -155,7 +158,7 @@ fun StageToolbar(
 }
 
 @Composable
-private fun TimingButton(offsetMs: Int, open: Boolean, onClick: () -> Unit) {
+private fun TimingButton(offsetMs: Int, open: Boolean, onClick: () -> Unit, enabled: Boolean) {
     val shifted = offsetMs != 0
     val container by animateColorAsState(
         when {
@@ -169,6 +172,7 @@ private fun TimingButton(offsetMs: Int, open: Boolean, onClick: () -> Unit) {
     val offsetLabel = formatOffset(offsetMs)
     Surface(
         onClick = onClick,
+        enabled = enabled,
         shape = CircleShape,
         color = container,
         contentColor = if (shifted && !open) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -188,8 +192,9 @@ private fun TimingButton(offsetMs: Int, open: Boolean, onClick: () -> Unit) {
             Icon(Icons.Outlined.Timer, contentDescription = stringResource(R.string.lyrics_timing), modifier = Modifier.size(20.dp))
             AnimatedVisibility(
                 visible = shifted,
-                enter = fadeIn(tween(150)) + expandHorizontally(tween(200)),
-                exit = fadeOut(tween(100)) + shrinkHorizontally(tween(200)),
+                // Fade only: growing the label would relayout the toolbar every frame
+                enter = fadeIn(tween(150, easing = EaseOutStrong)),
+                exit = fadeOut(tween(100)),
             ) {
                 Text(
                     offsetLabel,
