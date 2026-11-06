@@ -3,6 +3,7 @@
 package pl.lambada.songsync.ui.theme
 
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.material3.ColorScheme
 import android.app.Activity
 import android.os.Build
@@ -39,11 +40,7 @@ private val lightColorScheme = expressiveLightColorScheme().copy(
  * applies in dark theme: the setting stays saved while the system is light.
  */
 internal fun fallbackColorScheme(darkTheme: Boolean, pureBlack: Boolean): ColorScheme = when {
-    darkTheme && pureBlack -> darkColorScheme.copy(
-        surface = Color.Black,
-        background = Color.Black,
-        surfaceContainerLowest = Color.Black,
-    )
+    darkTheme && pureBlack -> darkColorScheme.pureBlack()
     darkTheme -> darkColorScheme
     else -> lightColorScheme
 }
@@ -67,11 +64,7 @@ fun SongSyncTheme(
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             if (darkTheme)
                 if (pureBlack)
-                    dynamicDarkColorScheme(context).copy(
-                        surface = Color.Black,
-                        background = Color.Black,
-                        surfaceContainerLowest = Color.Black,
-                    )
+                    dynamicDarkColorScheme(context).pureBlack()
                 else
                     dynamicDarkColorScheme(context)
             else
@@ -105,6 +98,52 @@ fun SongSyncTheme(
         shapes = Shapes(),
         typography = Typography,
         content = content,
+    )
+}
+
+/**
+ * Pure black: black backgrounds, and every neutral layer on top (cards, sheets, pills, chips,
+ * outlines, secondary text) as white at a low opacity over black, so the app is black and white
+ * throughout. The accents are white too (black on them), for what is selected or active; only
+ * errors keep their colour.
+ * The layers are opaque (white composited over black) so they stack like the usual containers.
+ */
+internal fun ColorScheme.pureBlack(): ColorScheme {
+    fun white(alpha: Float) = Color.White.copy(alpha = alpha).compositeOver(Color.Black)
+    return copy(
+        background = Color.Black,
+        surface = Color.Black,
+        surfaceDim = Color.Black,
+        surfaceContainerLowest = Color.Black,
+        surfaceContainerLow = white(0.04f),
+        surfaceContainer = white(0.06f),
+        surfaceContainerHigh = white(0.09f),
+        surfaceContainerHighest = white(0.12f),
+        surfaceBright = white(0.14f),
+        surfaceVariant = white(0.12f),
+        surfaceTint = Color.White,
+        // The accent is white: buttons, selection, switches, labels, progress
+        primary = Color.White,
+        onPrimary = Color.Black,
+        primaryContainer = white(0.88f),
+        onPrimaryContainer = Color.Black,
+        inversePrimary = Color.Black,
+        // The other accents too, so nothing is coloured but errors
+        secondary = white(0.8f),
+        onSecondary = Color.Black,
+        tertiary = Color.White,
+        onTertiary = Color.Black,
+        tertiaryContainer = white(0.88f),
+        onTertiaryContainer = Color.Black,
+        // Neutral pills and chips (Get lyrics, unselected toggles) in the same greys
+        secondaryContainer = white(0.14f),
+        onSecondaryContainer = Color.White,
+        onBackground = Color.White,
+        onSurface = Color.White,
+        onSurfaceVariant = Color.White.copy(alpha = 0.7f),
+        outline = Color.White.copy(alpha = 0.38f),
+        outlineVariant = Color.White.copy(alpha = 0.16f),
+        scrim = Color.Black,
     )
 }
 

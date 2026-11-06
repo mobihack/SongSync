@@ -481,6 +481,10 @@ fun NowPlayingCard(
 private fun BoxScope.FrostedGlow(moving: Boolean, hazeState: HazeState) {
     val colors = MaterialTheme.colorScheme
     val tint = colors.surfaceContainer.copy(alpha = FrostedTintAlpha)
+    // Pure black is black and white throughout: white glows there, the accents otherwise
+    val pureBlack = colors.surface == Color.Black
+    val glowA = if (pureBlack) Color.White.copy(alpha = PureBlackGlowAlpha) else colors.primary.copy(alpha = GlowAlpha)
+    val glowB = if (pureBlack) Color.White.copy(alpha = PureBlackGlowAlpha) else colors.tertiary.copy(alpha = GlowAlpha)
     // One lap of the drift, 0..2π; read only while drawing, so a frame redraws without recomposing
     val phase = remember { Animatable(0f) }
     LaunchedEffect(moving) {
@@ -500,7 +504,7 @@ private fun BoxScope.FrostedGlow(moving: Boolean, hazeState: HazeState) {
                 // Loops of different shapes, so the two glows never move in step
                 drawRect(
                     Brush.radialGradient(
-                        listOf(colors.primary.copy(alpha = GlowAlpha), Color.Transparent),
+                        listOf(glowA, Color.Transparent),
                         center = Offset(
                             size.width * (0.15f + 0.15f * cos(t)),
                             size.height * (0.15f + 0.2f * sin(t)),
@@ -510,7 +514,7 @@ private fun BoxScope.FrostedGlow(moving: Boolean, hazeState: HazeState) {
                 )
                 drawRect(
                     Brush.radialGradient(
-                        listOf(colors.tertiary.copy(alpha = GlowAlpha), Color.Transparent),
+                        listOf(glowB, Color.Transparent),
                         center = Offset(
                             size.width * (0.55f - 0.2f * sin(t)),
                             size.height * (0.85f + 0.15f * cos(2 * t)),
@@ -530,6 +534,9 @@ private const val GlowLapMillis = 16_000
 
 /** How strong the glows are under the tint: enough to show the frosting, not to colour the card. */
 private const val GlowAlpha = 0.8f
+
+/** White glows on pure black: softer, white shows much more than an accent there. */
+private const val PureBlackGlowAlpha = 0.35f
 
 /** The art on screen, and what it is of: the image uri, or null for the placeholder. */
 private class ShownArt(val source: Any?, val painter: Painter)
