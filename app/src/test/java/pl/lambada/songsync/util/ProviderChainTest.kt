@@ -235,18 +235,23 @@ class ProviderChainTest {
         tried.shouldContainExactly(Providers.GENIUS, Providers.LRCLIB)
     }
 
-    /** Pages through fake results: [results] maps each provider to its result list. */
+    /**
+     * Pages through fake results: [results] maps each provider to its result list, where a null
+     * entry is a result without lyrics; past the end of a list, the provider has no more.
+     */
     private suspend fun next(
         providers: List<Providers>,
         current: Providers,
         offset: Int,
-        results: Map<Providers, List<String>>,
+        results: Map<Providers, List<String?>>,
         skipCurrent: Boolean = false,
     ): Pair<ProviderChain.Page<String>?, List<Pair<Providers, Int>>> {
         val asked = mutableListOf<Pair<Providers, Int>>()
         val page = ProviderChain.next(providers, current, offset, skipCurrent) { provider, at ->
             asked += provider to at
-            results[provider]?.getOrNull(at)
+            val list = results[provider].orEmpty()
+            if (at > list.lastIndex) throw NoTrackFoundException()
+            list[at]
         }
         return page to asked
     }
@@ -281,6 +286,24 @@ class ProviderChainTest {
     }
 
     @Test
+    fun `results without lyrics are passed over for the provider's next one`() = runTest {
+        val (page, asked) = next(
+            order, Providers.NETEASE, 0,
+            mapOf(Providers.NETEASE to listOf("first", null, null, "found")),
+        )
+        page shouldBe ProviderChain.Page(Providers.NETEASE, 3, "found")
+        asked.shouldContainExactly(Providers.NETEASE to 1, Providers.NETEASE to 2, Providers.NETEASE to 3)
+    }
+
+    @Test
+    fun `a provider with only lyric-less results is left after a few, for the next provider`() = runTest {
+        val page = ProviderChain.next(order, Providers.NETEASE, 0, maxSkips = 3) { provider, _ ->
+            if (provider == Providers.KUGOU) "k" else null // Netease: endless results, no lyrics
+        }
+        page shouldBe ProviderChain.Page(Providers.KUGOU, 0, "k")
+    }
+
+    @Test
     fun `next is null once the last provider has run out`() = runTest {
         val (page, _) = next(order, Providers.KUGOU, 0, mapOf(Providers.KUGOU to listOf("k")))
         page.shouldBeNull()
@@ -301,7 +324,7 @@ class ProviderChainTest {
             when (provider) {
                 Providers.LRCLIB -> throw InternalErrorException("boom")
                 Providers.NETEASE -> "n"
-                else -> null
+                else -> throw NoTrackFoundException()
             }
         }
         page shouldBe ProviderChain.Page(Providers.NETEASE, 0, "n")

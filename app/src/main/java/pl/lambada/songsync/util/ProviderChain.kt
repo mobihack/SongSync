@@ -126,54 +126,67 @@ object ProviderChain {
      * walks the same order a search does (the default one in auto mode, the user's in custom
      * order) instead of stopping at the end of one provider's list.
      *
-     * [attempt] returns a provider's result at an offset, or null (or throws
-     * [NoTrackFoundException]) when it has none there. A provider that errors is skipped, like in
-     * [find]; being offline, cancellation or an empty query stops. With [skipCurrent], [current]
-     * isn't asked again (a provider with only one result per search).
+     * [attempt] gives a provider's result at an offset. It throws [NoTrackFoundException] when the
+     * provider has no result there (its list has ended), and returns null for a result that's no
+     * use (no lyrics): that one is passed over for the provider's next, up to [maxSkips] in a row,
+     * so a provider whose results have no lyrics doesn't hold "next" up one press at a time.
+     * A provider that errors is left for the next one, like in [find]; being offline,
+     * cancellation or an empty query stops. With [skipCurrent], [current] isn't asked again (a
+     * provider with only one result per search).
      *
-     * @return null when no provider has a further result; the last error instead when none of the
-     * providers asked could answer at all.
+     * @return null when no provider has a further usable result; the last error instead when none
+     * of the providers asked could answer at all.
      */
     suspend fun <T> next(
         providers: List<Providers>,
         current: Providers,
         offset: Int,
         skipCurrent: Boolean = false,
+        maxSkips: Int = MaxSkipsPerProvider,
         onAttempt: (Progress) -> Unit = {},
         attempt: suspend (provider: Providers, offset: Int) -> T?,
     ): Page<T>? {
         val currentIndex = providers.indexOf(current)
-        val tries = buildList {
+        val starts = buildList {
             if (!skipCurrent) add(current to offset + 1)
             // A provider that isn't in the order (chosen before the order changed) has no "after"
             if (currentIndex >= 0) providers.drop(currentIndex + 1).forEach { add(it to 0) }
         }
         var lastError: Exception? = null
         var anyAnswered = false
-        for ((provider, at) in tries) {
+        for ((provider, start) in starts) {
             val index = providers.indexOf(provider)
             onAttempt(Progress(provider, index = if (index >= 0) index + 1 else 1, total = maxOf(providers.size, 1)))
-            val value = try {
-                attempt(provider, at).also { anyAnswered = true }
-            } catch (e: UnknownHostException) {
-                throw e
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: EmptyQueryException) {
-                throw e
-            } catch (e: NoTrackFoundException) {
-                anyAnswered = true
-                null
-            } catch (e: Exception) {
-                lastError = e
-                null
-            } ?: continue
-            return Page(provider, at, value)
+            var at = start
+            var skipped = 0
+            while (true) {
+                val value = try {
+                    attempt(provider, at).also { anyAnswered = true }
+                } catch (e: UnknownHostException) {
+                    throw e
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: EmptyQueryException) {
+                    throw e
+                } catch (e: NoTrackFoundException) {
+                    anyAnswered = true
+                    break // this provider's list has ended
+                } catch (e: Exception) {
+                    lastError = e
+                    break
+                }
+                if (value != null) return Page(provider, at, value)
+                if (++skipped >= maxSkips) break
+                at++
+            }
         }
         val error = lastError
         if (error != null && !anyAnswered) throw error
         return null
     }
+
+    /** How many unusable results in a row [next] passes over before leaving a provider. */
+    const val MaxSkipsPerProvider = 10
 
     private class Result<T>(val value: T)
 

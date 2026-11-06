@@ -166,4 +166,26 @@ class LyricsFetchViewModelTest {
 
         (vm.queryState as QueryStatus.Failed).exception::class shouldBe pl.lambada.songsync.util.NoTrackFoundException::class
     }
+
+    @Test
+    fun `next result passes over a result without lyrics`() = test {
+        val first = settings.lookupProviders().first()
+        val noLyrics = SongInfo("3005 (Instrumental)", "Childish Gambino")
+        val withLyrics = SongInfo("3005 (Remix)", "Childish Gambino")
+        coEvery { service.findLyrics(any(), any(), any(), any()) } returns
+            ProviderChain.Found(first, LyricsLookup(SongInfo("3005", "Childish Gambino"), "[00:01.00]Hi"))
+        coEvery { service.getSongInfo(any(), 1, first) } returns noLyrics
+        coEvery { service.getSongInfo(any(), 2, first) } returns withLyrics
+        coEvery { service.getSyncedLyrics(noLyrics, first, any()) } returns null
+        coEvery { service.getSyncedLyrics(withLyrics, first, any()) } returns "[00:03.00]Remix"
+        val vm = viewModel()
+
+        vm.loadSongInfo(context)
+        advanceUntilIdle()
+        vm.loadSongInfo(context, tryingAgain = true)
+        advanceUntilIdle()
+
+        (vm.queryState as QueryStatus.Success).song.songName shouldBe "3005 (Remix)"
+        vm.lyricsFetchState shouldBe LyricsFetchState.Success("[00:03.00]Remix")
+    }
 }

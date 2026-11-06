@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import pl.lambada.songsync.R
 import pl.lambada.songsync.data.UserSettingsController
+import pl.lambada.songsync.data.remote.lyrics_providers.LyricsLookup
 import pl.lambada.songsync.data.remote.lyrics_providers.LyricsProviderService
 import pl.lambada.songsync.domain.model.SongInfo
 import pl.lambada.songsync.ui.LocalSong
@@ -151,9 +152,11 @@ class LyricsFetchViewModel(
                 lyricsFetchState = LyricsFetchState.NotSubmitted
 
                 if (tryingAgain) {
-                    // The next result: this provider's next one, and once it has no more, the
-                    // providers after it in the search order (auto or the user's own)
+                    // The next result with lyrics: this provider's next one, and once it has no
+                    // more, the providers after it in the search order (auto or the user's own).
+                    // Results without lyrics are passed over rather than shown one press at a time.
                     val query = buildQuery()
+                    val options = userSettingsController.lyricsOptions
                     val page = ProviderChain.next(
                         providers = lookupProviders(),
                         current = activeProvider,
@@ -161,14 +164,15 @@ class LyricsFetchViewModel(
                         skipCurrent = !pagesResults(activeProvider),
                         onAttempt = { searchProgress = it },
                     ) { provider, offset ->
-                        lyricsProviderService.getSongInfo(query = query, offset = offset, provider = provider)
+                        val match = lyricsProviderService.getSongInfo(query = query, offset = offset, provider = provider)
+                        lyricsProviderService.getSyncedLyrics(match, provider, options)?.let { LyricsLookup(match, it) }
                     } ?: throw NoTrackFoundException()
 
                     activeProvider = page.provider
                     queryOffset = page.offset
                     searchProgress = null
-                    queryState = QueryStatus.Success(page.value)
-                    loadLyrics(page.value)
+                    queryState = QueryStatus.Success(page.value.songInfo)
+                    lyricsFetchState = LyricsFetchState.Success(page.value.lyrics)
                 } else {
                     // Fresh search: providers in the order the provider mode gives
                     queryOffset = 0
@@ -218,25 +222,6 @@ class LyricsFetchViewModel(
                     refreshSavedLyrics(context)
                 }
                 .onFailure { showToast(context, it.message ?: context.getString(R.string.error)) }
-        }
-    }
-
-    /** Runs inside the search that found [match], so replacing that search stops this too. */
-    private suspend fun loadLyrics(match: SongInfo) {
-        lyricsFetchState = LyricsFetchState.Pending
-
-        try {
-            val lyrics = lyricsProviderService.getSyncedLyrics(
-                match,
-                activeProvider,
-                userSettingsController.lyricsOptions,
-            ) ?: throw NullPointerException("Lyrics result is null")
-
-            lyricsFetchState = LyricsFetchState.Success(lyrics)
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            lyricsFetchState = LyricsFetchState.Failed(e)
         }
     }
 
