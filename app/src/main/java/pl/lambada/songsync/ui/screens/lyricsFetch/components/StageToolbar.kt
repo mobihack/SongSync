@@ -50,7 +50,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
@@ -84,15 +89,25 @@ fun StageToolbar(
     onEmbed: (() -> Unit)?,
     onSave: () -> Unit,
     modifier: Modifier = Modifier,
+    /** A tap on the toolbar itself, between its buttons. */
+    onBackgroundTap: () -> Unit = {},
 ) {
+    val currentOnBackgroundTap by rememberUpdatedState(onBackgroundTap)
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         modifier = modifier
             .fillMaxWidth()
             .frosted(hazeState, CircleShape, MaterialTheme.colorScheme.surfaceContainerHigh)
-            // Touches between the buttons stay on the toolbar instead of reaching the lyrics below
-            .pointerInput(Unit) {}
+            // Touches between the buttons stay on the toolbar instead of reaching the lyrics below.
+            // Seen after the buttons (Final pass): a tap none of them took is a background tap.
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Final)
+                    val up = waitForUpOrCancellation(PointerEventPass.Final)
+                    if (up != null && !up.isConsumed) currentOnBackgroundTap()
+                }
+            }
             .padding(8.dp),
     ) {
         if (playing != null) WithTooltip(stringResource(if (playing) R.string.pause_song else R.string.play_song)) {

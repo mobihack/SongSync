@@ -16,6 +16,8 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.animateScrollBy
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -359,6 +361,14 @@ fun SharedTransitionScope.LyricsFetchScreen(
                 (if (query.songOrNull()?.availableLanguages?.isNotEmpty() == true) 1 else 0)
             FollowPlayback(listState, firstLineIndex, lines.size, activeLine = { activeLine }, playing = playing)
 
+            // While the timing panel is open, a tap anywhere else closes it instead of reaching
+            // the lyrics
+            if (timingOpen) Box(
+                Modifier
+                    .fillMaxSize()
+                    .pointerInput(Unit) { detectTapGestures { timingOpen = false } }
+            )
+
             // Floating toolbar, with the timing panel opening above it
             if (lyrics != null) Column(
                 Modifier
@@ -393,6 +403,7 @@ fun SharedTransitionScope.LyricsFetchScreen(
                     offsetMs = offset,
                     timingOpen = timingOpen,
                     onTimingToggle = { timingOpen = !timingOpen },
+                    onBackgroundTap = { timingOpen = false },
                     onEmbed = if (songPath != null) {
                         { viewModel.embedLyrics(lyrics, songPath, context, query.songOrNull()!!) }
                     } else null,
