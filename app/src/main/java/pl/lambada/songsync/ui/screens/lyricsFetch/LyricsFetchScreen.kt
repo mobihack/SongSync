@@ -405,9 +405,13 @@ fun SharedTransitionScope.LyricsFetchScreen(
                     onTimingToggle = { timingOpen = !timingOpen },
                     onBackgroundTap = { timingOpen = false },
                     onEmbed = if (songPath != null) {
-                        { viewModel.embedLyrics(lyrics, songPath, context, query.songOrNull()!!) }
+                        {
+                            timingOpen = false
+                            viewModel.embedLyrics(lyrics, songPath, context, query.songOrNull()!!)
+                        }
                     } else null,
                     onSave = {
+                        timingOpen = false
                         viewModel.saveLyricsToFile(
                             lyrics, query.songOrNull()!!, songPath, context, context.getString(R.string.generated_using),
                         )
